@@ -42,15 +42,22 @@ async function main(): Promise<number> {
       }
     }
     const local = args.includes('--local');
-    // Default to loopback for a local `serve`; a host platform (Railway, etc.)
-    // sets HOST=0.0.0.0 so its proxy can reach the container.
-    const host = process.env.HOST || '127.0.0.1';
+    // Running on a managed platform (Railway injects RAILWAY_ENVIRONMENT): its
+    // proxy must reach the container, so bind 0.0.0.0 and trust the proxy's
+    // X-Forwarded-For — otherwise the rate limiter would key every request on
+    // the single proxy IP. Locally, default to loopback and no proxy trust.
+    // Both are still overridable via HOST / WILLAICITE_TRUST_PROXY.
+    const onPlatform = Boolean(process.env.RAILWAY_ENVIRONMENT);
+    const host = process.env.HOST || (onPlatform ? '0.0.0.0' : '127.0.0.1');
+    const trustProxy = process.env.WILLAICITE_TRUST_PROXY
+      ? process.env.WILLAICITE_TRUST_PROXY === '1'
+      : onPlatform;
     const { startServer } = await import('./server.js');
     const { createGuardedFetcher } = await import('./safeFetch.js');
     await startServer(
       port,
       {
-        trustProxy: process.env.WILLAICITE_TRUST_PROXY === '1',
+        trustProxy,
         maxConcurrent: Number(process.env.WILLAICITE_MAX_CONCURRENT) || undefined,
         // --local opts back into a permissive fetcher for auditing private/localhost targets.
         fetcher: local ? createGuardedFetcher({ policy: { blockPrivateHosts: false, allowedPorts: null } }) : undefined,
