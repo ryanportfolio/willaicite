@@ -1,0 +1,247 @@
+---
+// The AI crawler registry. Data is imported from the audit engine itself
+// (src/aiBots.ts), so this page and the scoring share one source of truth.
+import Base from '../layouts/Base.astro';
+import { AI_BOTS } from '../../../src/aiBots';
+
+const retrieval = AI_BOTS.filter((b) => b.role === 'retrieval');
+const training = AI_BOTS.filter((b) => b.role === 'training');
+
+const TITLE = 'AI crawler registry · willaicite';
+const DESCRIPTION = `The ${AI_BOTS.length} AI crawler tokens willaicite audits: what each bot fetches, whether blocking it costs you citations or only model training, and the robots.txt lines that control it. Covers OAI-SearchBot, GPTBot, ClaudeBot, PerplexityBot and more.`;
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'TechArticle',
+      '@id': 'https://willaicite.com/crawlers#article',
+      headline: 'The AI crawler registry',
+      description: DESCRIPTION,
+      author: { '@id': 'https://willaicite.com/#ryan' },
+      publisher: { '@id': 'https://willaicite.com/#org' },
+      datePublished: '2026-07-17',
+      dateModified: '2026-07-17',
+      mainEntityOfPage: 'https://willaicite.com/crawlers',
+    },
+    {
+      '@type': 'Person',
+      '@id': 'https://willaicite.com/#ryan',
+      name: 'Ryan',
+      url: 'https://github.com/ryanportfolio',
+    },
+    {
+      '@type': 'Organization',
+      '@id': 'https://willaicite.com/#org',
+      name: 'willaicite',
+      url: 'https://willaicite.com/',
+      logo: 'https://willaicite.com/favicon.svg',
+    },
+    {
+      '@type': 'ItemList',
+      '@id': 'https://willaicite.com/crawlers#list',
+      name: 'AI crawler tokens audited by willaicite',
+      numberOfItems: AI_BOTS.length,
+      itemListElement: AI_BOTS.map((b, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: b.token,
+        description: `${b.engine} (${b.role})`,
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': 'https://willaicite.com/crawlers#crumbs',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'willaicite', item: 'https://willaicite.com/' },
+        { '@type': 'ListItem', position: 2, name: 'AI crawler registry', item: 'https://willaicite.com/crawlers' },
+      ],
+    },
+  ],
+};
+---
+<Base title={TITLE} description={DESCRIPTION} canonical="https://willaicite.com/crawlers" schema={schema}>
+
+<main>
+  <div class="sheet">
+    <article class="registry">
+      <h1>The AI crawler registry</h1>
+      <p class="lede">
+        This registry is the roster willaicite checks on every audit: {AI_BOTS.length} crawler
+        tokens, what each one fetches, whether blocking it costs you citations or only model
+        training, and the robots.txt lines that control it. The page renders the same data the
+        <a class="body-link" href="/app">audit engine</a> scores with, so it cannot drift from
+        what the tool actually tests.
+      </p>
+
+      <div class="report-rule"><h2 class="rulelabel">Which crawlers decide whether you get cited?</h2></div>
+      <p class="section-intro">
+        Retrieval crawlers fetch pages to answer live queries or fill an answer engine&rsquo;s
+        search index. Blocking any one of them means that engine can never retrieve or cite
+        your page, no matter how good the content is. {retrieval.length} of the
+        {AI_BOTS.length} tokens are retrieval-class.
+      </p>
+      <table class="bots">
+        <thead><tr><th>token</th><th>what it feeds</th><th>note</th></tr></thead>
+        <tbody>
+          {retrieval.map((b) => (
+            <tr>
+              <td class="tok">{b.token}</td>
+              <td class="eng">{b.engine}</td>
+              <td class="note">{b.robotsIgnored ? 'generally ignores robots.txt (user-initiated); a Disallow records intent but does not stop the fetch' : b.caveat ?? ''}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div class="report-rule"><h2 class="rulelabel">Which tokens only affect training?</h2></div>
+      <p class="section-intro">
+        Training tokens control whether your content ends up in model-training data. Blocking
+        them is a legitimate, now-mainstream content policy and does not stop AI engines from
+        citing your page today. Two of them (Google-Extended and Applebot-Extended) are pure
+        opt-out tokens with no crawler behind them.
+      </p>
+      <table class="bots">
+        <thead><tr><th>token</th><th>what it controls</th><th>note</th></tr></thead>
+        <tbody>
+          {training.map((b) => (
+            <tr>
+              <td class="tok">{b.token}</td>
+              <td class="eng">{b.engine}</td>
+              <td class="note">{b.caveat ?? ''}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div class="report-rule"><h2 class="rulelabel">Who actually blocks these crawlers?</h2></div>
+      <p class="section-intro">
+        The Reuters Institute measured it for news publishers:
+        &ldquo;48% of the most widely used news websites &hellip; were blocking OpenAI&rsquo;s crawlers&rdquo;
+        by the end of 2023, across ten countries, while 24% blocked Google&rsquo;s AI crawler
+        (<a class="body-link" href="https://reutersinstitute.politics.ox.ac.uk/how-many-news-websites-block-ai-crawlers">Fletcher, Reuters Institute, 2024</a>).
+        The spread is wide: 79% of sampled US news sites blocked OpenAI against 20% in Mexico
+        and Poland, and 57% of legacy print outlets blocked it against 31% of digital-born ones.
+        Those blocks are aimed at training crawlers; the risk willaicite flags is blocking a
+        retrieval token by accident and vanishing from citations with them.
+      </p>
+
+      <div class="report-rule"><h2 class="rulelabel">How do I allow or block a crawler?</h2></div>
+      <p class="section-intro">
+        robots.txt rules are per token. No rule means allowed; every crawler above is allowed
+        by default. To block one, name it and disallow your paths:
+      </p>
+      <pre class="snippet"><code># block OpenAI model training, keep ChatGPT citations
+User-agent: GPTBot
+Disallow: /
+
+# block Gemini training and grounding
+User-agent: Google-Extended
+Disallow: /</code></pre>
+      <p class="section-intro">Two things robots.txt cannot tell you:</p>
+      <ol class="cannot">
+        <li>
+          User-initiated fetchers like Perplexity-User document that they generally ignore
+          robots.txt, so a Disallow there records intent without stopping the fetch; real
+          enforcement lives at the WAF or CDN.
+        </li>
+        <li>
+          The reverse failure is silent: a firewall rule that returns 403 to AI crawlers
+          overrides everything robots.txt promises, and no SEO tool walks that path.
+          willaicite fetches your page with an AI crawler&rsquo;s user agent and reports the
+          difference; a clean result reads
+          &ldquo;UA differential: normal UA and GPTBot UA both got HTTP 200&rdquo;.
+        </li>
+      </ol>
+
+      <div class="report-rule"><h2 class="rulelabel">Registry FAQ</h2></div>
+      <div class="faq">
+        <div class="faq-item">
+          <h3>Should I block GPTBot?</h3>
+          <p>
+            That is a content-policy decision, not a technical one. Blocking GPTBot keeps your
+            pages out of OpenAI&rsquo;s training data and does not remove you from ChatGPT&rsquo;s
+            citations; those run through OAI-SearchBot and ChatGPT-User. Many publishers block
+            it deliberately. Just make sure the block stops at GPTBot and does not sweep up the
+            retrieval tokens with it.
+          </p>
+        </div>
+        <div class="faq-item">
+          <h3>Why do AI crawlers get a 403 when robots.txt says allowed?</h3>
+          <p>
+            Because robots.txt and the firewall are separate layers. CDN bot-management rules
+            (Cloudflare ships a
+            <a class="body-link" href="https://blog.cloudflare.com/declaring-your-aindependence-block-ai-bots-scrapers-and-crawlers-with-a-single-click/">one-click AI-bot block</a>)
+            act on the user agent at the edge, before your server or your robots.txt opinion is
+            consulted. The audit&rsquo;s crawler-access dimension flags this as its hardest failure:
+            &ldquo;a blocked retrieval crawler cannot fetch the page at all, so the engine behind
+            it can never retrieve or cite this content.&rdquo; Every SEO report still shows a
+            clean crawl.
+          </p>
+        </div>
+        <div class="faq-item">
+          <h3>Does one Disallow line cover every AI bot?</h3>
+          <p>
+            No. Rules bind per token, so each crawler needs its own User-agent group unless you
+            use the <code>*</code> wildcard, which also binds ordinary search crawlers. And the
+            two pure opt-out tokens (Google-Extended, Applebot-Extended) have no crawler behind
+            them at all; they only register your preference.
+          </p>
+        </div>
+      </div>
+
+      <div class="report-rule"><h2 class="rulelabel">Sources</h2></div>
+      <ul class="sources">
+        <li><a class="body-link" href="https://developers.openai.com/api/docs/bots">OpenAI: bots and crawlers documentation</a></li>
+        <li><a class="body-link" href="https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler">Anthropic: crawler documentation</a></li>
+        <li><a class="body-link" href="https://docs.perplexity.ai/guides/bots">Perplexity: PerplexityBot and Perplexity-User</a></li>
+        <li><a class="body-link" href="https://reutersinstitute.politics.ox.ac.uk/how-many-news-websites-block-ai-crawlers">Reuters Institute: how many news websites block AI crawlers (Fletcher, 2024)</a></li>
+        <li><a class="body-link" href="https://arxiv.org/abs/2311.09735">Aggarwal et&nbsp;al.: GEO, Generative Engine Optimization (KDD 2024)</a></li>
+      </ul>
+
+      <p class="backlink"><a class="cta" href="/app">Audit your robots.txt</a></p>
+    </article>
+  </div>
+</main>
+
+<style is:global>
+  .registry { padding-top: 64px; }
+  .registry h1 { font-size: clamp(32px, 5vw, 46px); font-weight: 500; line-height: 1.1; letter-spacing: -0.015em; }
+  .registry .lede { margin-top: 20px; max-width: 64ch; font-size: 18px; color: var(--ink-soft); }
+  .registry .report-rule { margin-top: 56px; }
+  .registry .section-intro { max-width: 66ch; }
+  .registry table.bots {
+    border-collapse: collapse; width: 100%; margin-top: 22px;
+    background: var(--paper-raised); border: 1px solid var(--rule);
+  }
+  .registry .bots th {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-faint); font-weight: 400; text-align: left; padding: 10px 14px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .registry .bots td { padding: 10px 14px; border-top: 1px solid var(--rule); vertical-align: baseline; }
+  .registry .bots tr:first-child td { border-top: 0; }
+  .registry .bots .tok { font-family: var(--mono); font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .registry .bots .eng { font-size: 15px; color: var(--ink-soft); }
+  .registry .bots .note { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); max-width: 34ch; }
+  .registry .snippet {
+    margin-top: 22px; padding: 18px 20px; max-width: 640px; overflow-x: auto;
+    background: var(--paper-raised); border: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 13px; line-height: 1.7; color: var(--ink-soft);
+  }
+  .registry .cannot { margin: 16px 0 0 22px; max-width: 64ch; color: var(--ink-soft); }
+  .registry .cannot li { margin-top: 10px; }
+  .registry .faq { margin-top: 10px; }
+  .registry .faq-item { border-top: 1px solid var(--rule); margin-top: 24px; padding-top: 20px; }
+  .registry .faq-item:first-child { border-top: 0; margin-top: 22px; }
+  .registry .faq-item h3 { font-size: 20px; font-weight: 500; line-height: 1.3; letter-spacing: -0.01em; }
+  .registry .faq-item p { margin-top: 10px; max-width: 66ch; color: var(--ink-soft); font-size: 16px; }
+  .registry .sources { margin: 22px 0 0 22px; color: var(--ink-soft); }
+  .registry .sources li { margin-top: 8px; }
+  .registry .backlink { margin-top: 48px; padding-bottom: 24px; }
+  @media (max-width: 760px) {
+    .registry .bots .note { display: none; }
+    .registry .bots th:last-child { display: none; }
+  }
+</style>
+</Base>
