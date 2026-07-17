@@ -7,6 +7,12 @@
       "runtimeArgs": ["dist/cli.js", "serve", "--port", "4199"],
       "port": 4199,
       "autoPort": false
+    },
+    {
+      "name": "landing",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "site"],
+      "port": 4321
     }
   ]
 }

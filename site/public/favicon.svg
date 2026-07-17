@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#f4f0e6"/>
+  <rect x="0" y="0" width="64" height="4" fill="#1c1914"/>
+  <text x="32" y="46" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace" font-size="34" font-weight="700" fill="#1c1914">w<tspan fill="#cf3b1a">.</tspan></text>
+</svg>

@@ -231,6 +231,13 @@ describe('checkEvidenceDensity', () => {
     expect(r.recommendations[0].action).toContain('Renderability');
   });
 
+  it('counts percent-sign, currency and word-unit statistics', () => {
+    const html =
+      '<html><body><main><p>Traffic grew 24.9% year over year. The rebuild cost $3 million and shipped in 30 days.</p></main></body></html>';
+    const r = checkEvidenceDensity(makeCtx({ target: makePage('https://example.com/guide', html) }));
+    expect(r.evidence.some((e) => e.message.includes('3 statistic(s)'))).toBe(true);
+  });
+
   it('does not count same-domain links as outbound citations', () => {
     const html = '<html><body><main><p>Some ordinary body copy that talks about the topic at hand in a fairly plain way without numbers.</p><a href="https://example.com/other">internal</a><a href="https://www.example.com/other2">internal www</a></main></body></html>';
     const r = checkEvidenceDensity(makeCtx({ target: makePage('https://example.com/guide', html) }));
