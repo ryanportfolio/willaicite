@@ -1,114 +1,166 @@
-# geo-audit
+<div align="center">
 
-Point it at a URL and get a scored **GEO (Generative Engine Optimization) audit**: how ready the site is to be retrieved and cited by AI answer engines (ChatGPT, Perplexity, Google AI Overviews, Claude), plus prioritized recommendations.
+<img src="site/public/og.png" alt="willaicite: SEO gets you listed, GEO gets you quoted" width="640">
 
-**Deterministic by design (v1):** no LLM calls, only rule-based checks — the same input always produces the same score.
+# willaicite
 
-```
-$ geo-audit example.com
+**A free, deterministic audit that scores whether AI answer engines can retrieve, read, and quote your web page.**
 
-# GEO Audit — example.com
-## Overall score: 44/100
-**Poor — this site is largely invisible or unciteable to AI answer engines as-is.**
-...
-```
+[![Live site](https://img.shields.io/badge/live-willaicite.com-cf3b1a?style=flat-square)](https://willaicite.com)
+[![License](https://img.shields.io/badge/license-MIT-2c6e49?style=flat-square)](LICENSE)
+[![Node](https://img.shields.io/badge/node-20%2B-informational?style=flat-square)](package.json)
+[![Tests](https://img.shields.io/badge/tests-145%20passing-2c6e49?style=flat-square)](tests)
+[![Runtime deps](https://img.shields.io/badge/runtime%20deps-0-2c6e49?style=flat-square)](package.json)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square)](tsconfig.json)
 
-## Install
+[Run a live audit](https://willaicite.com/app) &middot; [How it works](https://willaicite.com) &middot; [Crawler registry](https://willaicite.com/crawlers) &middot; [Proof](https://willaicite.com/proof)
 
-Requires Node 20+.
+</div>
+
+---
+
+Search engines rank you in a list of links. Answer engines quote you inside a synthesized reply. Those are different games, and a page can win the first while losing the second: to be quoted, an answer engine has to fetch your page with its own crawler, read it without executing your JavaScript, and find a passage worth lifting. willaicite scores all three, one verdict per engine, and tells you exactly what to fix.
+
+Point it at a URL and get a 0 to 100 score across seven weighted dimensions, with evidence on every line: the exact robots.txt rule that blocks a bot, the HTTP status a crawler actually receives, the sentence an engine could quote. There are no LLM calls, so the same input always produces the same score.
+
+Try it now at **[willaicite.com/app](https://willaicite.com/app)**, or run it locally.
+
+## What your SEO tool does not test
+
+SEO tooling audits the path to a ranking. willaicite audits the path to a citation. Five places the two roads split:
+
+- **The block robots.txt will not admit to.** willaicite fetches your page twice, once as an ordinary browser and once wearing an AI crawler's user agent, then compares the responses. A CDN firewall rule (Cloudflare's one-click "block AI bots" toggle, for example) can return 403 to the real crawler while robots.txt still says allowed. SEO crawlers never walk the AI-bot path, so they report clean while the engine silently drops your page.
+- **The single-page app nobody is reading.** Googlebot and Lighthouse render JavaScript. GPTBot, ClaudeBot, and PerplexityBot do not; they see whatever the server sends and nothing more. A client-rendered page can audit perfectly and still arrive at the answer engine as an empty shell. willaicite scores how much of your content survives in the raw HTML, from the exact no-JavaScript vantage those crawlers have.
+- **The outbound-citation inversion.** SEO folklore says external links leak authority, so pages cite no one. The GEO study (Aggarwal et al., KDD 2024) measured the opposite effect on AI visibility: citing sources lifted it 24.9%, statistics 25.9%, quotations 27.8%. One benchmark, directional rather than guaranteed, but it means optimizing for the ranking can quietly cost you the quote.
+- **A verdict per engine, weighed by what it costs you.** "Is Googlebot allowed" is one question. willaicite asks it for a roster of AI crawler tokens and separates retrieval crawlers, where a block means that engine can never cite you, from training-only tokens, where blocking is a legitimate policy choice.
+- **Is there a liftable answer.** Engines quote a chunk verbatim. willaicite checks whether one exists: a self-contained answer near the top, headings phrased as the questions people actually ask, an FAQ ready to be lifted whole. You can rank first for a query and still contain nothing an engine can use.
+
+## The seven dimensions
+
+Every audit scores the same seven dimensions, each weighted by how often it decides whether a citation happens. The overall score is the weighted average of the dimensions that could be verified.
+
+| # | Dimension | Weight | What it measures |
+|---|---|---|---|
+| 01 | **AI crawler access** | high | Can the engines that cite pages fetch this one at all, per crawler token, checking robots.txt and the CDN firewall both |
+| 02 | **Renderability** | high | How much content survives in the raw HTML with no JavaScript executed, the way GPTBot and PerplexityBot see it |
+| 03 | **Answer-readiness** | high | Whether a self-contained, liftable answer sits near the top under question-shaped headings |
+| 04 | **Evidence density** | high | The material engines prefer to quote: statistics, quotations, and cited sources |
+| 05 | **Structured data** | medium | JSON-LD (Article, FAQPage, Organization, Person) that helps Google AI Overviews and entity trust |
+| 06 | **Freshness** | medium | Visible and machine-readable dates; engines discount content they cannot date |
+| 07 | **Entity &amp; E-E-A-T** | medium | A nameable author, organization, and provenance an engine can attribute |
+
+Also checked, informational and unscored: `llms.txt` presence, well-formedness, and consistency with robots.txt.
+
+## Quick start
+
+Requires Node 20 or newer. There are zero runtime dependencies.
 
 ```bash
+git clone https://github.com/ryanportfolio/willaicite.git
+cd willaicite
 npm install
 npm run build
-npm link        # exposes the `geo-audit` command
-# or run without linking:
-node dist/cli.js <url>
+npm link            # exposes the `geo-audit` command
 ```
 
-## Usage
+```bash
+geo-audit https://example.com               # scored report, printed as markdown
+geo-audit https://example.com --json        # machine-readable JSON
+geo-audit https://example.com --out report.md
+geo-audit serve --port 4173                 # local web UI
 
-```
-geo-audit <url> [--json] [--out report.md]
-geo-audit serve [--port 4173]
-
---json        machine-readable JSON instead of markdown
---out <file>  write the report to a file instead of stdout
---port <n>    port for the local web UI (default 4173)
+# without linking:
+node dist/cli.js https://example.com
 ```
 
 ## Web UI
 
-`geo-audit serve` starts a local, zero-dependency web UI (nothing leaves your machine except the audited site's fetches). Enter a URL and watch the real fetch progress stream in (Server-Sent Events — every progress line is an actual request, never cosmetic), then get the full report: overall score, per-dimension bars with expandable evidence, the prioritized fix-first list, and one-click downloads of `report.md` / `result.json`. Same audit engine as the CLI — identical input produces the identical score in both.
+`geo-audit serve` starts a local, zero-dependency web UI. Nothing leaves your machine except the fetches to the site being audited. Enter a URL and watch the real fetch progress stream in over Server-Sent Events (every progress line is an actual request, never cosmetic), then read the full report: overall score, per-dimension bars with expandable evidence, the prioritized fix-first list, and one-click downloads of `report.md` and `result.json`. It is the same audit engine as the CLI, so identical input produces an identical score in both.
 
-## What it fetches (politely)
-
-- Identifies as `geo-audit/1.2` and **respects robots.txt for its own fetching** — pages *and* auxiliary files (sitemap.xml, llms.txt, favicon) are skipped and reported as such when robots.txt disallows the tool.
-- Hard cap of **10 fetches total** per audit: the given URL, the homepage, an about page, and a few pages from the sitemap if present — including robots.txt, sitemap.xml, llms.txt and favicon. (HTTP redirects inside a fetch are followed by the platform fetcher, so a redirecting site can incur more wire requests than fetches.)
-- A robots-declared sitemap on a different host is ignored in favor of the same-origin `/sitemap.xml` (robots.txt cannot point the tool at third-party URLs).
-- Per-request timeout with graceful failure: a failed fetch or crashed check is reported as **"could not verify"** and excluded from the weighted score. It is never guessed and never crashes the audit.
+The hosted version at [willaicite.com/app](https://willaicite.com/app) is this exact UI.
 
 ## Running it as a public service
 
-The CLI is single-user and trusts you. `geo-audit serve` is safe to expose publicly **only** because the hosted path fetches through an SSRF-guarded transport (`src/safeFetch.ts`):
+The CLI is single-user and trusts you. `geo-audit serve` is safe to expose publicly only because the hosted path fetches through an SSRF-guarded transport ([`src/safeFetch.ts`](src/safeFetch.ts)):
 
-- Only `http`/`https`, only ports 80/443.
-- The destination hostname is resolved and **every** returned address is checked; anything loopback, private (RFC 1918), link-local (incl. `169.254.169.254` cloud metadata), CGNAT, or reserved is refused. IPv4-mapped/6to4/NAT64 IPv6 forms that embed a private v4 are decoded and re-checked.
-- The socket is **pinned** to the validated IP, so a hostname that re-resolves to a private address between the check and the connection (DNS rebinding) cannot slip through. Redirects are followed manually and every hop is re-validated.
-- Per-IP rate limit (default 10 audits / 10 min) and a global concurrency cap (default 4).
-
-Environment:
+- Only `http` and `https`, only ports 80 and 443.
+- The destination hostname is resolved and every returned address is checked. Anything loopback, private (RFC 1918), link-local (including the `169.254.169.254` cloud metadata address), CGNAT, or reserved is refused. IPv4-mapped, 6to4, and NAT64 IPv6 forms that embed a private v4 are decoded and re-checked.
+- The socket is pinned to the validated IP, so a hostname that re-resolves to a private address between the check and the connection (DNS rebinding) cannot slip through. Redirects are followed manually and every hop is re-validated.
+- Per-IP rate limit (default 10 audits per 10 minutes) and a global concurrency cap (default 4).
 
 | Var | Purpose | Default |
 |---|---|---|
 | `PORT` | Listen port | 4173 |
-| `WILLAICITE_TRUST_PROXY` | Set `1` behind a proxy you control (reads `X-Forwarded-For`) | off |
+| `WILLAICITE_TRUST_PROXY` | Set `1` behind a proxy you control, to read `X-Forwarded-For` | off |
 | `WILLAICITE_MAX_CONCURRENT` | Max simultaneous audits | 4 |
 
-`--local` disables the SSRF guard so you can audit `localhost`/private targets from the CLI. **Never pass `--local` on a public server.** See [SECURITY.md](SECURITY.md).
+`--local` disables the SSRF guard so you can audit `localhost` and private targets from the CLI. **Never pass `--local` on a public server.** See [SECURITY.md](SECURITY.md).
 
-## The seven dimensions
+## Sample report
 
-Each scores 0–100 with per-check evidence lines (e.g. the exact robots.txt line that blocks a bot). The overall score is the weighted average of the dimensions that could be verified.
+<details>
+<summary>willaicite audited with willaicite (100/100, abridged)</summary>
 
-| Dimension | Weight | What it measures |
+```
+# GEO Audit: https://willaicite.com
+
+## Overall score: 100/100
+
+**Excellent: well positioned to be retrieved and cited by AI answer engines.**
+
+| Dimension | Weight | Score |
 |---|---|---|
-| **AI crawler access** | high | robots.txt verdicts for 17 AI crawler tokens, scored by role: **retrieval/citation crawlers** (OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User, PerplexityBot, Bingbot, Amazonbot, DuckAssistBot, Applebot, MistralAI-User — blocking one means that engine can never cite the page) weigh heavily, while **training-only tokens** (GPTBot, ClaudeBot, CCBot, meta-externalagent, Google-Extended, Applebot-Extended) draw a light "confirm this is deliberate" note, since blocking training is a legitimate mainstream policy. Two documented exceptions are scored honestly: Perplexity-User generally ignores robots.txt (a Disallow records intent without stopping retrieval — light advisory, not a hard block), and Google-Extended also gates Gemini grounding, so blocking it does cost Gemini citations. Also: meta robots / X-Robots-Tag noindex, Cloudflare Content Signals lines (informational), and a UA differential test — the page is fetched once with a normal UA and once with GPTBot's UA string to catch CDN/WAF-level bot blocking that robots.txt doesn't show. |
-| **Renderability** | high | How much content is extractable from the raw HTML with no JS execution — which is how GPTBot, ClaudeBot and PerplexityBot see the page. Flags empty SPA shells (`<div id="root">` with no server-rendered text), low text volume, and low text-to-HTML ratio. |
-| **Structured data** | medium | JSON-LD presence and validity: Article/BlogPosting (with author and dates), FAQPage, Organization, Person, BreadcrumbList. Weighted honestly — schema mainly moves Google AI Overviews and entity trust; ChatGPT/Claude/Perplexity largely tokenize the text rather than parse the graph, and the recommendations say so. |
-| **Answer-readiness** | high | Can an engine lift an answer straight off the page? Direct definitional statement ("X is …") in the first ~200 tokens, question-formatted headings, an FAQ section, lists/tables for enumerable content, one clear H1. |
-| **Evidence density** | high | Statistics (numbers with units/%/$), quotations, and outbound citation links in the main content. Grounded in the original GEO research (Aggarwal et al., KDD 2024): quotations +27.8%, statistics +25.9%, citing sources +24.9% generative-engine visibility lift — those numbers appear in the recommendations so they carry their evidence. |
-| **Freshness** | medium | Visible publish/updated dates, JSON-LD dates, `<time>` elements, sitemap `<lastmod>`, Last-Modified headers. Content older than ~3 months is flagged — AI engines have a strong recency bias and citations drop off sharply past that. Header-only dates are capped (they usually reflect deploys, not edits). |
-| **Entity & E-E-A-T** | medium | Author bylines, an about page, org-name consistency across title/schema/og:site_name, contact info, favicon, Open Graph metadata — the signals that let an engine resolve who is behind the content. |
+| AI crawler access | high | 100/100 |
+| Renderability | high | 100/100 |
+| Structured data | medium | 100/100 |
+| Answer-readiness | high | 100/100 |
+| Evidence density | high | 100/100 |
+| Freshness | medium | 100/100 |
+| Entity & E-E-A-T | medium | 100/100 |
 
-**Also checked (informational, unscored):** `llms.txt` presence, well-formedness, and consistency with robots.txt. Honest framing: adoption is ~10% and the major AI crawlers mostly skip it today, but IDE coding agents and Lighthouse's agentic-browsing audit do use it, and it costs nothing.
+## Dimension detail
 
-## Report format
+### AI crawler access: 100/100 (weight: high)
 
-- Overall score and a one-line verdict up top.
-- Per-dimension sections: score, what passed, what failed — with exact evidence (the robots.txt line, the HTTP statuses, the matched sentence).
-- A **"Fix first"** list ordered by impact-per-effort, where every recommendation states *why* (the mechanism or the research number), not just what to do. Recommendations that share one root cause (e.g. several content checks pointing at renderability) collapse into a single entry tagged with every affected dimension.
-- No fabricated metrics anywhere: anything unverifiable says "could not verify".
+- 11 retrieval/citation crawler(s) allowed: OAI-SearchBot, ChatGPT-User,
+  Claude-SearchBot, Claude-User, PerplexityBot, Perplexity-User, Bingbot,
+  Amazonbot, DuckAssistBot, Applebot, MistralAI-User
+- 6 training crawler(s)/opt-out token(s) allowed: GPTBot, ClaudeBot, CCBot,
+  meta-externalagent, Google-Extended, Applebot-Extended
+- UA differential: normal UA and GPTBot UA both got HTTP 200; no WAF-level
+  bot blocking detected
+```
+
+The full run, including the baseline-to-100 history, is on the [proof page](https://willaicite.com/proof).
+
+</details>
 
 ## Development
 
 ```bash
-npm test          # Vitest suite over fixture HTML/robots.txt files
-npm run dev <url> # run from source via tsx
+npm test            # Vitest suite over fixture HTML and robots.txt files (145 tests)
+npm run dev <url>   # run from source via tsx
 ```
 
-## Limitations (honest ones)
+## Limitations, stated honestly
 
-- **No JS rendering.** Renderability is a heuristic on raw HTML (shell detection, text volume/ratio). Pages that hydrate real server-rendered HTML are judged fairly; lazy-loaded sections are undercounted. No headless browser in v1.
-- **Heuristic answer-readiness.** "Direct answer" detection is lexical (subject + is/are/means/helps near the top), not semantic. A well-written page can fail the pattern and vice versa.
-- **No live AI-engine querying.** This measures retrieval/citation *readiness*, not whether engines actually cite you today.
-- Robots matching implements the practically relevant parts of RFC 9309 (longest-match, allow-wins-ties, `*`/`$` wildcards, percent-encoding normalization for non-ASCII paths); exotic corner cases may still differ from Google's reference matcher.
-- The evidence-density research numbers come from one study (Aggarwal et al., "GEO: Generative Engine Optimization", KDD 2024) measured on Perplexity-style engines; treat them as directional, not gospel.
-- Scores are comparable only within one scoring-model version (the `version` field in the JSON output). Heuristic recalibrations bump the version — do not compare a v1.2 score against a v1.1 score.
+- **No JavaScript rendering.** Renderability is a heuristic on raw HTML (shell detection, text volume and ratio). Pages that hydrate real server-rendered HTML are judged fairly; lazy-loaded sections are undercounted. There is no headless browser in v1.
+- **Heuristic answer-readiness.** "Direct answer" detection is lexical (a subject plus is/are/means/helps near the top), not semantic. A well-written page can fail the pattern and the reverse can happen too.
+- **No live AI-engine querying.** This measures retrieval and citation readiness, not whether engines actually cite you today.
+- **Robots matching** implements the practically relevant parts of RFC 9309 (longest-match, allow-wins-ties, `*` and `$` wildcards, percent-encoding normalization for non-ASCII paths). Exotic corner cases may still differ from Google's reference matcher.
+- **The evidence-density numbers** come from one study (Aggarwal et al., KDD 2024) measured on Perplexity-style engines. Treat them as directional, not gospel.
+- **Scores are comparable only within one scoring-model version** (the `version` field in the JSON output). Heuristic recalibrations bump the version, so do not compare a v1.2 score against a v1.1 score.
 
-## v2 (planned, not built)
+## Roadmap: v2
 
-**Live share-of-voice probing:** query multiple AI engines (ChatGPT, Perplexity, Claude, AI Overviews) with a tracked prompt list, multiple samples per prompt — single-sample checks measure randomness, not visibility — and report brand mentions vs competitors over time. This requires live engine access and gives non-deterministic results, which is why it is out of scope for the deterministic v1.
+Live share-of-voice probing: query multiple AI engines (ChatGPT, Perplexity, Claude, AI Overviews) with a tracked prompt list, several samples per prompt (single-sample checks measure randomness, not visibility), and report brand mentions against competitors over time. This needs live engine access and gives non-deterministic results, which is why it stays out of scope for the deterministic v1.
 
 ## License
 
-MIT
+MIT. See [LICENSE](LICENSE).
+
+<div align="center">
+
+Made by Ryan &middot; [willaicite.com](https://willaicite.com) &middot; [hello@willaicite.com](mailto:hello@willaicite.com)
+
+</div>
