@@ -173,6 +173,22 @@ describe('checkAnswerReadiness', () => {
     expect(r.recommendations.some((rec) => rec.action.includes('direct answer'))).toBe(true);
   });
 
+  it('rejects an "is" sentence with a long rambling subject (not a definitional shape)', () => {
+    const html =
+      '<html><body><main><p>Over the course of the last decade the broader ecommerce personalization market in Europe is growing at a rapid pace according to several industry watchers. More filler text follows here so the page clears the word floor for the checks comfortably today.</p><h1>Topic</h1></main></body></html>';
+    const r = checkAnswerReadiness(makeCtx({ target: makePage('https://example.com/guide', html) }));
+    expect(r.evidence[0].status).toBe('fail');
+    expect(r.evidence[0].message).toContain('no direct definitional/answer statement');
+  });
+
+  it('accepts a short-subject definitional sentence', () => {
+    const html =
+      '<html><body><main><p>Generative caching is a technique for reusing model outputs across similar requests. More filler text follows here so the page clears the word floor for the checks comfortably today.</p><h1>Topic</h1></main></body></html>';
+    const r = checkAnswerReadiness(makeCtx({ target: makePage('https://example.com/guide', html) }));
+    expect(r.evidence[0].status).toBe('pass');
+    expect(r.evidence[0].message).toContain('Generative caching is');
+  });
+
   it('detects question headings partially (1-2 questions)', () => {
     const html = '<html><body><main><h1>Topic</h1><h2>How does it work?</h2><p>The system is a pipeline that processes text through several stages and produces structured output for downstream consumers.</p></main></body></html>';
     const r = checkAnswerReadiness(makeCtx({ target: makePage('https://example.com/guide', html) }));
@@ -262,6 +278,13 @@ describe('checkFreshness', () => {
     );
     expect(r.score).toBe(100);
     expect(r.evidence.some((e) => e.message.includes('sitemap <lastmod>'))).toBe(true);
+  });
+
+  it('detects abbreviated-month visible dates ("Jun 5, 2026")', () => {
+    const html = '<html><body><main><p>Updated Jun 20, 2026 — some article text here.</p></main></body></html>';
+    const r = checkFreshness(makeCtx({ target: makePage('https://example.com/guide', html) }), NOW);
+    expect(r.score).toBe(100);
+    expect(r.evidence.some((e) => e.message.includes('Jun 20, 2026'))).toBe(true);
   });
 
   it('ignores future dates', () => {

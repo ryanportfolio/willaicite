@@ -1,10 +1,12 @@
 import type { AuditContext } from '../context.js';
 import type { DimensionResult, Evidence, Recommendation } from '../types.js';
 import { extractJsonLd, extractVisibleText, findMeta } from '../html.js';
+import { parseDateUTC } from '../dates.js';
 
-const MONTHS = 'january|february|march|april|may|june|july|august|september|october|november|december';
+const MONTHS =
+  'january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept|sep|oct|nov|dec';
 const VISIBLE_DATE_RE = new RegExp(
-  `\\b(?:\\d{4}-\\d{2}-\\d{2}|(?:${MONTHS})\\s+\\d{1,2},?\\s+\\d{4}|\\d{1,2}\\s+(?:${MONTHS})\\s+\\d{4})\\b`,
+  `\\b(?:\\d{4}-\\d{2}-\\d{2}|(?:${MONTHS})\\.?\\s+\\d{1,2},?\\s+\\d{4}|\\d{1,2}\\s+(?:${MONTHS})\\.?\\s+\\d{4})\\b`,
   'gi',
 );
 
@@ -155,9 +157,9 @@ export function checkFreshness(ctx: AuditContext, now: Date = new Date()): Dimen
 }
 
 function parseDate(raw: string): Date | null {
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return null;
-  if (d.getFullYear() < 1995 || d.getFullYear() > 2100) return null;
+  const d = parseDateUTC(raw);
+  if (d === null) return null;
+  if (d.getUTCFullYear() < 1995 || d.getUTCFullYear() > 2100) return null;
   return d;
 }
 

@@ -232,7 +232,7 @@ export function mainContentHtml(html: string): string {
   return stripChrome(visible);
 }
 
-const SHELL_IDS = ['root', 'app', '__next', '___gatsby', 'q-app', 'svelte'];
+const SHELL_IDS = ['root', 'app', '__next', '__nuxt', '___gatsby', 'q-app', 'svelte'];
 
 /**
  * Detect an SPA shell: a mount-point element (<div id="root"> etc. or

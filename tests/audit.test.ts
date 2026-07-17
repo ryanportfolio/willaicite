@@ -110,6 +110,20 @@ describe('runAudit orchestration', () => {
     expect(log.some((r) => r.url === 'https://example.com/sitemap.xml')).toBe(true);
   });
 
+  it('ignores a robots-declared sitemap on the same host but a different port', async () => {
+    const log: Recorded[] = [];
+    const fetcher: Fetcher = async (url, opts) => {
+      log.push({ url, ua: opts?.ua });
+      const u = new URL(url);
+      if (u.pathname === '/robots.txt') return makeFetch({ body: 'User-agent: *\nDisallow:\nSitemap: https://example.com:8443/sitemap.xml\n' });
+      if (u.pathname === '/sitemap.xml') return makeFetch({ ok: false, status: 404, body: null });
+      return htmlPage(`page ${u.pathname}`);
+    };
+    await runAudit('https://example.com/guide', { fetcher, delayMs: 0 });
+    expect(log.some((r) => r.url.includes(':8443'))).toBe(false);
+    expect(log.some((r) => r.url === 'https://example.com/sitemap.xml')).toBe(true);
+  });
+
   it('discovers the about page from an on-page link before falling back to /about', async () => {
     const log: Recorded[] = [];
     const fetcher: Fetcher = async (url, opts) => {

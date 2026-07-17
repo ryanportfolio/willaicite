@@ -1,4 +1,5 @@
 import type { SitemapEntry } from './context.js';
+import { parseDateUTC } from './dates.js';
 
 /**
  * Minimal sitemap XML parsing: <url><loc>/<lastmod> entries, plus
@@ -40,8 +41,8 @@ function tagText(fragment: string, tag: string): string | null {
 export function pickExtraPages(entries: SitemapEntry[], exclude: Set<string>, max: number): SitemapEntry[] {
   const normalizedExclude = new Set([...exclude].map(normalize));
   const sorted = [...entries].sort((a, b) => {
-    const ta = a.lastmod ? Date.parse(a.lastmod) : NaN;
-    const tb = b.lastmod ? Date.parse(b.lastmod) : NaN;
+    const ta = a.lastmod ? (parseDateUTC(a.lastmod)?.getTime() ?? NaN) : NaN;
+    const tb = b.lastmod ? (parseDateUTC(b.lastmod)?.getTime() ?? NaN) : NaN;
     const va = Number.isNaN(ta) ? -Infinity : ta;
     const vb = Number.isNaN(tb) ? -Infinity : tb;
     if (va !== vb) return vb - va;
