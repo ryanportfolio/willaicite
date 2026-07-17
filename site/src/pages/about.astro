@@ -49,7 +49,7 @@ const schema = {
 
       <div class="report-rule"><h2 class="rulelabel">How the audit works</h2></div>
       <p>
-        An audit fetches at most ten URLs from the target site: the page itself, fetched twice
+        An audit makes at most ten polite requests to the target site: the page itself, fetched twice
         (once with a normal browser user agent, once with an AI crawler&rsquo;s), plus robots.txt,
         the sitemap, an about page, favicon and llms.txt. It then scores seven weighted dimensions: AI crawler
         access, renderability, structured data, answer-readiness, evidence density, freshness,

@@ -5,7 +5,7 @@
 // + mono data. External links below are citations; each was verified live.
 import Base, { UPDATED_ISO } from '../layouts/Base.astro';
 
-const TITLE = 'willaicite · SEO gets you listed. GEO gets you quoted.';
+const TITLE = 'willaicite · SEO gets you listed, GEO gets you quoted';
 const DESCRIPTION =
   'willaicite is a free, deterministic audit that scores whether AI answer engines (ChatGPT, Perplexity, Google AI Overviews and Claude) can retrieve your page, extract it without JavaScript, and cite it. No LLM calls, no fabricated numbers.';
 
@@ -39,8 +39,12 @@ const faqs = [
     a: 'Answer engines cite pages updated within the last 90 days far more readily; reported citation likelihood drops off sharply past roughly 3 months. Keep a visible and machine-readable date, and bump it only with genuine edits; willaicite reads both and flags undatable pages.',
   },
   {
+    q: 'Does willaicite check SEO too?',
+    a: 'No. willaicite audits the citation path, which is GEO. Several of the signals it checks (crawler access, structured data, visible dates, clear headings, authorship) are SEO fundamentals as well, so fixes often help both. But it does not measure rankings, keywords, backlinks or page speed; established SEO tools already cover that ground.',
+  },
+  {
     q: 'What does an audit cost, and what happens to my data?',
-    a: 'Nothing; willaicite is free. An audit fetches at most ten URLs from your site, politely, and typically finishes in under 30 seconds. It is deterministic: no LLM calls, no sampling, and the same input produces the same score.',
+    a: 'Nothing; willaicite is free. An audit makes at most ten polite requests to your site and typically finishes in under 30 seconds. It is deterministic: no LLM calls, no sampling.',
   },
 ];
 
@@ -71,7 +75,7 @@ const schema = {
     {
       '@type': 'TechArticle',
       '@id': 'https://willaicite.com/#article',
-      headline: 'SEO gets you listed. GEO gets you quoted.',
+      headline: 'SEO gets you listed, GEO gets you quoted',
       description: DESCRIPTION,
       author: { '@id': 'https://willaicite.com/#ryan' },
       publisher: { '@id': 'https://willaicite.com/#org' },
@@ -105,7 +109,7 @@ const schema = {
   <div class="sheet">
     <!-- ================= hero ================= -->
     <section class="hero" aria-labelledby="hero-h">
-      <h1 id="hero-h">SEO gets you listed.<br /><em>GEO gets you quoted.</em></h1>
+      <h1 id="hero-h">SEO gets you listed<br /><em>GEO gets you quoted</em></h1>
       <p class="sub">
         willaicite is a free, deterministic audit that scores whether AI answer engines
         (ChatGPT, Perplexity, Google AI Overviews and Claude) can retrieve your page, extract
@@ -118,10 +122,10 @@ const schema = {
         <input id="url" name="url" type="text" placeholder="yoursite.com/your-best-page" autocomplete="off" spellcheck="false" />
         <button type="submit">Audit</button>
       </form>
-      <p class="fineprint">free &middot; deterministic &middot; same input, same score &middot; results in about 30 seconds</p>
+      <p class="fineprint">free &middot; deterministic &middot; results in about 30 seconds</p>
 
       <figure class="answerfig">
-        <figcaption>Fig. 1 · the outcome under audit: a verbatim quote, with attribution, inside someone else&rsquo;s answer.</figcaption>
+        <figcaption>Fig. 1 · a citation inside an AI answer</figcaption>
         <div class="answercard" aria-hidden="true">
           <div class="q">“how long does waxed canvas stay waterproof?”</div>
           <div class="a">
@@ -129,7 +133,7 @@ const schema = {
             <mark>“A properly waxed canvas resists water for three to five seasons
             before re-treatment.”</mark><sup>[1]</sup> Re-waxing seams first extends&hellip;
           </div>
-          <div class="cite"><span class="marker">[1]</span> yoursite.com/guides/canvas-care <span class="arrow">&larr; the citation</span></div>
+          <div class="cite"><span class="marker">[1]</span> yoursite.com/guides/canvas-care</div>
         </div>
       </figure>
     </section>
@@ -288,12 +292,12 @@ const schema = {
   <section class="band" aria-labelledby="method-h">
     <div class="band-inner">
       <div class="band-rule"><h2 class="rulelabel" id="method-h">Method</h2></div>
-      <p class="band-head">Scored like a ledger,<br />not a horoscope.</p>
+      <p class="band-head">How the score is made</p>
       <p>
-        willaicite is deterministic. No LLM calls, no sampling, no drift: the same input produces
-        the same score, and every point is tied to evidence you can check. When something cannot be
-        observed, the report says <em>could not verify</em> instead of inventing a number. It fetches
-        at most ten URLs, politely, and respects robots.txt, while telling you what robots.txt won&rsquo;t.
+        willaicite is deterministic: no LLM calls, no sampling, and every point is tied to
+        evidence you can check in the report. An audit makes at most ten polite requests to
+        your site (your page twice, robots.txt, the sitemap and a few supporting files) and
+        honors robots.txt, while telling you what robots.txt won&rsquo;t.
       </p>
       <a class="cta inverted" href="/app">Audit your site</a>
     </div>
