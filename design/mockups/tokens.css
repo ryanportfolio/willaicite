@@ -1,0 +1,131 @@
+/* ============================================================
+   CoreWise Academy — design tokens v2 "Celestial Atlas"
+   One documented source of truth. Everything reads from here.
+
+   Identity: a celestial atlas of machine minds. Vintage star-atlas
+   editorial — ultramarine ink on warm paper by day, luminous
+   periwinkle on night slate after dark. Custom display face:
+   Alembic Titling (built in design/typeface/build-alembic.mjs).
+
+   Type scale: major third (1.25) on a 17px body.
+   Spacing: 8px base unit.
+   Accent budget: ultramarine only — emphasis words, links, key
+   numerals, one drop cap per feature, the brightest star state.
+   ============================================================ */
+
+@font-face {
+  font-family: 'Alembic Titling';
+  src: url('../typeface/AlembicTitling.otf');
+  font-display: swap;
+}
+
+:root {
+  /* ---- type families ---- */
+  --font-display: 'Alembic Titling', 'Didot', Georgia, serif;
+  --font-body: 'Newsreader', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-hand: 'Caveat', cursive;            /* margin chalk notes only */
+
+  /* ---- type scale (major third) ---- */
+  --text-2xs: 0.68rem;    /* 11.5 — graticule labels */
+  --text-xs: 0.76rem;     /* 13 — mono labels, kickers */
+  --text-sm: 0.88rem;     /* 15 — meta, captions */
+  --text-base: 1.0625rem; /* 17 — body */
+  --text-md: 1.33rem;     /* 22.6 */
+  --text-lg: 1.66rem;     /* 28 */
+  --text-xl: 2.07rem;     /* 35 */
+  --text-2xl: 2.6rem;     /* 44 */
+  --text-3xl: 3.25rem;    /* 55 */
+  --text-4xl: 4.75rem;    /* 81 — hero display */
+  --leading-body: 1.68;
+  --leading-tight: 1.08;
+  --measure: 62ch;
+  --tracking-caps: 0.14em;
+
+  /* ---- spacing (8px base) ---- */
+  --s-1: 0.5rem; --s-2: 1rem; --s-3: 1.5rem; --s-4: 2rem;
+  --s-6: 3rem; --s-8: 4rem; --s-12: 6rem; --s-16: 8rem;
+
+  /* ---- motion ---- */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);   /* the one easing token */
+  --dur: 0.45s;
+
+  /* ---- day session (light) ---- */
+  --paper: #f3efe4;        /* warm atlas paper */
+  --paper-2: #ece6d6;      /* deeper paper wash */
+  --panel: #faf7ef;        /* raised leaf */
+  --ink: #1c1914;          /* warm near-black */
+  --ink-soft: #574f43;     /* secondary text */
+  --ink-mute: #766d5d;     /* faint labels (AA at small mono sizes) */
+  --line: rgba(28, 25, 20, 0.16);        /* hairlines */
+  --line-soft: rgba(28, 25, 20, 0.08);   /* graticule */
+  --accent: #2743d0;       /* ultramarine ink */
+  --accent-deep: #1c31a4;  /* pressed / text-on-paper */
+  --accent-wash: rgba(39, 67, 208, 0.09);
+  --star: #1c31a4;         /* chart star color (day: ink-blue) */
+  --star-dim: rgba(28, 49, 164, 0.35);
+  --glow: rgba(39, 67, 208, 0.22);
+  --scrim: rgba(243, 239, 228, 0.72);
+}
+
+[data-theme='night'] {
+  /* ---- night session (dark) — the observatory ---- */
+  --paper: #121420;        /* night slate (deep indigo-charcoal) */
+  --paper-2: #0d0f18;
+  --panel: #181b2a;
+  --ink: #e8e4d8;          /* warm starlight text */
+  --ink-soft: #a9a496;
+  --ink-mute: #84806f;
+  --line: rgba(232, 228, 216, 0.16);
+  --line-soft: rgba(232, 228, 216, 0.07);
+  --accent: #96a8ff;       /* periwinkle starlight */
+  --accent-deep: #b4c1ff;
+  --accent-wash: rgba(150, 168, 255, 0.10);
+  --star: #cdd6ff;
+  --star-dim: rgba(205, 214, 255, 0.4);
+  --glow: rgba(150, 168, 255, 0.35);
+  --scrim: rgba(18, 20, 32, 0.72);
+}
+
+/* ---- reset-lite ---- */
+* { margin: 0; box-sizing: border-box; }
+html { font-size: 17px; scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+a { color: var(--accent-deep); text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent); text-underline-offset: 3px; transition: text-decoration-color var(--dur) var(--ease); }
+a:hover { text-decoration-color: var(--accent); }
+::selection { background: var(--accent); color: var(--paper); }
+
+/* ---- shared apparatus ---- */
+.mono-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ink-mute);
+}
+.mono-label.accent { color: var(--accent-deep); }
+.display { font-family: var(--font-display); font-weight: 400; line-height: var(--leading-tight); }
+.rule { border: 0; border-top: 1px solid var(--line); }
+
+/* paper grain — procedural, both themes */
+.grain::after {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.5 0 0 0 0 0.48 0 0 0 0 0.44 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}

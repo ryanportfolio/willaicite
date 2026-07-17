@@ -12,7 +12,7 @@
 |---|---|
 | Native | `applying-best-practices`, `brainstorming`, `caveman`, `conflict`, `enhance-prompt`, `executing-plans`, `forge-repo-ui-skill`, `handoff-audit`, `humanizer`, `learning`, `purposeful-writing`, `recall`, `systematic-debugging`, `test-driven-development`, `verification-before-completion`, `writing-plans` |
 | Adapted | `addskill`, `fable-mode`, `finishing-a-development-branch`, `init-project`, `lab`, `optimize-context`, `sync-starter`, `using-git-worktrees`, `using-superpowers`, `writing-skills` |
-| Capability-gated | `advocate`, `dispatching-parallel-agents`, `impartial-review`, `subagent-driven-development`, `why` |
+| Capability-gated | `advocate`, `design-study`, `dispatching-parallel-agents`, `impartial-review`, `subagent-driven-development`, `why` |
 | Dangerous | `merge`, `pr`, `safe-ship` |
 | Claude-only | None in the starter source set. |
 
