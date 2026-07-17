@@ -159,6 +159,7 @@ const schema = {
           </p>
           <figure class="minifig">
             <table class="ledger">
+              <thead class="visually-hidden"><tr><th>check</th><th>result</th><th>meaning</th></tr></thead>
               <tbody>
                 <tr><td class="k">robots.txt, GPTBot</td><td class="ok">allowed</td><td class="c">what every SEO tool reads</td></tr>
                 <tr><td class="k">fetch, browser UA</td><td class="ok">200 OK</td><td class="c">what your monitoring sees</td></tr>
@@ -225,6 +226,7 @@ const schema = {
           </p>
           <figure class="minifig">
             <table class="ledger roster">
+              <thead class="visually-hidden"><tr><th>crawler token</th><th>tier</th><th>consequence when blocked</th></tr></thead>
               <tbody>
                 <tr><td class="k"><a href="https://developers.openai.com/api/docs/bots">OAI-SearchBot</a></td><td class="tier hot">retrieval</td><td class="c">blocked &rarr; ChatGPT can never cite you</td></tr>
                 <tr><td class="k"><a href="https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler">Claude-SearchBot</a></td><td class="tier hot">retrieval</td><td class="c">blocked &rarr; Claude can never cite you</td></tr>

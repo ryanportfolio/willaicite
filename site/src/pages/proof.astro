@@ -1,0 +1,203 @@
+---
+// The dogfood receipt: willaicite's own site, audited by willaicite, with the
+// baseline report, the fixes it prescribed, and the reproducible result.
+// Every number on this page comes from logged audit runs on 2026-07-17.
+import Base from '../layouts/Base.astro';
+
+const TITLE = 'Proof · willaicite';
+const DESCRIPTION =
+  'willaicite audited its own site: baseline 51/100, then 100/100 across all seven dimensions after fixing exactly what the report flagged, in under 10 minutes. Every number is reproducible; the audit is deterministic.';
+
+const dims = [
+  { name: 'AI crawler access', before: 100, after: 100 },
+  { name: 'Renderability', before: 100, after: 100 },
+  { name: 'Structured data', before: 0, after: 100 },
+  { name: 'Answer-readiness', before: 45, after: 100 },
+  { name: 'Evidence density', before: 28, after: 100 },
+  { name: 'Freshness', before: 30, after: 100 },
+  { name: 'Entity & E-E-A-T', before: 20, after: 100 },
+];
+
+const faqs = [
+  {
+    q: 'Did you game your own tool?',
+    a: 'No, and the design makes gaming visible. Every point is tied to a page property anyone can inspect: the JSON-LD is in the source, the citations resolve, the dates are real, the FAQ you are reading renders from the same data as its schema markup. The audit is deterministic, so re-running it reproduces the same evidence lines, and a faked signal would show up as a contradiction between the report and the page. The dogfood also cut the other way: running the tool on ourselves exposed a real scoring bug (percent-sign statistics could never be counted), which we fixed and shipped the same day.',
+  },
+  {
+    q: 'Can I reproduce these numbers?',
+    a: 'Yes. Run the audit on willaicite.com and you get the same score from the same evidence; that is what deterministic means here. The independent measures are reproducible too: Lighthouse scores this page 100 in all four categories, and you can paste any page of this site into Google’s Rich Results Test or the Schema.org validator to check the structured data yourself.',
+  },
+  {
+    q: 'Why does this matter for my site?',
+    a: 'Because the loop that took this site from 51 to 100 is the product: audit, fix what the report flags in priority order, re-run until clean. The fix-first list is sorted by impact per effort, so the expensive-looking score usually falls to a handful of small, real changes.',
+  },
+];
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'TechArticle',
+      '@id': 'https://willaicite.com/proof#article',
+      headline: 'Proof: willaicite audited with willaicite',
+      description: DESCRIPTION,
+      author: { '@id': 'https://willaicite.com/#ryan' },
+      publisher: { '@id': 'https://willaicite.com/#org' },
+      datePublished: '2026-07-17',
+      dateModified: '2026-07-17',
+      mainEntityOfPage: 'https://willaicite.com/proof',
+    },
+    {
+      '@type': 'Person',
+      '@id': 'https://willaicite.com/#ryan',
+      name: 'Ryan',
+      url: 'https://github.com/ryanportfolio',
+    },
+    {
+      '@type': 'Organization',
+      '@id': 'https://willaicite.com/#org',
+      name: 'willaicite',
+      url: 'https://willaicite.com/',
+      logo: 'https://willaicite.com/favicon.svg',
+    },
+    {
+      '@type': 'FAQPage',
+      '@id': 'https://willaicite.com/proof#faq',
+      mainEntity: faqs.map((f) => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': 'https://willaicite.com/proof#crumbs',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'willaicite', item: 'https://willaicite.com/' },
+        { '@type': 'ListItem', position: 2, name: 'Proof', item: 'https://willaicite.com/proof' },
+      ],
+    },
+  ],
+};
+---
+<Base title={TITLE} description={DESCRIPTION} canonical="https://willaicite.com/proof" schema={schema}>
+
+<main>
+  <div class="sheet">
+    <article class="proof">
+      <h1>Proof</h1>
+      <p class="lede">
+        This page is the audit trail of willaicite scoring its own site: the baseline report,
+        the fixes it prescribed, and the reproducible result. The site you are reading was
+        optimized by the tool it sells, and every number below comes from logged runs on
+        July 17, 2026.
+      </p>
+
+      <div class="report-rule"><h2 class="rulelabel">Where did the site start?</h2></div>
+      <p class="section-intro">
+        The first audit of the freshly built landing page logged at 15:37 UTC and scored
+        <strong>51/100</strong>. The verdict line read
+        &ldquo;Needs work: real gaps are limiting how AI engines retrieve and cite this site.&rdquo;
+        The page was technically clean and completely uncitable: readable by every crawler,
+        with nothing an answer engine could attribute, date, or quote.
+      </p>
+      <table class="scores">
+        <thead><tr><th>dimension</th><th>baseline</th><th>after</th></tr></thead>
+        <tbody>
+          {dims.map((d) => (
+            <tr>
+              <td class="dname">{d.name}</td>
+              <td class={d.before < 50 ? 'num low' : 'num'}>{d.before}</td>
+              <td class="num done">{d.after}</td>
+            </tr>
+          ))}
+          <tr class="total"><td class="dname">Overall</td><td class="num low">51</td><td class="num done">100</td></tr>
+        </tbody>
+      </table>
+
+      <div class="report-rule"><h2 class="rulelabel">What did the audit flag?</h2></div>
+      <p class="section-intro">
+        The fix-first list named each gap with its evidence. What followed was not a redesign;
+        it was working through that list:
+      </p>
+      <ul class="fixes">
+        <li><strong>Structured data, 0 to 100.</strong> The report said, verbatim: &ldquo;no JSON-LD blocks found on the audited pages&rdquo;. Fixed with one schema graph: Organization, Person, WebSite, TechArticle with author and dates, FAQPage, BreadcrumbList.</li>
+        <li><strong>Answer-readiness, 45 to 100.</strong> No definitional opening, one question-shaped heading, no FAQ. The page now opens with a sentence an engine can lift whole, and the FAQ renders from the same array as its FAQPage markup, so the two cannot disagree.</li>
+        <li><strong>Evidence density, 28 to 100.</strong> Zero statistics and one outbound link. The GEO study found citing sources lifted generative visibility 24.9 percent, statistics 25.9 percent, and quotations 27.8 percent, so the page now carries all three, with every external link verified live before shipping.</li>
+        <li><strong>Freshness, 30 to 100.</strong> No dates anywhere. Machine-readable dates went into the schema, the meta tags, and the sitemap.</li>
+        <li><strong>Entity &amp; E-E-A-T, 20 to 100.</strong> No author, about page, contact route, favicon, or Open Graph metadata. All added, all real.</li>
+      </ul>
+
+      <div class="report-rule"><h2 class="rulelabel">What does it score now?</h2></div>
+      <p class="section-intro">
+        The clean audit logged at 15:46 UTC, under 10 minutes after the baseline:
+        <strong>100/100</strong>, every dimension at 100, zero recommendations. The verdict line now reads
+        &ldquo;Excellent: well positioned to be retrieved and cited by AI answer engines.&rdquo;
+        Independent measures agree: <a class="body-link" href="https://github.com/GoogleChrome/lighthouse">Lighthouse</a>
+        scores the page 100 for accessibility, best practices, SEO, and agentic browsing, and
+        <a class="body-link" href="https://pagespeed.web.dev/">PageSpeed Insights</a> measured
+        first paint at 0.9 seconds with 0 ms of blocking time and zero layout shift
+        (mobile, July 17, 2026).
+      </p>
+
+      <div class="report-rule"><h2 class="rulelabel">Proof FAQ</h2></div>
+      <div class="faq">
+        {faqs.map((f) => (
+          <div class="faq-item">
+            <h3>{f.q}</h3>
+            <p>{f.a}</p>
+          </div>
+        ))}
+      </div>
+
+      <div class="report-rule"><h2 class="rulelabel">Verify it yourself</h2></div>
+      <ul class="sources">
+        <li>Re-run the audit: <a class="body-link" href="/app?url=willaicite.com">willaicite.com/app?url=willaicite.com</a></li>
+        <li><a class="body-link" href="https://search.google.com/test/rich-results">Google Rich Results Test</a>: paste any page of this site</li>
+        <li><a class="body-link" href="https://validator.schema.org/">Schema.org markup validator</a>: check the JSON-LD graph</li>
+        <li><a class="body-link" href="https://pagespeed.web.dev/">PageSpeed Insights</a>: performance and Core Web Vitals</li>
+        <li>Evidence basis for the scoring model: <a class="body-link" href="https://arxiv.org/abs/2311.09735">Aggarwal et&nbsp;al., GEO, KDD&nbsp;2024</a></li>
+      </ul>
+
+      <p class="backlink"><a class="cta" href="/app">Run the same audit on your site</a></p>
+    </article>
+  </div>
+</main>
+
+<style is:global>
+  .proof { padding-top: 64px; }
+  .proof h1 { font-size: clamp(32px, 5vw, 46px); font-weight: 500; line-height: 1.1; letter-spacing: -0.015em; }
+  .proof .lede { margin-top: 20px; max-width: 64ch; font-size: 18px; color: var(--ink-soft); }
+  .proof .report-rule { margin-top: 56px; }
+  .proof .section-intro { max-width: 66ch; }
+  .proof .section-intro strong { font-family: var(--mono); font-size: 0.95em; }
+  .proof table.scores {
+    border-collapse: collapse; width: 100%; max-width: 560px; margin-top: 24px;
+    background: var(--paper-raised); border: 1px solid var(--rule);
+  }
+  .proof .scores th {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-faint); font-weight: 400; text-align: left; padding: 10px 14px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .proof .scores th:not(:first-child), .proof .scores .num { text-align: right; }
+  .proof .scores td { padding: 9px 14px; border-top: 1px solid var(--rule); }
+  .proof .scores tr:first-child td { border-top: 0; }
+  .proof .scores .dname { font-size: 15.5px; }
+  .proof .scores .num { font-family: var(--mono); font-size: 14px; font-weight: 600; }
+  .proof .scores .low { color: var(--accent); }
+  .proof .scores .done { color: var(--ok); }
+  .proof .scores .total td { border-top: 2px solid var(--ink); }
+  .proof .fixes { margin: 20px 0 0 22px; max-width: 66ch; color: var(--ink-soft); }
+  .proof .fixes li { margin-top: 14px; font-size: 16px; }
+  .proof .fixes strong { color: var(--ink); font-weight: 600; }
+  .proof .faq { margin-top: 10px; }
+  .proof .faq-item { border-top: 1px solid var(--rule); margin-top: 24px; padding-top: 20px; }
+  .proof .faq-item:first-child { border-top: 0; margin-top: 22px; }
+  .proof .faq-item h3 { font-size: 20px; font-weight: 500; line-height: 1.3; letter-spacing: -0.01em; }
+  .proof .faq-item p { margin-top: 10px; max-width: 66ch; color: var(--ink-soft); font-size: 16px; }
+  .proof .sources { margin: 22px 0 0 22px; color: var(--ink-soft); }
+  .proof .sources li { margin-top: 8px; }
+  .proof .backlink { margin-top: 48px; padding-bottom: 24px; }
+</style>
+</Base>
