@@ -160,7 +160,7 @@
   }
   .fix-action { font-size: 19px; line-height: 1.35; }
   .fix-why { margin-top: 8px; color: var(--ink-soft); font-size: 15px; max-width: 72ch; }
-  .fix-why::before { content: "Why — "; font-style: italic; color: var(--ink-faint); }
+  .fix-why::before { content: "Why: "; font-style: italic; color: var(--ink-faint); }
   .fix-tags { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
   .tag {
     font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase;
@@ -211,7 +211,7 @@
 
   <section class="prompt">
     <h1>Will AI engines <em>cite</em> this site?</h1>
-    <p class="sub">A scored audit of retrieval-and-citation readiness for ChatGPT, Perplexity, Google AI Overviews and Claude — seven dimensions, exact evidence, no fabricated numbers.</p>
+    <p class="sub">A scored audit of retrieval-and-citation readiness for ChatGPT, Perplexity, Google AI Overviews and Claude: seven dimensions, exact evidence, no fabricated numbers.</p>
     <form class="run" id="runform">
       <input id="url" type="text" placeholder="example.com/article" autocomplete="off" spellcheck="false" autofocus>
       <button id="runbtn" type="submit">Audit</button>
@@ -239,7 +239,7 @@
     <div class="report-rule"><span>Seven dimensions</span></div>
     <table class="index"><tbody id="dims"></tbody></table>
 
-    <div class="report-rule"><span>Fix first — by impact per effort</span></div>
+    <div class="report-rule"><span>Fix first, by impact per effort</span></div>
     <ol class="fixes" id="fixes"></ol>
 
     <div class="report-rule"><span>Limitations</span></div>
@@ -248,11 +248,11 @@
     <div class="downloads">
       <button id="dl-md" type="button">Download report.md</button>
       <button id="dl-json" type="button">Download result.json</button>
+      <button id="copy-agent" type="button">Copy for your agent</button>
     </div>
   </section>
 
   <footer class="colophon">
-    <span>geo-audit v1.2.0 — local UI, nothing leaves this machine except the audited site's fetches</span>
     <span>evidence basis: Aggarwal et al., KDD 2024</span>
   </footer>
 </div>
@@ -317,12 +317,12 @@
 
   function showError(msg) {
     const el = $('error');
-    el.textContent = 'audit failed — ' + msg;
+    el.textContent = 'audit failed: ' + msg;
     el.style.display = 'block';
   }
 
   function render({ result, fixFirst }) {
-    $('score').textContent = result.overallScore === null ? '—' : result.overallScore;
+    $('score').textContent = result.overallScore === null ? '–' : result.overallScore;
     $('verdict').textContent = result.verdict;
     $('audited').textContent =
       'audited ' + result.pagesAudited.length + ' page(s) · ' + result.fetchedAt +
@@ -382,7 +382,7 @@
       fixes.appendChild(li);
     }
     if (fixFirst.length === 0) {
-      fixes.innerHTML = '<li><div class="fix-action">Nothing to fix — every verifiable check passed.</div></li>';
+      fixes.innerHTML = '<li><div class="fix-action">Nothing to fix: every verifiable check passed.</div></li>';
     }
 
     const limits = $('limits');
@@ -427,6 +427,52 @@
 
   $('dl-md').addEventListener('click', () => payload && download('geo-audit-report.md', payload.markdown, 'text/markdown'));
   $('dl-json').addEventListener('click', () => payload && download('geo-audit-result.json', JSON.stringify({ ...payload.result, fixFirst: payload.fixFirst }, null, 2), 'application/json'));
+  $('copy-agent').addEventListener('click', async () => {
+    if (!payload) return;
+    const r = payload.result;
+    const url = r.finalUrl || (r.pagesAudited && r.pagesAudited[0]) || r.url || 'the audited site';
+    const scoreLine = r.overallScore === null ? 'could not be scored' : r.overallScore + '/100';
+    const preamble = [
+      'GEO audit report for an AI coding agent',
+      '',
+      'What this is: a geo-audit (Generative Engine Optimization) of ' + url + ', scored ' + scoreLine + '.',
+      'It measures whether AI answer engines (ChatGPT, Perplexity, Google AI Overviews, Claude) can',
+      'retrieve this page, extract it without executing JavaScript, and cite it in a synthesized answer.',
+      'The audit is deterministic and evidence-based; checks that could not run are marked',
+      '"could not verify" and excluded from the weighted score.',
+      '',
+      'What to do with it:',
+      '1. Work through fixFirst in order; it is already sorted by impact per effort. Each item names',
+      '   the action, the dimension it improves, and why it matters.',
+      '2. Apply the fixes in the site source: server-render or prerender quotable content, fix',
+      '   robots.txt or WAF rules that block AI crawlers, add JSON-LD (Organization, Article with',
+      '   author and dates, FAQPage), visible dates, bylines, and outbound citations.',
+      '3. Keep signals honest: real dates, real authors, real sources. Do not fake anything.',
+      '4. Verify by re-auditing the deployed page; the score is deterministic, so improvements',
+      '   are reproducible.',
+      '',
+      'Full audit JSON (result plus fixFirst) follows:',
+      '',
+    ].join('\n');
+    const text = preamble + JSON.stringify({ ...payload.result, fixFirst: payload.fixFirst }, null, 2);
+    const btn = $('copy-agent');
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.textContent = 'Copied ✓';
+    } catch {
+      // Clipboard API can be unavailable (insecure context); fall back to a hidden textarea.
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      ta.remove();
+      btn.textContent = ok ? 'Copied ✓' : 'Copy failed';
+    }
+    setTimeout(() => { btn.textContent = 'Copy for your agent'; }, 1600);
+  });
 
   function download(name, content, type) {
     const a = document.createElement('a');

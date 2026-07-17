@@ -1,7 +1,7 @@
 ---
 import Base, { UPDATED_ISO } from '../layouts/Base.astro';
 
-const TITLE = 'About — willaicite';
+const TITLE = 'About · willaicite';
 const DESCRIPTION =
   'Who runs willaicite and how the audit works: a deterministic, evidence-based score of whether AI answer engines can retrieve, extract and cite a page. No LLM calls, no fabricated numbers.';
 
@@ -42,23 +42,23 @@ const schema = {
 
       <p class="lede">
         willaicite is a free audit that scores how ready a web page is to be retrieved and
-        cited by AI answer engines — ChatGPT, Perplexity, Google AI Overviews and Claude.
+        cited by AI answer engines: ChatGPT, Perplexity, Google AI Overviews and Claude.
         It is built and run by Ryan, an independent developer, as a working application of
         the published GEO research.
       </p>
 
       <div class="report-rule"><h2 class="rulelabel">How the audit works</h2></div>
       <p>
-        An audit fetches at most ten URLs from the target site — the page itself (twice: once
-        with a normal browser user agent, once with an AI crawler&rsquo;s), robots.txt, the sitemap,
-        an about page, favicon and llms.txt — then scores seven weighted dimensions: AI crawler
+        An audit fetches at most ten URLs from the target site: the page itself, fetched twice
+        (once with a normal browser user agent, once with an AI crawler&rsquo;s), plus robots.txt,
+        the sitemap, an about page, favicon and llms.txt. It then scores seven weighted dimensions: AI crawler
         access, renderability, structured data, answer-readiness, evidence density, freshness,
         and entity &amp; E-E-A-T.
       </p>
       <p>
         The scoring is deterministic. There are no LLM calls and no sampling; the same input
-        produces the same score. Every point is tied to observable evidence — an HTTP status,
-        a robots.txt rule, a byte count of extractable text — and when a check cannot run, the
+        produces the same score. Every point is tied to observable evidence (an HTTP status,
+        a robots.txt rule, a byte count of extractable text), and when a check cannot run, the
         report says <em>could not verify</em> rather than inventing a number.
       </p>
 

@@ -4,7 +4,7 @@
 
 ## Pages
 
-- [Home](https://willaicite.com/): what the audit tests and why SEO tooling misses it — WAF/CDN bot blocking, no-JavaScript extraction, the outbound-citation inversion, per-engine crawler verdicts, liftable answers.
+- [Home](https://willaicite.com/): what the audit tests and why SEO tooling misses it, including WAF/CDN bot blocking, no-JavaScript extraction, the outbound-citation inversion, per-engine crawler verdicts, liftable answers.
 - [About](https://willaicite.com/about): who runs willaicite, how the audit works, evidence basis and contact.
 
 ## Evidence basis

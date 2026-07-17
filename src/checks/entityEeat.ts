@@ -16,7 +16,7 @@ export function checkEntityEeat(ctx: AuditContext): DimensionResult {
       name: dim,
       weight: 2,
       score: null,
-      evidence: [{ status: 'unverified', message: 'could not verify — page HTML unavailable' }],
+      evidence: [{ status: 'unverified', message: 'could not verify: page HTML unavailable' }],
       recommendations: [],
     };
   }
@@ -36,7 +36,7 @@ export function checkEntityEeat(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Add a visible author byline with a real name (plus author in Article JSON-LD)',
-      why: 'E-E-A-T source selection favors accountable authorship — engines preferring citable sources treat anonymous content as lower-trust, and Google documents authorship as an AI Overview quality input.',
+      why: 'E-E-A-T source selection favors accountable authorship; engines preferring citable sources treat anonymous content as lower-trust, and Google documents authorship as an AI Overview quality input.',
       impact: 2,
       effort: 1,
     });
@@ -51,7 +51,7 @@ export function checkEntityEeat(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Publish an /about page describing who runs the site and their credentials',
-      why: 'The about page is the canonical place engines (and Google raters) look to resolve "who is behind this" — its absence leaves the entity unresolvable.',
+      why: 'The about page is the canonical place engines (and Google raters) look to resolve "who is behind this"; its absence leaves the entity unresolvable.',
       impact: 2,
       effort: 2,
     });
@@ -85,7 +85,7 @@ export function checkEntityEeat(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Use one canonical organization name across <title>, og:site_name, Organization schema and the footer',
-      why: 'Entity resolution is string-matching plus graph signals — inconsistent naming splits the entity across variants and dilutes every trust signal attached to it.',
+      why: 'Entity resolution is string-matching plus graph signals; inconsistent naming splits the entity across variants and dilutes every trust signal attached to it.',
       impact: 1,
       effort: 1,
     });

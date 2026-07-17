@@ -74,7 +74,7 @@ describe('buildResult + renderMarkdown (integration, no network)', () => {
 
   it('renders markdown with overall score, table, and limitations', () => {
     const md = renderMarkdown(result);
-    expect(md).toContain('# GEO Audit — https://example.com/guide');
+    expect(md).toContain('# GEO Audit: https://example.com/guide');
     expect(md).toContain(`## Overall score: ${result.overallScore}/100`);
     expect(md).toContain('| AI crawler access | high |');
     expect(md).toContain('## Limitations');

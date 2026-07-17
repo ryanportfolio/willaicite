@@ -19,7 +19,7 @@ export function checkStructuredData(ctx: AuditContext): DimensionResult {
       name: dim,
       weight: 2,
       score: null,
-      evidence: [{ status: 'unverified', message: 'could not verify — no page HTML available' }],
+      evidence: [{ status: 'unverified', message: 'could not verify: no page HTML available' }],
       recommendations,
     };
   }
@@ -60,7 +60,7 @@ export function checkStructuredData(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Fix the malformed JSON-LD block(s) so they parse as valid JSON',
-      why: 'A block that fails JSON.parse is silently ignored by every consumer — it contributes nothing while still costing bytes.',
+      why: 'A block that fails JSON.parse is silently ignored by every consumer; it contributes nothing while still costing bytes.',
       impact: 2,
       effort: 1,
     });
@@ -91,7 +91,7 @@ export function checkStructuredData(ctx: AuditContext): DimensionResult {
       score += 10;
       evidence.push({
         status: 'pass',
-        message: `Article has dates (datePublished: ${String(articleNode['datePublished'] ?? '—')}, dateModified: ${String(articleNode['dateModified'] ?? '—')})`,
+        message: `Article has dates (datePublished: ${String(articleNode['datePublished'] ?? 'unset')}, dateModified: ${String(articleNode['dateModified'] ?? 'unset')})`,
       });
     } else {
       evidence.push({ status: 'warn', message: 'Article schema lacks datePublished/dateModified' });
@@ -110,7 +110,7 @@ export function checkStructuredData(ctx: AuditContext): DimensionResult {
     score += 15;
     evidence.push({ status: 'pass', message: 'Organization schema present' });
   } else {
-    evidence.push({ status: 'warn', message: 'no Organization schema — weakens entity resolution' });
+    evidence.push({ status: 'warn', message: 'no Organization schema; weakens entity resolution' });
     recommendations.push({
       dimension: dim,
       action: 'Add Organization JSON-LD (name, url, logo, sameAs) on the homepage',

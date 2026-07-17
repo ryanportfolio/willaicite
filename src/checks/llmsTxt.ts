@@ -25,7 +25,7 @@ export function checkLlmsTxt(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Optionally add an llms.txt (markdown index of your key pages) at the site root',
-      why: 'Honest framing: adoption is ~10% and the major AI crawlers (GPTBot, ClaudeBot, PerplexityBot) mostly skip it today — but IDE coding agents and Lighthouse\'s agentic-browsing audit do read it, and it costs nothing to maintain. Low priority, zero downside.',
+      why: 'Honest framing: adoption is ~10% and the major AI crawlers (GPTBot, ClaudeBot, PerplexityBot) mostly skip it today, but IDE coding agents and Lighthouse\'s agentic-browsing audit do read it, and it costs nothing to maintain. Low priority, zero downside.',
       impact: 1,
       effort: 1,
     });
@@ -48,11 +48,11 @@ export function checkLlmsTxt(ctx: AuditContext): DimensionResult {
   if (hasH1) {
     evidence.push({ status: 'pass', message: `starts with an H1 as the spec expects: "${firstContent.slice(0, 80)}"` });
   } else {
-    evidence.push({ status: 'warn', message: `first line is not an H1 ("# Site name") — spec expects one: "${firstContent.slice(0, 80)}"` });
+    evidence.push({ status: 'warn', message: `first line is not an H1 ("# Site name"); spec expects one: "${firstContent.slice(0, 80)}"` });
   }
   evidence.push({
     status: linkCount > 0 ? 'pass' : 'warn',
-    message: `${linkCount} markdown link(s) — ${linkCount > 0 ? 'agents can follow the index' : 'an llms.txt without links gives agents nothing to follow'}`,
+    message: `${linkCount} markdown link(s); ${linkCount > 0 ? 'agents can follow the index' : 'an llms.txt without links gives agents nothing to follow'}`,
   });
 
   // Consistency with robots.txt: inviting LLMs via llms.txt while blocking their crawlers is contradictory.
@@ -62,7 +62,7 @@ export function checkLlmsTxt(ctx: AuditContext): DimensionResult {
     if (blocked.length > 0) {
       evidence.push({
         status: 'warn',
-        message: `contradiction: llms.txt invites AI agents but robots.txt blocks ${blocked.join(', ')} — crawlers honor robots.txt, so the invitation is unreachable for them`,
+        message: `contradiction: llms.txt invites AI agents but robots.txt blocks ${blocked.join(', ')}; crawlers honor robots.txt, so the invitation is unreachable for them`,
       });
       recommendations.push({
         dimension: dim,

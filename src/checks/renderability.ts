@@ -20,7 +20,7 @@ export function checkRenderability(ctx: AuditContext): DimensionResult {
       name: dim,
       weight: 3,
       score: null,
-      evidence: [{ status: 'unverified', message: `could not verify — page HTML unavailable (${ctx.target?.fetch.error ?? ctx.targetSkippedReason ?? 'fetch failed'})` }],
+      evidence: [{ status: 'unverified', message: `could not verify: page HTML unavailable (${ctx.target?.fetch.error ?? ctx.targetSkippedReason ?? 'fetch failed'})` }],
       recommendations,
     };
   }
@@ -60,19 +60,19 @@ export function checkRenderability(ctx: AuditContext): DimensionResult {
     shellPts = 0;
     evidence.push({
       status: 'fail',
-      message: `empty SPA shell detected (mount point ${shell} with almost no server-rendered text) — invisible to ChatGPT, Claude and Perplexity crawlers, which do not execute JavaScript; Googlebot can render JS, so Google AI surfaces may still see the hydrated content`,
+      message: `empty SPA shell detected (mount point ${shell} with almost no server-rendered text); invisible to ChatGPT, Claude and Perplexity crawlers, which do not execute JavaScript; Googlebot can render JS, so Google AI surfaces may still see the hydrated content`,
     });
   } else {
     evidence.push({ status: 'pass', message: 'no empty SPA shell detected' });
   }
 
   if (/enable\s+javascript|javascript\s+(is\s+)?(required|disabled)/i.test(noscript)) {
-    evidence.push({ status: 'warn', message: `noscript fallback says "${noscript.slice(0, 80)}" — confirms the page depends on JS to render` });
+    evidence.push({ status: 'warn', message: `noscript fallback says "${noscript.slice(0, 80)}"; confirms the page depends on JS to render` });
   }
   evidence.push({ status: 'info', message: `${scriptCount} <script> tags on the page` });
   evidence.push({
     status: 'info',
-    message: 'limitation: heuristic on raw HTML only — geo-audit does not execute JS, so hydrated-but-server-rendered pages are judged fairly, while lazy-loaded sections may be undercounted',
+    message: 'limitation: heuristic on raw HTML only; geo-audit does not execute JS, so hydrated-but-server-rendered pages are judged fairly, while lazy-loaded sections may be undercounted',
   });
 
   let score = Math.min(100, textPts + ratioPts + shellPts);
@@ -81,8 +81,8 @@ export function checkRenderability(ctx: AuditContext): DimensionResult {
   if (shell) {
     recommendations.push({
       dimension: dim,
-      action: 'Put content in the initial HTML: cheapest first — a static H1 + a 1-2 sentence description in the shell before hydration, or make a static page (e.g. /about) the canonical marketing surface; full SSR/SSG only if the whole app needs indexing',
-      why: 'GPTBot, ClaudeBot and PerplexityBot do not execute JavaScript — content that only appears after hydration is literally absent from what those crawlers retrieve, so it can never be cited. Even a static paragraph in the shell gives them something real to index.',
+      action: 'Put content in the initial HTML: cheapest first is a static H1 + a 1-2 sentence description in the shell before hydration, or make a static page (e.g. /about) the canonical marketing surface; full SSR/SSG only if the whole app needs indexing',
+      why: 'GPTBot, ClaudeBot and PerplexityBot do not execute JavaScript; content that only appears after hydration is literally absent from what those crawlers retrieve, so it can never be cited. Even a static paragraph in the shell gives them something real to index.',
       impact: 3,
       effort: 2,
     });
@@ -90,7 +90,7 @@ export function checkRenderability(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Publish substantive text content in the initial HTML (the page currently serves very little extractable text)',
-      why: 'Retrieval works on extractable text; a page with almost none gives answer engines nothing to chunk, rank, or cite — regardless of how it renders for humans.',
+      why: 'Retrieval works on extractable text; a page with almost none gives answer engines nothing to chunk, rank, or cite, regardless of how it renders for humans.',
       impact: 3,
       effort: 2,
     });

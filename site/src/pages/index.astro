@@ -1,19 +1,19 @@
 ---
-// willaicite landing page — static, self-contained, zero external resources
+// willaicite landing page: static, self-contained, zero external resources
 // at render time. Visual language shared with the audit app (public/index.html
 // in the tool repo): warm paper, warm ink, one vermilion accent, serif display
 // + mono data. External links below are citations; each was verified live.
 import Base, { UPDATED_ISO } from '../layouts/Base.astro';
 
-const TITLE = 'willaicite — SEO gets you listed. GEO gets you quoted.';
+const TITLE = 'willaicite · SEO gets you listed. GEO gets you quoted.';
 const DESCRIPTION =
-  'willaicite is a free, deterministic audit that scores whether AI answer engines — ChatGPT, Perplexity, Google AI Overviews and Claude — can retrieve your page, extract it without JavaScript, and cite it. No LLM calls, no fabricated numbers.';
+  'willaicite is a free, deterministic audit that scores whether AI answer engines (ChatGPT, Perplexity, Google AI Overviews and Claude) can retrieve your page, extract it without JavaScript, and cite it. No LLM calls, no fabricated numbers.';
 
 const dimensions = [
-  { name: 'AI crawler access', weight: 'high', note: 'Can the engines that cite pages fetch this one at all — per crawler token, robots.txt and firewall both.' },
+  { name: 'AI crawler access', weight: 'high', note: 'Can the engines that cite pages fetch this one at all: per crawler token, robots.txt and firewall both.' },
   { name: 'Renderability', weight: 'high', note: 'How much of the content survives in raw HTML, with no JavaScript executed.' },
-  { name: 'Answer-readiness', weight: 'high', note: 'Is there a self-contained, liftable answer — near the top, under question-shaped headings.' },
-  { name: 'Evidence density', weight: 'high', note: 'Statistics, quotations and cited sources — the material engines prefer to quote.' },
+  { name: 'Answer-readiness', weight: 'high', note: 'Is there a self-contained, liftable answer near the top, under question-shaped headings.' },
+  { name: 'Evidence density', weight: 'high', note: 'The material engines prefer to quote: statistics, quotations and cited sources.' },
   { name: 'Structured data', weight: 'medium', note: 'Schema.org markup that helps Google AI Overviews and entity trust.' },
   { name: 'Freshness', weight: 'medium', note: 'Visible and machine-readable dates; engines discount the undatable.' },
   { name: 'Entity & E-E-A-T', weight: 'medium', note: 'A nameable author, organization and provenance an engine can attribute.' },
@@ -24,7 +24,7 @@ const dimensions = [
 const faqs = [
   {
     q: 'How is GEO different from SEO?',
-    a: 'SEO answers the question “where do we rank in the list of links?” GEO answers the question “does the synthesized answer quote us?” The two overlap less than you would hope: an answer engine must fetch your page with its own crawler, extract it without running JavaScript, and find a passage worth quoting verbatim — three steps no ranking audit tests.',
+    a: 'SEO answers the question “where do we rank in the list of links?” GEO answers the question “does the synthesized answer quote us?” The two overlap less than you would hope: an answer engine must fetch your page with its own crawler, extract it without running JavaScript, and find a passage worth quoting verbatim. Three steps, and no ranking audit tests them.',
   },
   {
     q: 'Does blocking GPTBot stop ChatGPT from citing my page?',
@@ -36,11 +36,11 @@ const faqs = [
   },
   {
     q: 'How fresh does my content need to be?',
-    a: 'Answer engines cite pages updated within the last 90 days far more readily; reported citation likelihood drops off sharply past roughly 3 months. Keep a visible and machine-readable date, and bump it only with genuine edits — willaicite reads both and flags undatable pages.',
+    a: 'Answer engines cite pages updated within the last 90 days far more readily; reported citation likelihood drops off sharply past roughly 3 months. Keep a visible and machine-readable date, and bump it only with genuine edits; willaicite reads both and flags undatable pages.',
   },
   {
     q: 'What does an audit cost, and what happens to my data?',
-    a: 'Nothing — willaicite is free. An audit fetches at most ten URLs from your site, politely, and typically finishes in under 30 seconds. It is deterministic: no LLM calls, no sampling, and the same input produces the same score.',
+    a: 'Nothing; willaicite is free. An audit fetches at most ten URLs from your site, politely, and typically finishes in under 30 seconds. It is deterministic: no LLM calls, no sampling, and the same input produces the same score.',
   },
 ];
 
@@ -107,8 +107,8 @@ const schema = {
     <section class="hero" aria-labelledby="hero-h">
       <h1 id="hero-h">SEO gets you listed.<br /><em>GEO gets you quoted.</em></h1>
       <p class="sub">
-        willaicite is a free, deterministic audit that scores whether AI answer engines —
-        ChatGPT, Perplexity, Google AI Overviews and Claude — can retrieve your page, extract
+        willaicite is a free, deterministic audit that scores whether AI answer engines
+        (ChatGPT, Perplexity, Google AI Overviews and Claude) can retrieve your page, extract
         it without running your JavaScript, and quote it inside a synthesized answer.
         Search engines rank you in a list of links; answer engines quote you.
         willaicite measures whether they can.
@@ -119,7 +119,7 @@ const schema = {
       </div>
 
       <figure class="answerfig">
-        <figcaption>Fig. 1 — the outcome under audit: a verbatim quote, with attribution, inside someone else&rsquo;s answer.</figcaption>
+        <figcaption>Fig. 1 · the outcome under audit: a verbatim quote, with attribution, inside someone else&rsquo;s answer.</figcaption>
         <div class="answercard" aria-hidden="true">
           <div class="q">“how long does waxed canvas stay waterproof?”</div>
           <div class="a">
@@ -144,8 +144,8 @@ const schema = {
         <li>
           <h3>The block robots.txt won&rsquo;t admit to</h3>
           <p>
-            willaicite fetches your page twice — once as an ordinary browser, once wearing an
-            AI crawler&rsquo;s user agent — and compares what comes back. A CDN firewall rule like
+            willaicite fetches your page twice, once as an ordinary browser and once wearing an
+            AI crawler&rsquo;s user agent, then compares what comes back. A CDN firewall rule like
             Cloudflare&rsquo;s <a class="body-link" href="https://blog.cloudflare.com/declaring-your-aindependence-block-ai-bots-scrapers-and-crawlers-with-a-single-click/">one-click &ldquo;block AI bots&rdquo; toggle</a>
             returns 403 to the real crawler while robots.txt keeps saying <em>allowed</em>.
             SEO crawlers never walk the AI-bot path, so they report clean while the engine
@@ -166,7 +166,7 @@ const schema = {
           <h3>The single-page app nobody&rsquo;s reading</h3>
           <p>
             <a class="body-link" href="https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics">Googlebot renders JavaScript</a>;
-            so does Lighthouse. GPTBot, ClaudeBot and PerplexityBot do not — they see whatever
+            so does Lighthouse. GPTBot, ClaudeBot and PerplexityBot do not; they see whatever
             the server sends and nothing more. A client-rendered page audits perfectly and
             arrives at the answer engine as an empty shell. willaicite scores how much of your
             content survives in the raw HTML, from the exact no-JavaScript vantage those
@@ -195,7 +195,7 @@ const schema = {
             cite no one. The <a class="body-link" href="https://arxiv.org/abs/2311.09735">GEO study</a>
             (Aggarwal et&nbsp;al., KDD&nbsp;2024) measured the opposite effect on AI visibility:
             citing sources lifted it 24.9 percent, statistics 25.9 percent, and quotations
-            27.8 percent. One benchmark, directional rather than guaranteed — but it means
+            27.8 percent. One benchmark, directional rather than guaranteed. But it means
             optimizing for the ranking can quietly cost you the quote.
           </p>
           <figure class="minifig">
@@ -204,7 +204,7 @@ const schema = {
               <div class="stat"><span class="stat-k">statistics</span><span class="stat-bar"><i style="--w:93%"></i></span><span class="stat-v">+25.9%</span></div>
               <div class="stat"><span class="stat-k">quotations</span><span class="stat-bar"><i style="--w:100%"></i></span><span class="stat-v">+27.8%</span></div>
             </div>
-            <figcaption>Visibility lift in generative answers — Aggarwal et&nbsp;al., <cite>GEO: Generative Engine Optimization</cite>, KDD&nbsp;2024. One study; directional, not a guarantee.</figcaption>
+            <figcaption>Visibility lift in generative answers (Aggarwal et&nbsp;al., <cite>GEO: Generative Engine Optimization</cite>, KDD&nbsp;2024). One study; directional, not a guarantee.</figcaption>
           </figure>
         </li>
 
@@ -212,8 +212,8 @@ const schema = {
           <h3>A verdict per engine, weighed by what it costs you</h3>
           <p>
             &ldquo;Is Googlebot allowed&rdquo; is one question. willaicite asks it for a roster of AI crawler
-            tokens and separates <em>retrieval</em> crawlers — where a block means that engine can never
-            cite you — from <em>training-only</em> tokens, where blocking is a legitimate policy choice
+            tokens and separates <em>retrieval</em> crawlers, where a block means that engine can never
+            cite you, from <em>training-only</em> tokens, where blocking is a legitimate policy choice
             rather than a citation problem.
           </p>
           <figure class="minifig">
@@ -240,9 +240,9 @@ const schema = {
           </p>
           <figure class="minifig">
             <ul class="checks">
-              <li><span class="g pass">&check;</span>self-contained definition in the first screenful — &ldquo;X is &hellip;&rdquo;</li>
+              <li><span class="g pass">&check;</span>self-contained definition in the first screenful: &ldquo;X is &hellip;&rdquo;</li>
               <li><span class="g pass">&check;</span>headings phrased as questions users ask</li>
-              <li><span class="g fail">&#10007;</span>no FAQ — nothing an engine can lift whole</li>
+              <li><span class="g fail">&#10007;</span>no FAQ: nothing an engine can lift whole</li>
             </ul>
           </figure>
         </li>
@@ -288,12 +288,12 @@ const schema = {
       <div class="band-rule"><h2 class="rulelabel" id="method-h">Method</h2></div>
       <p class="band-head">Scored like a ledger,<br />not a horoscope.</p>
       <p>
-        willaicite is deterministic. No LLM calls, no sampling, no drift — the same input produces
+        willaicite is deterministic. No LLM calls, no sampling, no drift: the same input produces
         the same score, and every point is tied to evidence you can check. When something cannot be
         observed, the report says <em>could not verify</em> instead of inventing a number. It fetches
-        at most ten URLs, politely, and respects robots.txt — while telling you what robots.txt won&rsquo;t.
+        at most ten URLs, politely, and respects robots.txt, while telling you what robots.txt won&rsquo;t.
       </p>
-      <a class="cta inverted" href="https://willaicite.com">Audit your site — willaicite.com</a>
+      <a class="cta inverted" href="https://willaicite.com">Audit your site · willaicite.com</a>
     </div>
   </section>
 </main>
