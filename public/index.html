@@ -3,7 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>geo-audit</title>
+<title>audit · willaicite</title>
+<meta name="description" content="Run a free, deterministic willaicite audit: will AI answer engines (ChatGPT, Perplexity, Google AI Overviews, Claude) retrieve and cite your page? Seven dimensions, exact evidence, no fabricated numbers.">
+<link rel="canonical" href="https://willaicite.com/app">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:site_name" content="willaicite">
+<meta property="og:type" content="website">
+<meta property="og:title" content="audit · willaicite">
+<meta property="og:description" content="Run a free, deterministic willaicite audit: will AI answer engines retrieve and cite your page?">
+<meta property="og:url" content="https://willaicite.com/app">
+<meta property="og:image" content="https://willaicite.com/og.png">
 <style>
   :root {
     --paper: #f4f0e6;
@@ -35,6 +44,9 @@
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
+  /* Match the landing's ~140% optical size on large screens; 1:1 below
+     1064px so the 760px breakpoint still governs phones and tablets. */
+  @media (min-width: 1064px) { html { zoom: 1.4; } }
   body {
     background: var(--paper);
     color: var(--ink);
@@ -205,8 +217,8 @@
 <body>
 <div class="sheet">
   <header class="masthead">
-    <div class="wordmark">geo-audit<span class="tld">/1.2</span></div>
-    <div class="masthead-meta">generative engine optimization &middot; deterministic</div>
+    <div class="wordmark"><a href="/" style="text-decoration:none;color:inherit">will<span class="tld">ai</span>cite</a></div>
+    <div class="masthead-meta">audit console &middot; deterministic</div>
   </header>
 
   <section class="prompt">
@@ -253,6 +265,7 @@
   </section>
 
   <footer class="colophon">
+    <span>engine: geo-audit v1.2.0</span>
     <span>evidence basis: Aggarwal et al., KDD 2024</span>
   </footer>
 </div>

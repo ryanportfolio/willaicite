@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createAuditServer } from '../src/server.js';
 import type { Fetcher } from '../src/fetcher.js';
 import { createRateLimiter } from '../src/rateLimiter.js';
@@ -24,7 +27,7 @@ let server: Server;
 let base: string;
 
 beforeAll(async () => {
-  server = createAuditServer({ fetcher: fakeFetcher, delayMs: 0 });
+  server = createAuditServer({ fetcher: fakeFetcher, delayMs: 0, landingDir: null });
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
@@ -32,13 +35,19 @@ beforeAll(async () => {
 afterAll(() => new Promise<void>((resolve) => server.close(() => resolve())));
 
 describe('audit server', () => {
-  it('serves the UI at /', async () => {
+  it('serves the UI at / when no landing build is configured', async () => {
     const res = await fetch(base + '/');
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/html');
     const html = await res.text();
-    expect(html).toContain('geo-audit');
+    expect(html).toContain('willaicite');
     expect(html).toContain('/api/audit');
+  });
+
+  it('serves the UI at /app in both modes', async () => {
+    const res = await fetch(base + '/app');
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain('/api/audit');
   });
 
   it('rejects a missing url param with 400', async () => {
@@ -83,11 +92,37 @@ describe('audit server', () => {
   });
 });
 
+describe('audit server — landing mode', () => {
+  it('serves the landing at /, directory URLs, and the app at /app; blocks traversal', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'geo-landing-'));
+    mkdirSync(join(dir, 'about'), { recursive: true });
+    writeFileSync(join(dir, 'index.html'), '<html><body>LANDING</body></html>');
+    writeFileSync(join(dir, 'about', 'index.html'), '<html><body>ABOUT</body></html>');
+    writeFileSync(join(dir, 'robots.txt'), 'User-agent: *\nAllow: /\n');
+    const s = createAuditServer({ fetcher: fakeFetcher, delayMs: 0, landingDir: dir });
+    await new Promise<void>((r) => s.listen(0, '127.0.0.1', r));
+    const p = (s.address() as AddressInfo).port;
+    const b = `http://127.0.0.1:${p}`;
+
+    expect(await (await fetch(b + '/')).text()).toContain('LANDING');
+    expect(await (await fetch(b + '/about')).text()).toContain('ABOUT');
+    const robots = await fetch(b + '/robots.txt');
+    expect(robots.headers.get('content-type')).toContain('text/plain');
+    expect(await (await fetch(b + '/app')).text()).toContain('/api/audit');
+    expect((await fetch(b + '/..%2f..%2fpackage.json')).status).toBe(404);
+    expect((await fetch(b + '/nope')).status).toBe(404);
+
+    await new Promise<void>((r) => s.close(() => r()));
+    rmSync(dir, { recursive: true, force: true });
+  });
+});
+
 describe('audit server — abuse controls', () => {
   it('returns 429 once the per-IP limit is exceeded', async () => {
     const s = createAuditServer({
       fetcher: fakeFetcher,
       delayMs: 0,
+      landingDir: null,
       rateLimiter: createRateLimiter({ windowMs: 60_000, max: 1, now: () => 0 }),
     });
     await new Promise<void>((r) => s.listen(0, '127.0.0.1', r));
@@ -106,7 +141,7 @@ describe('audit server — abuse controls', () => {
       await new Promise((r) => setTimeout(r, 50));
       return fakeFetcher(url, opts);
     };
-    const s = createAuditServer({ fetcher: slow, delayMs: 0, maxConcurrent: 1 });
+    const s = createAuditServer({ fetcher: slow, delayMs: 0, maxConcurrent: 1, landingDir: null });
     await new Promise<void>((r) => s.listen(0, '127.0.0.1', r));
     const p = (s.address() as AddressInfo).port;
     const a = fetch(`http://127.0.0.1:${p}/api/audit?url=example.com/a`).then((r) => r.text());
