@@ -156,14 +156,36 @@ const constellations = new THREE.LineSegments(lineGeo, lineMat);
 sky.add(constellations);
 
 // ---- lantern edges (drawn live between stars near the cursor) ----
-const MAX_LANTERN_EDGES = 160;
+// Each strand has a lifecycle: it eases in slowly, grows outward from its
+// midpoint, and fades out even more slowly — per-vertex alpha via shader,
+// so nothing pops. A persistent map + hysteresis keeps the set stable.
+const MAX_LANTERN_EDGES = 240;
 const lanternPos = new Float32Array(MAX_LANTERN_EDGES * 6);
+const lanternAlpha = new Float32Array(MAX_LANTERN_EDGES * 2);
 const lanternGeo = new THREE.BufferGeometry();
 lanternGeo.setAttribute('position', new THREE.BufferAttribute(lanternPos, 3));
+lanternGeo.setAttribute('aAlpha', new THREE.BufferAttribute(lanternAlpha, 1));
 lanternGeo.setDrawRange(0, 0);
-const lanternMat = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.5, color: '#2743d0' });
+const lanternMat = new THREE.ShaderMaterial({
+  transparent: true,
+  depthWrite: false,
+  uniforms: { uColor: { value: new THREE.Color('#2743d0') }, uOpacity: { value: 0.5 } },
+  vertexShader: /* glsl */ `
+    attribute float aAlpha;
+    varying float vAlpha;
+    void main() {
+      vAlpha = aAlpha;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }`,
+  fragmentShader: /* glsl */ `
+    uniform vec3 uColor;
+    uniform float uOpacity;
+    varying float vAlpha;
+    void main() { gl_FragColor = vec4(uColor, vAlpha * uOpacity); }`,
+});
 const lanternLines = new THREE.LineSegments(lanternGeo, lanternMat);
 sky.add(lanternLines);
+const edgeLife = new Map(); // "a_b" -> { a, b, s: strength 0..1, on: bool }
 
 // ------------------------------------------------------------ theme
 function readTheme() {
@@ -173,11 +195,11 @@ function readTheme() {
   starUniforms.uColor.value.set(star);
   starUniforms.uGlow.value.set(glow);
   lineMat.color.set(glow);
-  lanternMat.color.set(glow);
+  lanternMat.uniforms.uColor.value.set(glow);
   meteorMat.color.set(glow);
   const night = document.documentElement.dataset.theme === 'night';
   lineMat.opacity = night ? 0.3 : 0.22;
-  lanternMat.opacity = night ? 0.65 : 0.5;
+  lanternMat.uniforms.uOpacity.value = night ? 0.7 : 0.55;
   render();
 }
 new MutationObserver(readTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
@@ -187,45 +209,86 @@ const raycaster = new THREE.Raycaster();
 const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 const mouseNdc = new THREE.Vector2(10, 10); // offscreen until first move
 const lantern = new THREE.Vector3(999, 999, 0);
-let lanternTarget = new THREE.Vector3(999, 999, 0);
+const lanternTarget = new THREE.Vector3(999, 999, 0); // mutated in place, never reassigned
 
 canvas.parentElement.addEventListener('pointermove', (e) => {
   const r = canvas.getBoundingClientRect();
   mouseNdc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   raycaster.setFromCamera(mouseNdc, camera);
   const hit = new THREE.Vector3();
-  if (raycaster.ray.intersectPlane(plane, hit)) lanternTarget = sky.worldToLocal(hit.clone());
+  if (raycaster.ray.intersectPlane(plane, hit)) lanternTarget.copy(sky.worldToLocal(hit));
 });
-canvas.parentElement.addEventListener('pointerleave', () => { lanternTarget = new THREE.Vector3(999, 999, 0); });
+canvas.parentElement.addEventListener('pointerleave', () => { lanternTarget.set(999, 999, 0); });
 
-const LANTERN_R = 1.35;
-function updateLantern() {
-  lantern.lerp(lanternTarget, 0.12);
+const LANTERN_R = 1.6;
+const smooth = (t) => t * t * (3 - 2 * t); // smoothstep 0..1
+// time-based easing so the feel is identical at 60Hz and 144Hz:
+// fraction of remaining distance covered per second, applied as 1-e^(-k*dt)
+const ease = (k, dt) => 1 - Math.exp(-k * dt);
+function updateLantern(dt) {
+  lantern.lerp(lanternTarget, ease(5.5, dt)); // the light drifts, it doesn't snap
   const near = [];
   for (let i = 0; i < N; i++) {
     const dx = starPos[i * 3] - lantern.x, dy = starPos[i * 3 + 1] - lantern.y;
     const d = Math.hypot(dx, dy);
-    const v = Math.max(0, 1 - d / LANTERN_R);
-    aLantern[i] += (v - aLantern[i]) * 0.2;
-    if (v > 0.12 && starMeta[i].cluster !== -1) near.push([i, d]);
+    const v = smooth(Math.max(0, 1 - d / LANTERN_R));
+    // asymmetric ease: stars warm up gently, cool down even more gently
+    aLantern[i] += (v - aLantern[i]) * ease(v > aLantern[i] ? 4.2 : 2.6, dt);
+    if (aLantern[i] > 0.22 && starMeta[i].cluster !== -1) near.push([i, d]);
   }
   starGeo.attributes.aLantern.needsUpdate = true;
-  // connect the dots: edges among the closest lantern stars
+
+  // candidate strands among the warmest stars (hysteresis: born > 0.3, kept until < 0.12).
+  // Shortest pairs first, at most 3 strands per star — a web, not a hairball.
   near.sort((a, b) => a[1] - b[1]);
-  const picks = near.slice(0, 18).map((n) => n[0]);
-  let e = 0;
-  for (let i = 0; i < picks.length && e < MAX_LANTERN_EDGES; i++) {
-    for (let j = i + 1; j < picks.length && e < MAX_LANTERN_EDGES; j++) {
-      const a = picks[i] * 3, b = picks[j] * 3;
-      const d = Math.hypot(starPos[a] - starPos[b], starPos[a + 1] - starPos[b + 1]);
-      if (d < 1.15) {
-        lanternPos.set([starPos[a], starPos[a + 1], starPos[a + 2], starPos[b], starPos[b + 1], starPos[b + 2]], e * 6);
-        e++;
-      }
+  const picks = near.slice(0, 20).map((n) => n[0]);
+  const pairs = [];
+  for (let i = 0; i < picks.length; i++) {
+    for (let j = i + 1; j < picks.length; j++) {
+      const a = picks[i], b = picks[j];
+      const d = Math.hypot(starPos[a * 3] - starPos[b * 3], starPos[a * 3 + 1] - starPos[b * 3 + 1]);
+      if (d < 0.95 && aLantern[a] > 0.3 && aLantern[b] > 0.3) pairs.push([d, a, b]);
     }
+  }
+  pairs.sort((p, q) => p[0] - q[0]);
+  const degree = new Map();
+  const wanted = new Set();
+  for (const [, a, b] of pairs) {
+    if ((degree.get(a) ?? 0) >= 3 || (degree.get(b) ?? 0) >= 3) continue;
+    wanted.add(a < b ? `${a}_${b}` : `${b}_${a}`);
+    degree.set(a, (degree.get(a) ?? 0) + 1);
+    degree.set(b, (degree.get(b) ?? 0) + 1);
+  }
+  for (const key of wanted) {
+    if (!edgeLife.has(key) && edgeLife.size < MAX_LANTERN_EDGES) {
+      const [a, b] = key.split('_').map(Number);
+      edgeLife.set(key, { a, b, s: 0 });
+    }
+  }
+
+  // ease every strand toward its fate; write the growing geometry
+  let e = 0;
+  for (const [key, edge] of edgeLife) {
+    const alive = wanted.has(key) && aLantern[edge.a] > 0.12 && aLantern[edge.b] > 0.12;
+    edge.s += ((alive ? 1 : 0) - edge.s) * ease(alive ? 3.2 : 2.0, dt); // slow bloom, slower fade
+    if (!alive && edge.s < 0.02) { edgeLife.delete(key); continue; }
+    const g = smooth(edge.s);
+    const a3 = edge.a * 3, b3 = edge.b * 3;
+    const mx = (starPos[a3] + starPos[b3]) / 2, my = (starPos[a3 + 1] + starPos[b3 + 1]) / 2, mz = (starPos[a3 + 2] + starPos[b3 + 2]) / 2;
+    // the strand grows outward from its midpoint toward both stars
+    lanternPos.set([
+      mx + (starPos[a3] - mx) * g, my + (starPos[a3 + 1] - my) * g, mz + (starPos[a3 + 2] - mz) * g,
+      mx + (starPos[b3] - mx) * g, my + (starPos[b3 + 1] - my) * g, mz + (starPos[b3 + 2] - mz) * g,
+    ], e * 6);
+    // feather each strand by how warm its endpoint is — the web breathes at the rim
+    lanternAlpha[e * 2] = g * Math.min(1, aLantern[edge.a] * 1.4);
+    lanternAlpha[e * 2 + 1] = g * Math.min(1, aLantern[edge.b] * 1.4);
+    e++;
+    if (e >= MAX_LANTERN_EDGES) break;
   }
   lanternGeo.setDrawRange(0, e * 2);
   lanternGeo.attributes.position.needsUpdate = true;
+  lanternGeo.attributes.aAlpha.needsUpdate = true;
 }
 
 // ---- meteors: a click casts a shooting star ----
@@ -292,7 +355,7 @@ if (reduced) {
   let raf, last = performance.now();
   const loop = (now) => {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
-    updateLantern(); updateMeteors(dt); render(now);
+    updateLantern(dt); updateMeteors(dt); render(now);
     raf = requestAnimationFrame(loop);
   };
   document.addEventListener('visibilitychange', () => {
@@ -302,6 +365,13 @@ if (reduced) {
   readTheme();
   raf = requestAnimationFrame(loop);
 }
+
+// dev hook for automated visual checks (harmless in production)
+window.__sky = {
+  aLantern, edgeLife, lantern, lanternTarget, lanternGeo,
+  // advance the simulation deterministically, independent of rAF throttling
+  step(frames = 1, dt = 1 / 60) { for (let i = 0; i < frames; i++) { updateLantern(dt); updateMeteors(dt); } render(performance.now()); },
+};
 
 // expose the live census for the corner micro-labels
 document.querySelectorAll('[data-star-count]').forEach((el) => { el.textContent = N; });
