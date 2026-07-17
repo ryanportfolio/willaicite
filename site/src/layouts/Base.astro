@@ -35,11 +35,19 @@ export const UPDATED_HUMAN = 'July 17, 2026';
 </head>
 <body>
 
-<div class="sheet">
-  <header class="masthead">
-    <div class="wordmark"><a href="/">will<span class="ai">ai</span>cite</a></div>
-    <div class="masthead-meta">generative engine optimization</div>
-  </header>
+<div class="mastwrap">
+  <div class="sheet">
+    <header class="masthead">
+      <div class="wordmark"><a href="/">will<span class="ai">ai</span>cite</a></div>
+      <div class="masthead-meta">generative engine optimization</div>
+      <nav class="mast-nav" aria-label="Site">
+        <a href="/about">about</a>
+        <a href="/crawlers">crawlers</a>
+        <a href="/proof">proof</a>
+        <a href="/app">audit</a>
+      </nav>
+    </header>
+  </div>
 </div>
 
 <slot />
@@ -108,14 +116,24 @@ export const UPDATED_HUMAN = 'July 17, 2026';
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   /* ---------- masthead ---------- */
+  /* Sticky so the nav travels with the reader; the wrap carries the paper
+     ground so content scrolls cleanly beneath it. */
+  .mastwrap {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--paper);
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(128,116,90,0.025) 3px, rgba(128,116,90,0.025) 4px);
+  }
   .masthead {
-    display: flex; align-items: baseline; justify-content: space-between;
+    display: flex; align-items: baseline; justify-content: space-between; gap: 18px;
     padding: 22px 0 14px; border-bottom: 2px solid var(--ink);
   }
   .wordmark { font-family: var(--mono); font-size: 15px; font-weight: 600; letter-spacing: 0.04em; }
   .wordmark a { text-decoration: none; }
   .wordmark .ai { color: var(--accent); }
   .masthead-meta { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); letter-spacing: 0.06em; text-transform: uppercase; }
+  .mast-nav { font-family: var(--mono); font-size: 12px; letter-spacing: 0.05em; display: flex; gap: 16px; }
+  .mast-nav a { color: var(--ink-soft); text-decoration: none; }
+  .mast-nav a:hover { color: var(--accent); }
 
   /* ---------- section chrome ---------- */
   .report-rule { margin-top: 72px; border-top: 2px solid var(--ink); position: relative; }
