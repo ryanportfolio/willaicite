@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { runAudit, VERSION } from './audit.js';
 import { renderMarkdown, renderJson } from './report.js';
 
@@ -83,6 +84,8 @@ async function main(): Promise<number> {
   const output = json ? renderJson(result) : renderMarkdown(result);
 
   if (out) {
+    const dir = dirname(out);
+    if (dir && dir !== '.') mkdirSync(dir, { recursive: true });
     writeFileSync(out, output, 'utf8');
     process.stderr.write(`Report written to ${out}\n`);
   } else {

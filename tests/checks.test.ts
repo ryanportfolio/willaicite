@@ -8,6 +8,7 @@ import { checkFreshness } from '../src/checks/freshness.js';
 import { checkEntityEeat } from '../src/checks/entityEeat.js';
 import { checkLlmsTxt } from '../src/checks/llmsTxt.js';
 import { makeCtx, makePage, makeFetch, fixture, robotsCtxFrom, NOW } from './helpers.js';
+import { parseRobots } from '../src/robots.js';
 
 describe('checkCrawlerAccess', () => {
   it('scores 100 when nothing blocks (no robots.txt, clean headers, same status both UAs)', () => {
@@ -16,15 +17,34 @@ describe('checkCrawlerAccess', () => {
     expect(r.evidence.some((e) => e.message.includes('all crawlers allowed by default'))).toBe(true);
   });
 
-  it('deducts per blocked bot and cites the exact robots.txt line', () => {
+  it('deducts per blocked bot (tiered by role) and cites the exact robots.txt line', () => {
     const r = checkCrawlerAccess(makeCtx({ robots: robotsCtxFrom('robots-blocking.txt') }));
-    // GPTBot, ClaudeBot, Claude-SearchBot blocked = 3 × 12
-    expect(r.score).toBe(100 - 36);
+    // Claude-SearchBot (retrieval, −14) + GPTBot, ClaudeBot (training, −4 each)
+    expect(r.score).toBe(100 - 14 - 4 - 4);
+    const searchbot = r.evidence.find((e) => e.message.startsWith('Claude-SearchBot BLOCKED'));
+    expect(searchbot?.status).toBe('fail');
     const gptbot = r.evidence.find((e) => e.message.startsWith('GPTBot BLOCKED'));
-    expect(gptbot?.status).toBe('fail');
+    expect(gptbot?.status).toBe('warn'); // training-only block = policy warning, not a citation failure
     expect(gptbot?.message).toContain('line 5');
     expect(gptbot?.message).toContain('Disallow: /');
-    expect(r.recommendations.some((rec) => rec.action.includes('GPTBot, ClaudeBot, Claude-SearchBot'))).toBe(true);
+    expect(r.recommendations.some((rec) => rec.action.includes('Unblock Claude-SearchBot'))).toBe(true);
+    expect(r.recommendations.some((rec) => rec.action.includes('Confirm blocking GPTBot, ClaudeBot'))).toBe(true);
+  });
+
+  it('summarizes allowed bots by tier instead of one line per bot', () => {
+    const r = checkCrawlerAccess(makeCtx({ robots: robotsCtxFrom('robots-blocking.txt') }));
+    expect(r.evidence.some((e) => e.status === 'pass' && e.message.includes('retrieval/citation crawler(s) allowed'))).toBe(true);
+    expect(r.evidence.some((e) => e.status === 'pass' && e.message.includes('training crawler(s)/opt-out token(s) allowed'))).toBe(true);
+  });
+
+  it('surfaces a Content Signals policy line as informational evidence', () => {
+    const body = 'Content-Signal: search=yes, ai-train=no\nUser-agent: *\nDisallow:\n';
+    const r = checkCrawlerAccess(
+      makeCtx({
+        robots: { url: 'https://example.com/robots.txt', fetch: makeFetch({ body }), parsed: parseRobots(body) },
+      }),
+    );
+    expect(r.evidence.some((e) => e.status === 'info' && e.message.includes('Content Signals'))).toBe(true);
   });
 
   it('flags meta robots noindex', () => {

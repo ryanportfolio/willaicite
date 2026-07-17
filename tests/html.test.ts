@@ -55,6 +55,26 @@ describe('extractHeadings', () => {
   });
 });
 
+describe('mainContentHtml chrome stripping', () => {
+  it('strips nav/footer/header/aside in the body fallback (no <main>/<article>)', () => {
+    const html =
+      '<html><body><header><a href="/">Home</a></header><nav><ul><li><a href="/x">X</a></li></ul></nav>' +
+      '<p>Real content sentence that carries the substance of the page for readers today.</p>' +
+      '<footer><a href="https://twitter.com/acme">Twitter</a> © 2026</footer></body></html>';
+    const main = mainContentHtml(html);
+    expect(main).toContain('Real content sentence');
+    expect(main).not.toContain('twitter.com');
+    expect(main).not.toContain('<nav');
+  });
+
+  it('trusts an explicit <main> as-is', () => {
+    const html =
+      '<html><body><main><header><h1>Article header inside main stays</h1></header>' +
+      '<p>Long enough main content that clears the eighty character floor for the region.</p></main></body></html>';
+    expect(mainContentHtml(html)).toContain('Article header inside main stays');
+  });
+});
+
 describe('extractJsonLd', () => {
   it('flattens @graph into nodes', () => {
     const { nodes, errors, blockCount } = extractJsonLd(article);

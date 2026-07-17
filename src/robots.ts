@@ -96,9 +96,31 @@ function patternToRegex(pattern: string): RegExp {
   return new RegExp(out);
 }
 
+/**
+ * RFC 9309 compares percent-decoded octets. Normalize both sides to one
+ * canonical form instead: percent-encode non-ASCII (UTF-8) and uppercase
+ * existing %XX escapes, so `Disallow: /café` matches a request for
+ * `/caf%C3%A9` and vice versa. `*` and `$` survive encodeURI untouched.
+ */
+export function normalizeRobotsPath(s: string): string {
+  let out = '';
+  for (const ch of s) {
+    if (ch.codePointAt(0)! > 126) {
+      try {
+        out += encodeURIComponent(ch); // UTF-8 percent-encoding; existing % stays untouched
+      } catch {
+        out += ch; // lone surrogate — keep raw
+      }
+    } else {
+      out += ch;
+    }
+  }
+  return out.replace(/%[0-9a-f]{2}/gi, (m) => m.toUpperCase());
+}
+
 export function pathMatches(pattern: string, path: string): boolean {
   if (pattern === '') return false;
-  return patternToRegex(pattern).test(path);
+  return patternToRegex(normalizeRobotsPath(pattern)).test(normalizeRobotsPath(path));
 }
 
 export interface AccessDecision {
@@ -123,16 +145,17 @@ export function isAllowed(robots: RobotsData, botToken: string, path: string): A
   const viaGroup = bestAgent ?? '*';
   const rules = rulesFor(robots, botToken);
 
+  // Longest-match precedence measured on the normalized (percent-encoded)
+  // pattern, per the RFC's octet comparison.
   let winner: RobotsRule | null = null;
+  let winnerLen = -1;
   for (const rule of rules) {
     if (rule.path === '') continue; // "Disallow:" (empty) permits everything
     if (!pathMatches(rule.path, path)) continue;
-    if (
-      winner === null ||
-      rule.path.length > winner.path.length ||
-      (rule.path.length === winner.path.length && rule.type === 'allow' && winner.type === 'disallow')
-    ) {
+    const len = normalizeRobotsPath(rule.path).length;
+    if (winner === null || len > winnerLen || (len === winnerLen && rule.type === 'allow' && winner.type === 'disallow')) {
       winner = rule;
+      winnerLen = len;
     }
   }
   return { allowed: winner === null || winner.type === 'allow', rule: winner, viaGroup };

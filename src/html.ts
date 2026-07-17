@@ -207,9 +207,16 @@ export function extractInner(html: string, tag: string): string | null {
   return m ? m[1] : null;
 }
 
+/** Remove page-chrome subtrees (nav, footer, header, aside) from a fragment. */
+export function stripChrome(html: string): string {
+  return html.replace(/<(nav|footer|header|aside)\b[\s\S]*?<\/\1\s*>/gi, ' ');
+}
+
 /**
  * Best-effort main content region: <main>, then <article>, then <body>, then
- * the whole document.
+ * the whole document. The body/document fallbacks strip page chrome
+ * (nav/footer/header/aside) so boilerplate links and lists don't masquerade
+ * as main-content signals; an explicit <main>/<article> is trusted as-is.
  */
 export function mainContentHtml(html: string): string {
   const main = extractInner(html, 'main');
@@ -217,8 +224,8 @@ export function mainContentHtml(html: string): string {
   const article = extractInner(html, 'article');
   if (article && extractVisibleText(article).length > 80) return article;
   const body = html.match(/<body\b[^>]*>([\s\S]*)<\/body\s*>/i);
-  if (body) return body[1];
-  return html;
+  if (body) return stripChrome(body[1]);
+  return stripChrome(html);
 }
 
 const SHELL_IDS = ['root', 'app', '__next', '___gatsby', 'q-app', 'svelte'];

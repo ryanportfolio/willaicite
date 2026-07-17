@@ -3,16 +3,36 @@ import type { DimensionResult, Evidence, Recommendation } from '../types.js';
 import { isAllowed } from '../robots.js';
 import { findMeta } from '../html.js';
 
-export const AI_BOTS: { token: string; engine: string }[] = [
-  { token: 'GPTBot', engine: 'ChatGPT training + search index' },
-  { token: 'OAI-SearchBot', engine: 'ChatGPT Search' },
-  { token: 'ChatGPT-User', engine: 'ChatGPT live browsing' },
-  { token: 'ClaudeBot', engine: 'Claude training crawl' },
-  { token: 'Claude-SearchBot', engine: 'Claude search' },
-  { token: 'PerplexityBot', engine: 'Perplexity index' },
-  { token: 'Google-Extended', engine: 'Gemini training / grounding' },
-  { token: 'Bingbot', engine: 'Bing index (feeds ChatGPT + Copilot answers)' },
+/**
+ * Retrieval-class bots fetch pages to answer live queries or fill a search
+ * index — blocking one means that engine can never retrieve or cite the page.
+ * Training-class tokens only control model-training data collection (two of
+ * them, Google-Extended and Applebot-Extended, are pure opt-out tokens with no
+ * crawler behind them); blocking those is a mainstream content policy with a
+ * much smaller citation cost, so it is penalized far more lightly.
+ */
+export const AI_BOTS: { token: string; engine: string; role: 'retrieval' | 'training' }[] = [
+  { token: 'OAI-SearchBot', engine: 'ChatGPT Search index', role: 'retrieval' },
+  { token: 'ChatGPT-User', engine: 'ChatGPT live browsing', role: 'retrieval' },
+  { token: 'Claude-SearchBot', engine: 'Claude search index', role: 'retrieval' },
+  { token: 'Claude-User', engine: 'Claude live browsing', role: 'retrieval' },
+  { token: 'PerplexityBot', engine: 'Perplexity index', role: 'retrieval' },
+  { token: 'Perplexity-User', engine: 'Perplexity live fetch (sends real referrals)', role: 'retrieval' },
+  { token: 'Bingbot', engine: 'Bing index (feeds ChatGPT + Copilot answers)', role: 'retrieval' },
+  { token: 'Amazonbot', engine: 'Alexa / Rufus answers', role: 'retrieval' },
+  { token: 'DuckAssistBot', engine: 'DuckDuckGo AI answers', role: 'retrieval' },
+  { token: 'Applebot', engine: 'Siri / Spotlight / Apple Intelligence retrieval', role: 'retrieval' },
+  { token: 'MistralAI-User', engine: 'Le Chat live fetch', role: 'retrieval' },
+  { token: 'GPTBot', engine: 'OpenAI model training', role: 'training' },
+  { token: 'ClaudeBot', engine: 'Anthropic model training', role: 'training' },
+  { token: 'CCBot', engine: 'Common Crawl (feeds many training sets)', role: 'training' },
+  { token: 'meta-externalagent', engine: 'Meta AI training', role: 'training' },
+  { token: 'Google-Extended', engine: 'Gemini training opt-out token (no crawler)', role: 'training' },
+  { token: 'Applebot-Extended', engine: 'Apple Intelligence training opt-out token (no crawler)', role: 'training' },
 ];
+
+const RETRIEVAL_PENALTY = 14;
+const TRAINING_PENALTY = 4;
 
 export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
   const evidence: Evidence[] = [];
@@ -37,27 +57,54 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
     });
   } else {
     verifiable = true;
-    const blocked: string[] = [];
+    const blockedRetrieval: string[] = [];
+    const blockedTraining: string[] = [];
+    const allowed: Record<'retrieval' | 'training', string[]> = { retrieval: [], training: [] };
     for (const bot of AI_BOTS) {
       const decision = isAllowed(ctx.robots.parsed, bot.token, path);
       if (decision.allowed) {
-        evidence.push({ status: 'pass', message: `${bot.token} allowed (${bot.engine})` });
+        allowed[bot.role].push(bot.token);
       } else {
-        blocked.push(bot.token);
+        (bot.role === 'retrieval' ? blockedRetrieval : blockedTraining).push(bot.token);
         const ruleText = decision.rule ? `robots.txt line ${decision.rule.line}: \`${decision.rule.raw}\`` : 'robots.txt rule';
         const via = decision.viaGroup === '*' ? 'via wildcard `User-agent: *` group' : `via \`User-agent: ${decision.viaGroup}\` group`;
-        evidence.push({ status: 'fail', message: `${bot.token} BLOCKED for ${path} — ${ruleText} (${via}). Engine affected: ${bot.engine}` });
-        score -= 12;
+        const stake = bot.role === 'retrieval' ? 'Engine affected' : 'Training pipeline affected';
+        evidence.push({
+          status: bot.role === 'retrieval' ? 'fail' : 'warn',
+          message: `${bot.token} BLOCKED for ${path} — ${ruleText} (${via}). ${stake}: ${bot.engine}`,
+        });
+        score -= bot.role === 'retrieval' ? RETRIEVAL_PENALTY : TRAINING_PENALTY;
       }
     }
-    if (blocked.length > 0) {
+    if (allowed.retrieval.length > 0) {
+      evidence.push({ status: 'pass', message: `${allowed.retrieval.length} retrieval/citation crawler(s) allowed: ${allowed.retrieval.join(', ')}` });
+    }
+    if (allowed.training.length > 0) {
+      evidence.push({ status: 'pass', message: `${allowed.training.length} training crawler(s)/opt-out token(s) allowed: ${allowed.training.join(', ')}` });
+    }
+    if (blockedRetrieval.length > 0) {
       recommendations.push({
         dimension: dim,
-        action: `Unblock ${blocked.join(', ')} in robots.txt (or add explicit Allow rules for this path)`,
-        why: 'A crawler blocked in robots.txt cannot fetch the page at all, so the engine behind it can never retrieve or cite this content. This is the single hardest gate in GEO — every other optimization is irrelevant to an engine whose crawler is blocked.',
+        action: `Unblock ${blockedRetrieval.join(', ')} in robots.txt (or add explicit Allow rules for this path)`,
+        why: 'A retrieval crawler blocked in robots.txt cannot fetch the page at all, so the engine behind it can never retrieve or cite this content. This is the single hardest gate in GEO — every other optimization is irrelevant to an engine whose crawler is blocked.',
         impact: 3,
         effort: 1,
       });
+    }
+    if (blockedTraining.length > 0) {
+      recommendations.push({
+        dimension: dim,
+        action: `Confirm blocking ${blockedTraining.join(', ')} is a deliberate policy choice (training-only tokens)`,
+        why: 'Blocking training crawlers is a legitimate, now-mainstream content policy and does not stop AI engines from citing the page today — but it does keep the content out of future model knowledge, which slightly reduces long-term unprompted mentions. Keep it if intentional.',
+        impact: 1,
+        effort: 1,
+      });
+    }
+    // Cloudflare Content Signals policy (informational; a robots.txt-level
+    // usage declaration some CDNs now emit alongside classic rules)
+    const signalLine = (ctx.robots.fetch?.body ?? '').split(/\r?\n/).find((l) => /^\s*content-signal\s*:/i.test(l));
+    if (signalLine) {
+      evidence.push({ status: 'info', message: `robots.txt declares a Content Signals policy: \`${signalLine.trim()}\` (advisory usage signal, not an access rule)` });
     }
   }
 
