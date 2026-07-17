@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "geo-audit-ui",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["dist/cli.js", "serve", "--port", "4199"],
+      "port": 4199,
+      "autoPort": false
+    }
+  ]
+}

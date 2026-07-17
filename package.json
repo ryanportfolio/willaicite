@@ -1,0 +1,34 @@
+{
+  "name": "geo-audit",
+  "version": "1.0.0",
+  "description": "Scored GEO (Generative Engine Optimization) audit CLI: how ready a site is to be retrieved and cited by AI answer engines.",
+  "type": "module",
+  "bin": {
+    "geo-audit": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "tsx src/cli.ts"
+  },
+  "keywords": [
+    "geo",
+    "generative-engine-optimization",
+    "seo",
+    "ai",
+    "audit",
+    "cli"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>geo-audit</title>
+<style>
+  :root {
+    --paper: #f4f0e6;
+    --paper-raised: #fbf8f1;
+    --ink: #1c1914;
+    --ink-soft: #4a443a;
+    --ink-faint: #8a8172;
+    --rule: #d8d0bd;
+    --accent: #cf3b1a;
+    --accent-soft: #f3ddd4;
+    --ok: #2c6e49;
+    --warn: #96700e;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #171511;
+      --paper-raised: #201d17;
+      --ink: #eae3d2;
+      --ink-soft: #b5ac97;
+      --ink-faint: #7d7563;
+      --rule: #383327;
+      --accent: #f05a35;
+      --accent-soft: #3a2018;
+      --ok: #6dbb8f;
+      --warn: #d3a83a;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.55;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(128,116,90,0.025) 3px, rgba(128,116,90,0.025) 4px);
+  }
+  .sheet { max-width: 880px; margin: 0 auto; padding: 0 28px 96px; }
+
+  /* ---------- masthead ---------- */
+  header.masthead {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 22px 0 14px; border-bottom: 2px solid var(--ink);
+  }
+  .wordmark { font-family: var(--mono); font-size: 15px; font-weight: 600; letter-spacing: 0.04em; }
+  .wordmark .tld { color: var(--accent); }
+  .masthead-meta { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); letter-spacing: 0.06em; text-transform: uppercase; }
+
+  /* ---------- prompt ---------- */
+  .prompt { padding: 64px 0 8px; }
+  .prompt h1 {
+    font-size: clamp(34px, 6vw, 56px);
+    font-weight: 500; line-height: 1.08; letter-spacing: -0.015em;
+    max-width: 15ch;
+  }
+  .prompt h1 em { font-style: italic; color: var(--accent); }
+  .prompt p.sub {
+    margin-top: 18px; max-width: 58ch; color: var(--ink-soft); font-size: 16px;
+  }
+  form.run {
+    margin-top: 36px; display: flex; gap: 0; max-width: 640px;
+    border: 1.5px solid var(--ink); background: var(--paper-raised);
+  }
+  form.run input {
+    flex: 1; border: 0; outline: none; background: transparent;
+    font-family: var(--mono); font-size: 15px; color: var(--ink);
+    padding: 14px 16px;
+  }
+  form.run input::placeholder { color: var(--ink-faint); }
+  form.run button {
+    border: 0; cursor: pointer; background: var(--ink); color: var(--paper);
+    font-family: var(--mono); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 0 26px; transition: background 0.15s ease;
+  }
+  form.run button:hover:not(:disabled) { background: var(--accent); }
+  form.run button:disabled { opacity: 0.45; cursor: wait; }
+  .prompt .fineprint { margin-top: 12px; font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); }
+
+  /* ---------- live log ---------- */
+  #log { display: none; margin-top: 40px; border: 1px solid var(--rule); background: var(--paper-raised); }
+  #log.active { display: block; }
+  #log .log-head {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-soft); padding: 10px 16px; border-bottom: 1px solid var(--rule);
+  }
+  #log .pulse {
+    display: inline-block; width: 8px; height: 8px; background: var(--accent);
+    margin-right: 8px; animation: pulse 1s steps(2, start) infinite;
+  }
+  @keyframes pulse { 50% { opacity: 0.15; } }
+  #log ol { list-style: none; padding: 12px 16px; max-height: 220px; overflow-y: auto; }
+  #log li { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft); padding: 2px 0; overflow-wrap: anywhere; }
+  #log li::before { content: "→ "; color: var(--accent); }
+  #error {
+    display: none; margin-top: 40px; padding: 16px 20px;
+    border-left: 4px solid var(--accent); background: var(--accent-soft);
+    font-family: var(--mono); font-size: 14px;
+  }
+
+  /* ---------- report ---------- */
+  #report { display: none; }
+  #report.active { display: block; }
+  .report-rule { margin-top: 64px; border-top: 2px solid var(--ink); position: relative; }
+  .report-rule span {
+    position: absolute; top: -11px; left: 0; background: var(--paper); padding-right: 14px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft);
+  }
+
+  .scoreband { display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-end; padding: 44px 0 8px; }
+  .bignum { font-family: var(--mono); font-size: clamp(92px, 16vw, 152px); font-weight: 700; line-height: 0.82; letter-spacing: -0.04em; }
+  .bignum .of { font-size: 0.22em; font-weight: 400; color: var(--ink-faint); letter-spacing: 0; }
+  .scoremeta { padding-bottom: 10px; max-width: 46ch; }
+  .verdict { font-size: 22px; font-style: italic; line-height: 1.3; }
+  .scoremeta .audited { margin-top: 12px; font-family: var(--mono); font-size: 12px; color: var(--ink-faint); overflow-wrap: anywhere; }
+
+  /* dimension index */
+  table.index { width: 100%; border-collapse: collapse; margin-top: 36px; }
+  table.index td { padding: 0; }
+  .dimrow { border-top: 1px solid var(--rule); cursor: pointer; }
+  .dimrow:hover .dimname { color: var(--accent); }
+  .dimline { display: grid; grid-template-columns: 30px 1fr 90px 220px 64px; gap: 14px; align-items: center; padding: 13px 4px; }
+  .dimno { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+  .dimname { font-size: 18px; transition: color 0.12s ease; }
+  .dimweight { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); text-align: right; }
+  .dimbar { height: 6px; background: var(--rule); position: relative; }
+  .dimbar i {
+    position: absolute; inset: 0 auto 0 0; width: 0; background: var(--ink);
+    transition: width 0.7s cubic-bezier(.22,.9,.35,1);
+  }
+  .dimbar i.low { background: var(--accent); }
+  .dimscore { font-family: var(--mono); font-size: 14px; font-weight: 600; text-align: right; }
+  .dimscore .nv { font-size: 10px; color: var(--ink-faint); font-weight: 400; }
+  .dimdetail { display: none; padding: 4px 4px 22px 44px; }
+  .dimrow.open .dimdetail { display: block; }
+  .dimdetail ul { list-style: none; }
+  .dimdetail li {
+    display: flex; gap: 10px; padding: 4px 0;
+    font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft); line-height: 1.5;
+  }
+  .dimdetail li .g { flex: 0 0 16px; text-align: center; font-weight: 700; }
+  .g.pass { color: var(--ok); } .g.fail { color: var(--accent); } .g.warn { color: var(--warn); }
+  .g.info, .g.unverified { color: var(--ink-faint); }
+  .caret { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); margin-left: 8px; }
+
+  /* fix first */
+  ol.fixes { list-style: none; counter-reset: fix; margin-top: 40px; }
+  ol.fixes li { counter-increment: fix; border-top: 1px solid var(--rule); padding: 20px 4px 20px 0; display: grid; grid-template-columns: 44px 1fr; gap: 8px; }
+  ol.fixes li::before {
+    content: counter(fix, decimal-leading-zero);
+    font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 700; padding-top: 4px;
+  }
+  .fix-action { font-size: 19px; line-height: 1.35; }
+  .fix-why { margin-top: 8px; color: var(--ink-soft); font-size: 15px; max-width: 72ch; }
+  .fix-why::before { content: "Why — "; font-style: italic; color: var(--ink-faint); }
+  .fix-tags { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    border: 1px solid var(--rule); padding: 3px 8px; color: var(--ink-soft);
+  }
+  .tag.hot { border-color: var(--accent); color: var(--accent); }
+
+  /* footer of report */
+  .limits { margin-top: 40px; }
+  .limits ul { margin-top: 14px; padding-left: 20px; }
+  .limits li { color: var(--ink-soft); font-size: 15px; padding: 3px 0; }
+  .downloads { margin-top: 44px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .downloads button {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+    background: transparent; border: 1.5px solid var(--ink); color: var(--ink);
+    padding: 11px 20px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .downloads button:hover { background: var(--ink); color: var(--paper); }
+
+  footer.colophon {
+    margin-top: 96px; padding-top: 16px; border-top: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 11px; color: var(--ink-faint); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+  .dimrow.open .caret .tri { display: inline-block; transform: rotate(90deg); }
+  .caret .tri { display: inline-block; transition: transform 0.15s ease; }
+  .dimrow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  @media (max-width: 760px) {
+    .masthead-meta { display: none; }
+    .dimline { grid-template-columns: 24px 1fr 70px; }
+    .dimbar { grid-column: 2 / 4; }
+    .dimscore { grid-column: 3; grid-row: 1; }
+    .dimweight { display: none; }
+    .dimdetail { padding-left: 4px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .dimbar i { transition: none; }
+    #log .pulse { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header class="masthead">
+    <div class="wordmark">geo-audit<span class="tld">/1.0</span></div>
+    <div class="masthead-meta">generative engine optimization &middot; deterministic</div>
+  </header>
+
+  <section class="prompt">
+    <h1>Will AI engines <em>cite</em> this site?</h1>
+    <p class="sub">A scored audit of retrieval-and-citation readiness for ChatGPT, Perplexity, Google AI Overviews and Claude — seven dimensions, exact evidence, no fabricated numbers.</p>
+    <form class="run" id="runform">
+      <input id="url" type="text" placeholder="example.com/article" autocomplete="off" spellcheck="false" autofocus>
+      <button id="runbtn" type="submit">Audit</button>
+    </form>
+    <div class="fineprint">Fetches ≤10 pages politely as geo-audit/1.0 · respects robots.txt · no LLM calls, same input → same score</div>
+  </section>
+
+  <section id="log">
+    <div class="log-head"><span><span class="pulse"></span>auditing</span><span id="elapsed">0.0s</span></div>
+    <ol id="loglines"></ol>
+  </section>
+
+  <div id="error"></div>
+
+  <section id="report">
+    <div class="report-rule"><span>Overall</span></div>
+    <div class="scoreband">
+      <div class="bignum"><span id="score">–</span><span class="of">/100</span></div>
+      <div class="scoremeta">
+        <div class="verdict" id="verdict"></div>
+        <div class="audited" id="audited"></div>
+      </div>
+    </div>
+
+    <div class="report-rule"><span>Seven dimensions</span></div>
+    <table class="index"><tbody id="dims"></tbody></table>
+
+    <div class="report-rule"><span>Fix first — by impact per effort</span></div>
+    <ol class="fixes" id="fixes"></ol>
+
+    <div class="report-rule"><span>Limitations</span></div>
+    <div class="limits"><ul id="limits"></ul></div>
+
+    <div class="downloads">
+      <button id="dl-md" type="button">Download report.md</button>
+      <button id="dl-json" type="button">Download result.json</button>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    <span>geo-audit v1.0.0 — local UI, nothing leaves this machine except the audited site's fetches</span>
+    <span>evidence basis: Aggarwal et al., KDD 2024</span>
+  </footer>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const GLYPH = { pass: '✓', fail: '✕', warn: '!', info: 'i', unverified: '?' };
+  const LEVEL = { 1: 'low', 2: 'med', 3: 'high' };
+  const weightLabel = (w) => (w >= 3 ? 'high' : w === 2 ? 'medium' : w === 1 ? 'low' : 'info');
+
+  let es = null, timer = null, t0 = 0, payload = null;
+
+  $('runform').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const url = $('url').value.trim();
+    if (!url || es) return;
+    start(url);
+  });
+
+  function start(url) {
+    $('runbtn').disabled = true;
+    $('error').style.display = 'none';
+    $('report').classList.remove('active');
+    $('loglines').innerHTML = '';
+    $('log').classList.add('active');
+    t0 = performance.now();
+    timer = setInterval(() => { $('elapsed').textContent = ((performance.now() - t0) / 1000).toFixed(1) + 's'; }, 100);
+
+    let got = false;
+    es = new EventSource('/api/audit?url=' + encodeURIComponent(url));
+    es.addEventListener('progress', (ev) => {
+      const li = document.createElement('li');
+      li.textContent = JSON.parse(ev.data).message;
+      $('loglines').appendChild(li);
+      $('loglines').scrollTop = $('loglines').scrollHeight;
+    });
+    es.addEventListener('result', (ev) => {
+      got = true;
+      payload = JSON.parse(ev.data);
+      finish();
+      render(payload);
+    });
+    es.addEventListener('fatal', (ev) => {
+      got = true;
+      finish();
+      showError(JSON.parse(ev.data).error);
+    });
+    es.onerror = () => {
+      if (!got) showError('connection to the local geo-audit server was lost');
+      finish();
+    };
+  }
+
+  function finish() {
+    if (es) { es.close(); es = null; }
+    if (timer) { clearInterval(timer); timer = null; }
+    $('runbtn').disabled = false;
+    $('log').classList.remove('active');
+  }
+
+  function showError(msg) {
+    const el = $('error');
+    el.textContent = 'audit failed — ' + msg;
+    el.style.display = 'block';
+  }
+
+  function render({ result, fixFirst }) {
+    $('score').textContent = result.overallScore === null ? '—' : result.overallScore;
+    $('verdict').textContent = result.verdict;
+    $('audited').textContent =
+      'audited ' + result.pagesAudited.length + ' page(s) · ' + result.fetchedAt +
+      (result.finalUrl ? ' · resolved to ' + result.finalUrl : '');
+
+    const dims = $('dims');
+    dims.innerHTML = '';
+    result.dimensions.forEach((d, i) => {
+      const tr = document.createElement('tr');
+      tr.className = 'dimrow';
+      const td = document.createElement('td');
+      const nv = d.score === null;
+      td.innerHTML =
+        '<div class="dimline">' +
+          '<span class="dimno">0' + (i + 1) + '</span>' +
+          '<span class="dimname">' + esc(d.name) + '<span class="caret"><span class="tri">▸</span> evidence</span></span>' +
+          '<span class="dimweight">wt ' + weightLabel(d.weight) + '</span>' +
+          '<span class="dimbar"><i class="' + (!nv && d.score < 50 ? 'low' : '') + '"></i></span>' +
+          '<span class="dimscore">' + (nv ? '<span class="nv">COULD NOT<br>VERIFY</span>' : d.score) + '</span>' +
+        '</div>' +
+        '<div class="dimdetail"><ul>' +
+          d.evidence.map((e) =>
+            '<li><span class="g ' + e.status + '">' + GLYPH[e.status] + '</span><span>' + esc(e.message) + '</span></li>'
+          ).join('') +
+        '</ul></div>';
+      tr.appendChild(td);
+      tr.tabIndex = 0;
+      tr.setAttribute('role', 'button');
+      tr.setAttribute('aria-expanded', 'false');
+      const toggle = () => {
+        tr.classList.toggle('open');
+        tr.setAttribute('aria-expanded', String(tr.classList.contains('open')));
+      };
+      tr.addEventListener('click', toggle);
+      tr.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggle(); }
+      });
+      dims.appendChild(tr);
+      const bar = td.querySelector('.dimbar i');
+      requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = (nv ? 0 : d.score) + '%'; }));
+    });
+
+    const fixes = $('fixes');
+    fixes.innerHTML = '';
+    for (const f of fixFirst) {
+      const li = document.createElement('li');
+      li.innerHTML =
+        '<div>' +
+          '<div class="fix-action">' + esc(f.action) + '</div>' +
+          '<div class="fix-why">' + esc(f.why) + '</div>' +
+          '<div class="fix-tags">' +
+            '<span class="tag">' + esc(f.dimension) + '</span>' +
+            '<span class="tag' + (f.impact === 3 ? ' hot' : '') + '">impact ' + LEVEL[f.impact] + '</span>' +
+            '<span class="tag">effort ' + LEVEL[f.effort] + '</span>' +
+          '</div>' +
+        '</div>';
+      fixes.appendChild(li);
+    }
+    if (fixFirst.length === 0) {
+      fixes.innerHTML = '<li><div class="fix-action">Nothing to fix — every verifiable check passed.</div></li>';
+    }
+
+    const limits = $('limits');
+    limits.innerHTML = result.limitations.map((l) => '<li>' + esc(l) + '</li>').join('');
+
+    // informational llms.txt appended as an 8th, unscored row
+    result.informational.forEach((d) => {
+      const tr = document.createElement('tr');
+      tr.className = 'dimrow';
+      const td = document.createElement('td');
+      td.innerHTML =
+        '<div class="dimline">' +
+          '<span class="dimno">+</span>' +
+          '<span class="dimname">' + esc(d.name) + '<span class="caret"><span class="tri">▸</span> evidence</span></span>' +
+          '<span class="dimweight">unscored</span>' +
+          '<span class="dimbar"></span>' +
+          '<span class="dimscore"><span class="nv">INFO</span></span>' +
+        '</div>' +
+        '<div class="dimdetail"><ul>' +
+          d.evidence.map((e) =>
+            '<li><span class="g ' + e.status + '">' + GLYPH[e.status] + '</span><span>' + esc(e.message) + '</span></li>'
+          ).join('') +
+        '</ul></div>';
+      tr.appendChild(td);
+      tr.tabIndex = 0;
+      tr.setAttribute('role', 'button');
+      tr.setAttribute('aria-expanded', 'false');
+      const toggle = () => {
+        tr.classList.toggle('open');
+        tr.setAttribute('aria-expanded', String(tr.classList.contains('open')));
+      };
+      tr.addEventListener('click', toggle);
+      tr.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggle(); }
+      });
+      dims.appendChild(tr);
+    });
+
+    $('report').classList.add('active');
+    $('report').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  $('dl-md').addEventListener('click', () => payload && download('geo-audit-report.md', payload.markdown, 'text/markdown'));
+  $('dl-json').addEventListener('click', () => payload && download('geo-audit-result.json', JSON.stringify({ ...payload.result, fixFirst: payload.fixFirst }, null, 2), 'application/json'));
+
+  function download(name, content, type) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([content], { type }));
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+})();
+</script>
+</body>
+</html>

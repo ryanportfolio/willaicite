@@ -1,0 +1,8 @@
+# Acme Research
+
+> Research and guides on generative engine optimization.
+
+## Docs
+
+- [What is GEO?](https://example.com/guide): definitional guide
+- [Methodology](https://example.com/method): how we measure

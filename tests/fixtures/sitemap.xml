@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://example.com/</loc>
+    <lastmod>2026-05-01</lastmod>
+  </url>
+  <url>
+    <loc>https://example.com/guide</loc>
+    <lastmod>2026-06-20</lastmod>
+  </url>
+  <url>
+    <loc>https://example.com/blog/newest</loc>
+    <lastmod>2026-07-01</lastmod>
+  </url>
+  <url>
+    <loc>https://example.com/blog/older</loc>
+    <lastmod>2025-01-15</lastmod>
+  </url>
+  <url>
+    <loc>https://example.com/undated</loc>
+  </url>
+</urlset>
