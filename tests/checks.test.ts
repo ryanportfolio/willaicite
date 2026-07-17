@@ -37,6 +37,35 @@ describe('checkCrawlerAccess', () => {
     expect(r.evidence.some((e) => e.status === 'pass' && e.message.includes('training crawler(s)/opt-out token(s) allowed'))).toBe(true);
   });
 
+  it('scores a Perplexity-User disallow as a light advisory, not a hard retrieval block', () => {
+    const body = 'User-agent: Perplexity-User\nDisallow: /\n';
+    const r = checkCrawlerAccess(
+      makeCtx({
+        robots: { url: 'https://example.com/robots.txt', fetch: makeFetch({ body }), parsed: parseRobots(body) },
+      }),
+    );
+    expect(r.score).toBe(98); // ADVISORY_PENALTY, not the 14-point retrieval penalty
+    const ev = r.evidence.find((e) => e.message.startsWith('Perplexity-User'));
+    expect(ev?.status).toBe('warn');
+    expect(ev?.message).toContain('ignore robots.txt');
+    expect(r.recommendations.some((rec) => rec.action.includes('Unblock'))).toBe(false);
+    expect(r.recommendations.some((rec) => rec.action.includes('enforce it at the WAF/CDN'))).toBe(true);
+  });
+
+  it('flags the Gemini grounding cost when Google-Extended is blocked', () => {
+    const body = 'User-agent: Google-Extended\nDisallow: /\n';
+    const r = checkCrawlerAccess(
+      makeCtx({
+        robots: { url: 'https://example.com/robots.txt', fetch: makeFetch({ body }), parsed: parseRobots(body) },
+      }),
+    );
+    expect(r.score).toBe(96); // training-tier penalty
+    const ev = r.evidence.find((e) => e.message.startsWith('Google-Extended'));
+    expect(ev?.message).toContain('Gemini grounding');
+    const rec = r.recommendations.find((rec) => rec.action.includes('Google-Extended'));
+    expect(rec?.why).toContain('Gemini citations of this content do stop');
+  });
+
   it('surfaces a Content Signals policy line as informational evidence', () => {
     const body = 'Content-Signal: search=yes, ai-train=no\nUser-agent: *\nDisallow:\n';
     const r = checkCrawlerAccess(

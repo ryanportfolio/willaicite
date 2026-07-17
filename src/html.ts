@@ -219,13 +219,17 @@ export function stripChrome(html: string): string {
  * as main-content signals; an explicit <main>/<article> is trusted as-is.
  */
 export function mainContentHtml(html: string): string {
-  const main = extractInner(html, 'main');
+  // Locate the region on invisible-stripped HTML: a <main>/<article> that only
+  // exists inside <template>/<noscript>/a comment renders nothing and must not
+  // be trusted as the page's content.
+  const visible = stripInvisible(html);
+  const main = extractInner(visible, 'main');
   if (main && extractVisibleText(main).length > 80) return main;
-  const article = extractInner(html, 'article');
+  const article = extractInner(visible, 'article');
   if (article && extractVisibleText(article).length > 80) return article;
-  const body = html.match(/<body\b[^>]*>([\s\S]*)<\/body\s*>/i);
+  const body = visible.match(/<body\b[^>]*>([\s\S]*)<\/body\s*>/i);
   if (body) return stripChrome(body[1]);
-  return stripChrome(html);
+  return stripChrome(visible);
 }
 
 const SHELL_IDS = ['root', 'app', '__next', '___gatsby', 'q-app', 'svelte'];
