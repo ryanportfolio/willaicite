@@ -4,6 +4,10 @@ import { extractHeadings, extractJsonLd, extractVisibleText, firstWords, jsonLdT
 
 const QUESTION_START = /^(who|what|why|how|when|where|which|can|does|do|is|are|should|will)\b/i;
 const ANSWER_VERB = /\b(is|are|means|refers to|helps|enables|provides|allows|lets)\b/i;
+/** Flattened text loses block boundaries (a byline <p> glues onto the next
+ * paragraph's first sentence); a synthetic '.' at each block close keeps
+ * sentences from bleeding across elements. */
+const BLOCK_CLOSE = /<\/(p|div|li|h[1-6]|blockquote|section|header|figcaption|td|th|dt|dd)\s*>/gi;
 
 /**
  * Answer-readiness: can an engine lift a direct answer from the top of the
@@ -56,19 +60,22 @@ export function checkAnswerReadiness(ctx: AuditContext): DimensionResult {
     };
   }
 
-  const opening = firstWords(mainText, 200);
+  const opening = firstWords(extractVisibleText(mainHtml.replace(BLOCK_CLOSE, '. $&')), 200);
 
-  // 1. Direct answer statement in the first ~200 tokens (0-30)
+  // 1. Direct answer statement in the first ~200 tokens (0-30).
+  // Definitional shape required: a short subject (1-6 words) directly before
+  // the verb, with a substantive predicate after it — "X is …", not any prose
+  // that happens to contain "is" somewhere.
   const sentences = opening.split(/(?<=[.!?])\s+/);
   const answerSentence = sentences.find((s) => {
-    if (s.trim().endsWith('?')) return false; // a question is not an answer
+    if (s.trim().replace(/[.\s]+$/, '').endsWith('?')) return false; // a question is not an answer
     const words = s.split(/\s+/).filter(Boolean);
     if (words.length < 4 || words.length > 45) return false;
     const m = s.match(ANSWER_VERB);
     if (!m || m.index === undefined) return false;
-    // require an actual subject before the verb (not sentence-initial "Is ...?")
-    const before = s.slice(0, m.index).trim();
-    return before.split(/\s+/).filter(Boolean).length >= 1;
+    const subjectWords = s.slice(0, m.index).trim().split(/\s+/).filter(Boolean).length;
+    const predicateWords = s.slice(m.index + m[0].length).trim().split(/\s+/).filter(Boolean).length;
+    return subjectWords >= 1 && subjectWords <= 6 && predicateWords >= 3;
   });
   if (answerSentence) {
     score += 30;
@@ -169,7 +176,7 @@ export function checkAnswerReadiness(ctx: AuditContext): DimensionResult {
     });
   }
 
-  evidence.push({ status: 'info', message: 'limitation: answer detection is a lexical heuristic (subject + is/are/means/helps near the top), not semantic understanding' });
+  evidence.push({ status: 'info', message: 'limitation: answer detection is a lexical heuristic (short subject + is/are/means/helps + predicate near the top), not semantic understanding' });
 
   return {
     key: 'answerReadiness',

@@ -14,7 +14,7 @@ import { checkEntityEeat } from './checks/entityEeat.js';
 import { checkLlmsTxt } from './checks/llmsTxt.js';
 import { overallScore, verdictFor, prioritize } from './score.js';
 
-export const VERSION = '1.1.0';
+export const VERSION = '1.2.0';
 const MAX_PAGES = 10;
 const OWN_BOT_TOKEN = 'geo-audit';
 
@@ -237,7 +237,7 @@ export function buildResult(inputUrl: string, ctx: AuditContext, now: Date = new
     pagesAudited: dedupe(pages),
     limitations: [
       'No JS execution: renderability is judged heuristically from raw HTML; lazy-loaded content may be undercounted.',
-      'Answer-readiness uses lexical heuristics (subject + is/are/means/helps patterns), not semantic understanding.',
+      'Answer-readiness uses lexical heuristics (short subject + is/are/means/helps + predicate patterns), not semantic understanding.',
       'No live AI-engine querying: this audit measures retrieval/citation readiness, not actual share of voice.',
       'Checks that could not run are reported as "could not verify" and excluded from the weighted score — never guessed.',
     ],
@@ -260,9 +260,17 @@ function normalizePath(url: string): string {
   }
 }
 
+/** Same scheme, port, and www-tolerant hostname — a robots-declared sitemap on
+ * an odd port or scheme of the same host is treated as foreign. */
 function sameHost(url: string, origin: string): boolean {
   try {
-    return new URL(url).hostname.replace(/^www\./, '') === new URL(origin).hostname.replace(/^www\./, '');
+    const a = new URL(url);
+    const b = new URL(origin);
+    return (
+      a.protocol === b.protocol &&
+      a.port === b.port &&
+      a.hostname.replace(/^www\./, '') === b.hostname.replace(/^www\./, '')
+    );
   } catch {
     return false;
   }

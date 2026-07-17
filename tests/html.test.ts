@@ -131,6 +131,10 @@ describe('detectEmptyShell', () => {
     expect(detectEmptyShell(spa)).toBe('#root');
   });
 
+  it('detects a Nuxt (__nuxt) mount point', () => {
+    expect(detectEmptyShell('<body><div id="__nuxt"></div><script src="/app.js"></script></body>')).toBe('#__nuxt');
+  });
+
   it('does not flag a content-rich page with a root div', () => {
     const html = `<body><div id="root"><p>${'word '.repeat(200)}</p></div></body>`;
     expect(detectEmptyShell(html)).toBeNull();

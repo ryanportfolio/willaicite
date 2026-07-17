@@ -42,8 +42,8 @@ geo-audit serve [--port 4173]
 
 ## What it fetches (politely)
 
-- Identifies as `geo-audit/1.1` and **respects robots.txt for its own fetching** — pages *and* auxiliary files (sitemap.xml, llms.txt, favicon) are skipped and reported as such when robots.txt disallows the tool.
-- Hard cap of **10 requests total** per audit: the given URL, the homepage, an about page, and a few pages from the sitemap if present — including robots.txt, sitemap.xml, llms.txt and favicon.
+- Identifies as `geo-audit/1.2` and **respects robots.txt for its own fetching** — pages *and* auxiliary files (sitemap.xml, llms.txt, favicon) are skipped and reported as such when robots.txt disallows the tool.
+- Hard cap of **10 fetches total** per audit: the given URL, the homepage, an about page, and a few pages from the sitemap if present — including robots.txt, sitemap.xml, llms.txt and favicon. (HTTP redirects inside a fetch are followed by the platform fetcher, so a redirecting site can incur more wire requests than fetches.)
 - A robots-declared sitemap on a different host is ignored in favor of the same-origin `/sitemap.xml` (robots.txt cannot point the tool at third-party URLs).
 - Per-request timeout with graceful failure: a failed fetch or crashed check is reported as **"could not verify"** and excluded from the weighted score. It is never guessed and never crashes the audit.
 
@@ -84,6 +84,7 @@ npm run dev <url> # run from source via tsx
 - **No live AI-engine querying.** This measures retrieval/citation *readiness*, not whether engines actually cite you today.
 - Robots matching implements the practically relevant parts of RFC 9309 (longest-match, allow-wins-ties, `*`/`$` wildcards, percent-encoding normalization for non-ASCII paths); exotic corner cases may still differ from Google's reference matcher.
 - The evidence-density research numbers come from one study (Aggarwal et al., "GEO: Generative Engine Optimization", KDD 2024) measured on Perplexity-style engines; treat them as directional, not gospel.
+- Scores are comparable only within one scoring-model version (the `version` field in the JSON output). Heuristic recalibrations bump the version — do not compare a v1.2 score against a v1.1 score.
 
 ## v2 (planned, not built)
 
