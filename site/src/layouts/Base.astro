@@ -89,6 +89,13 @@ export const UPDATED_HUMAN = 'July 17, 2026';
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
+  /* The sheet reads better at the ~140% optical size the editor prefers;
+     emulate that browser zoom on large screens. Below 1064px (760px of
+     zoomed content) the layout stays 1:1 so tablets and phones keep the
+     original scale and the existing 760px breakpoint still governs. */
+  @media (min-width: 1064px) {
+    html { zoom: 1.4; }
+  }
   body {
     background: var(--paper);
     color: var(--ink);
