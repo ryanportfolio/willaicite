@@ -13,7 +13,9 @@ Usage:
 Options:
   --json        Emit machine-readable JSON instead of markdown
   --out <file>  Write the report to a file instead of stdout
-  --port <n>    Port for the local web UI (default 4173)
+  --port <n>    Port for the local web UI (default 4173, or $PORT)
+  --local       Allow auditing private/localhost targets (disables the SSRF
+                guard; never use this on a public server)
   --help        Show this help
   --version     Show version
 `;
@@ -30,7 +32,7 @@ async function main(): Promise<number> {
   }
 
   if (args[0] === 'serve') {
-    let port = 4173;
+    let port = Number(process.env.PORT) || 4173;
     const portIdx = args.indexOf('--port');
     if (portIdx !== -1) {
       port = Number(args[portIdx + 1]);
@@ -39,8 +41,22 @@ async function main(): Promise<number> {
         return 2;
       }
     }
+    const local = args.includes('--local');
+    // Default to loopback for a local `serve`; a host platform (Railway, etc.)
+    // sets HOST=0.0.0.0 so its proxy can reach the container.
+    const host = process.env.HOST || '127.0.0.1';
     const { startServer } = await import('./server.js');
-    await startServer(port);
+    const { createGuardedFetcher } = await import('./safeFetch.js');
+    await startServer(
+      port,
+      {
+        trustProxy: process.env.WILLAICITE_TRUST_PROXY === '1',
+        maxConcurrent: Number(process.env.WILLAICITE_MAX_CONCURRENT) || undefined,
+        // --local opts back into a permissive fetcher for auditing private/localhost targets.
+        fetcher: local ? createGuardedFetcher({ policy: { blockPrivateHosts: false, allowedPorts: null } }) : undefined,
+      },
+      host,
+    );
     return new Promise<number>(() => undefined); // run until killed
   }
 

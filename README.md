@@ -47,6 +47,25 @@ geo-audit serve [--port 4173]
 - A robots-declared sitemap on a different host is ignored in favor of the same-origin `/sitemap.xml` (robots.txt cannot point the tool at third-party URLs).
 - Per-request timeout with graceful failure: a failed fetch or crashed check is reported as **"could not verify"** and excluded from the weighted score. It is never guessed and never crashes the audit.
 
+## Running it as a public service
+
+The CLI is single-user and trusts you. `geo-audit serve` is safe to expose publicly **only** because the hosted path fetches through an SSRF-guarded transport (`src/safeFetch.ts`):
+
+- Only `http`/`https`, only ports 80/443.
+- The destination hostname is resolved and **every** returned address is checked; anything loopback, private (RFC 1918), link-local (incl. `169.254.169.254` cloud metadata), CGNAT, or reserved is refused. IPv4-mapped/6to4/NAT64 IPv6 forms that embed a private v4 are decoded and re-checked.
+- The socket is **pinned** to the validated IP, so a hostname that re-resolves to a private address between the check and the connection (DNS rebinding) cannot slip through. Redirects are followed manually and every hop is re-validated.
+- Per-IP rate limit (default 10 audits / 10 min) and a global concurrency cap (default 4).
+
+Environment:
+
+| Var | Purpose | Default |
+|---|---|---|
+| `PORT` | Listen port | 4173 |
+| `WILLAICITE_TRUST_PROXY` | Set `1` behind a proxy you control (reads `X-Forwarded-For`) | off |
+| `WILLAICITE_MAX_CONCURRENT` | Max simultaneous audits | 4 |
+
+`--local` disables the SSRF guard so you can audit `localhost`/private targets from the CLI. **Never pass `--local` on a public server.** See [SECURITY.md](SECURITY.md).
+
 ## The seven dimensions
 
 Each scores 0–100 with per-check evidence lines (e.g. the exact robots.txt line that blocks a bot). The overall score is the weighted average of the dimensions that could be verified.
