@@ -10,15 +10,26 @@ import { findMeta } from '../html.js';
  * them, Google-Extended and Applebot-Extended, are pure opt-out tokens with no
  * crawler behind them); blocking those is a mainstream content policy with a
  * much smaller citation cost, so it is penalized far more lightly.
+ *
+ * `robotsIgnored`: the operator documents that this fetcher generally ignores
+ * robots.txt (user-initiated), so a Disallow records intent without stopping
+ * retrieval — it is scored as a light advisory, never as a hard block.
+ * `caveat`: appended to blocked-evidence so the stake line stays factual.
  */
-export const AI_BOTS: { token: string; engine: string; role: 'retrieval' | 'training' }[] = [
+export const AI_BOTS: { token: string; engine: string; role: 'retrieval' | 'training'; robotsIgnored?: boolean; caveat?: string }[] = [
   { token: 'OAI-SearchBot', engine: 'ChatGPT Search index', role: 'retrieval' },
   { token: 'ChatGPT-User', engine: 'ChatGPT live browsing', role: 'retrieval' },
   { token: 'Claude-SearchBot', engine: 'Claude search index', role: 'retrieval' },
   { token: 'Claude-User', engine: 'Claude live browsing', role: 'retrieval' },
   { token: 'PerplexityBot', engine: 'Perplexity index', role: 'retrieval' },
-  { token: 'Perplexity-User', engine: 'Perplexity live fetch (sends real referrals)', role: 'retrieval' },
-  { token: 'Bingbot', engine: 'Bing index (feeds ChatGPT + Copilot answers)', role: 'retrieval' },
+  {
+    token: 'Perplexity-User',
+    engine: 'Perplexity live fetch (sends real referrals)',
+    role: 'retrieval',
+    robotsIgnored: true,
+    caveat: 'Perplexity documents that user-initiated fetches generally ignore robots.txt, so this rule records intent but does not stop retrieval',
+  },
+  { token: 'Bingbot', engine: 'Bing index (feeds Copilot and, residually, ChatGPT answers)', role: 'retrieval' },
   { token: 'Amazonbot', engine: 'Alexa / Rufus answers', role: 'retrieval' },
   { token: 'DuckAssistBot', engine: 'DuckDuckGo AI answers', role: 'retrieval' },
   { token: 'Applebot', engine: 'Siri / Spotlight / Apple Intelligence retrieval', role: 'retrieval' },
@@ -27,12 +38,18 @@ export const AI_BOTS: { token: string; engine: string; role: 'retrieval' | 'trai
   { token: 'ClaudeBot', engine: 'Anthropic model training', role: 'training' },
   { token: 'CCBot', engine: 'Common Crawl (feeds many training sets)', role: 'training' },
   { token: 'meta-externalagent', engine: 'Meta AI training', role: 'training' },
-  { token: 'Google-Extended', engine: 'Gemini training opt-out token (no crawler)', role: 'training' },
+  {
+    token: 'Google-Extended',
+    engine: 'Gemini training + grounding opt-out token (no crawler)',
+    role: 'training',
+    caveat: 'this token also gates Gemini grounding — blocking it stops Gemini from pulling and citing this content at answer time, not just from training on it',
+  },
   { token: 'Applebot-Extended', engine: 'Apple Intelligence training opt-out token (no crawler)', role: 'training' },
 ];
 
 const RETRIEVAL_PENALTY = 14;
 const TRAINING_PENALTY = 4;
+const ADVISORY_PENALTY = 2;
 
 export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
   const evidence: Evidence[] = [];
@@ -59,22 +76,33 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
     verifiable = true;
     const blockedRetrieval: string[] = [];
     const blockedTraining: string[] = [];
+    const blockedAdvisory: string[] = [];
     const allowed: Record<'retrieval' | 'training', string[]> = { retrieval: [], training: [] };
     for (const bot of AI_BOTS) {
       const decision = isAllowed(ctx.robots.parsed, bot.token, path);
       if (decision.allowed) {
         allowed[bot.role].push(bot.token);
-      } else {
-        (bot.role === 'retrieval' ? blockedRetrieval : blockedTraining).push(bot.token);
-        const ruleText = decision.rule ? `robots.txt line ${decision.rule.line}: \`${decision.rule.raw}\`` : 'robots.txt rule';
-        const via = decision.viaGroup === '*' ? 'via wildcard `User-agent: *` group' : `via \`User-agent: ${decision.viaGroup}\` group`;
-        const stake = bot.role === 'retrieval' ? 'Engine affected' : 'Training pipeline affected';
-        evidence.push({
-          status: bot.role === 'retrieval' ? 'fail' : 'warn',
-          message: `${bot.token} BLOCKED for ${path} — ${ruleText} (${via}). ${stake}: ${bot.engine}`,
-        });
-        score -= bot.role === 'retrieval' ? RETRIEVAL_PENALTY : TRAINING_PENALTY;
+        continue;
       }
+      const ruleText = decision.rule ? `robots.txt line ${decision.rule.line}: \`${decision.rule.raw}\`` : 'robots.txt rule';
+      const via = decision.viaGroup === '*' ? 'via wildcard `User-agent: *` group' : `via \`User-agent: ${decision.viaGroup}\` group`;
+      const caveat = bot.caveat ? `. Note: ${bot.caveat}` : '';
+      if (bot.robotsIgnored) {
+        blockedAdvisory.push(bot.token);
+        evidence.push({
+          status: 'warn',
+          message: `${bot.token} disallowed for ${path} — ${ruleText} (${via})${caveat}. Engine: ${bot.engine}`,
+        });
+        score -= ADVISORY_PENALTY;
+        continue;
+      }
+      (bot.role === 'retrieval' ? blockedRetrieval : blockedTraining).push(bot.token);
+      const stake = bot.role === 'retrieval' ? 'Engine affected' : 'Training pipeline affected';
+      evidence.push({
+        status: bot.role === 'retrieval' ? 'fail' : 'warn',
+        message: `${bot.token} BLOCKED for ${path} — ${ruleText} (${via}). ${stake}: ${bot.engine}${caveat}`,
+      });
+      score -= bot.role === 'retrieval' ? RETRIEVAL_PENALTY : TRAINING_PENALTY;
     }
     if (allowed.retrieval.length > 0) {
       evidence.push({ status: 'pass', message: `${allowed.retrieval.length} retrieval/citation crawler(s) allowed: ${allowed.retrieval.join(', ')}` });
@@ -92,12 +120,24 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
       });
     }
     if (blockedTraining.length > 0) {
+      const groundingException = blockedTraining.includes('Google-Extended')
+        ? ' Exception: Google-Extended also gates Gemini grounding, so Gemini citations of this content do stop while it is blocked.'
+        : '';
       recommendations.push({
         dimension: dim,
         action: `Confirm blocking ${blockedTraining.join(', ')} is a deliberate policy choice (training-only tokens)`,
-        why: 'Blocking training crawlers is a legitimate, now-mainstream content policy and does not stop AI engines from citing the page today — but it does keep the content out of future model knowledge, which slightly reduces long-term unprompted mentions. Keep it if intentional.',
+        why: `Blocking training crawlers is a legitimate, now-mainstream content policy and does not stop AI engines from citing the page today — but it does keep the content out of future model knowledge, which slightly reduces long-term unprompted mentions. Keep it if intentional.${groundingException}`,
         impact: 1,
         effort: 1,
+      });
+    }
+    if (blockedAdvisory.length > 0) {
+      recommendations.push({
+        dimension: dim,
+        action: `If blocking ${blockedAdvisory.join(', ')} is intended, enforce it at the WAF/CDN — robots.txt alone does not stop user-initiated fetchers`,
+        why: 'The operator documents that this fetcher generally ignores robots.txt because a human initiated the request. The Disallow line records intent without changing behavior; if you did not mean to block it, remove the rule to keep the declared policy accurate.',
+        impact: 1,
+        effort: 2,
       });
     }
     // Cloudflare Content Signals policy (informational; a robots.txt-level

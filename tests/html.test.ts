@@ -73,6 +73,24 @@ describe('mainContentHtml chrome stripping', () => {
       '<p>Long enough main content that clears the eighty character floor for the region.</p></main></body></html>';
     expect(mainContentHtml(html)).toContain('Article header inside main stays');
   });
+
+  it('does not trust a <main> that only exists inside a <template>', () => {
+    const html =
+      '<html><body><template><main>Template-only content that renders nothing but is long enough to pass the floor easily.</main></template>' +
+      '<p>Actual visible fallback content with enough words to stand in as the page body for checks.</p></body></html>';
+    const main = mainContentHtml(html);
+    expect(main).not.toContain('Template-only content');
+    expect(main).toContain('Actual visible fallback content');
+  });
+
+  it('does not trust a <main> that only exists inside an HTML comment', () => {
+    const html =
+      '<html><body><!-- <main>Commented-out content that renders nothing but is long enough to pass the floor easily.</main> -->' +
+      '<p>Actual visible fallback content with enough words to stand in as the page body for checks.</p></body></html>';
+    const main = mainContentHtml(html);
+    expect(main).not.toContain('Commented-out content');
+    expect(main).toContain('Actual visible fallback content');
+  });
 });
 
 describe('extractJsonLd', () => {

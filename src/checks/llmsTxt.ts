@@ -57,7 +57,8 @@ export function checkLlmsTxt(ctx: AuditContext): DimensionResult {
 
   // Consistency with robots.txt: inviting LLMs via llms.txt while blocking their crawlers is contradictory.
   if (ctx.robots.parsed) {
-    const blocked = AI_BOTS.filter((b) => !isAllowed(ctx.robots.parsed!, b.token, '/').allowed).map((b) => b.token);
+    // Fetchers that document ignoring robots.txt can still read the invitation, so they are not a contradiction.
+    const blocked = AI_BOTS.filter((b) => !b.robotsIgnored && !isAllowed(ctx.robots.parsed!, b.token, '/').allowed).map((b) => b.token);
     if (blocked.length > 0) {
       evidence.push({
         status: 'warn',
