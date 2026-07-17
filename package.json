@@ -12,6 +12,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "start": "node dist/cli.js serve",
     "test": "vitest run",
     "test:watch": "vitest",
     "dev": "tsx src/cli.ts"

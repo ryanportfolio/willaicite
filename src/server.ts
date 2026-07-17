@@ -108,14 +108,14 @@ export function createAuditServer(opts: ServerOptions = {}): Server {
   });
 }
 
-export function startServer(port: number, opts: ServerOptions = {}): Promise<Server> {
+export function startServer(port: number, opts: ServerOptions = {}, host = '127.0.0.1'): Promise<Server> {
   return new Promise((resolve, reject) => {
     const server = createAuditServer(opts);
     server.once('error', reject);
-    server.listen(port, '127.0.0.1', () => {
+    server.listen(port, host, () => {
       const addr = server.address();
       const actualPort = typeof addr === 'object' && addr ? addr.port : port;
-      process.stderr.write(`geo-audit v${VERSION} UI listening on http://127.0.0.1:${actualPort}\n`);
+      process.stderr.write(`geo-audit v${VERSION} UI listening on http://${host}:${actualPort}\n`);
       resolve(server);
     });
   });
