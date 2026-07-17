@@ -89,7 +89,9 @@
 
 /* ---- reset-lite ---- */
 * { margin: 0; box-sizing: border-box; }
-html { font-size: 17px; scroll-behavior: smooth; }
+/* Root scale ≈ the editor-approved "130% zoom" reading size: 21.6px at a
+   1440px viewport, clamped so laptops and ultrawides both hold the feel. */
+html { font-size: clamp(18px, 1.5vw, 23px); scroll-behavior: smooth; }
 body {
   font-family: var(--font-body);
   font-size: var(--text-base);
