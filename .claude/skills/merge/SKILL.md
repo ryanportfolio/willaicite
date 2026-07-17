@@ -14,7 +14,7 @@ Invoking `/merge` IS the user's standing authorization to merge into `main` repe
 
 On `/merge`, announce activation in **plain prose** (not caveman), so the user can immediately correct a misread of this standing authorization. Say, concisely:
 
-> **Auto-Merge Mode is ON for this session.** From now on, when a task is complete I will, without asking: commit the touched files, push, ensure a PR exists, and merge it into `main` (resolving conflicts where unambiguous). The session branch is kept the whole session. Say "stop merge" to turn this off.
+> **Auto-Merge Mode is ON for this session.** From now on, when a task is complete I will, without asking: commit the touched files, push, ensure a PR exists, merge it into `main` (resolving conflicts where unambiguous), and — if this project has a manual deploy documented (e.g. Railway) — deploy the merged `main` and verify it live. The session branch is kept the whole session. Say "stop merge" to turn this off.
 
 Then continue the current work. The cycle fires on the **next** task completion (and every one after), not retroactively.
 
@@ -56,8 +56,16 @@ gh pr merge <number> --merge
 - **No `--squash` / `--rebase`** unless the user explicitly asked.
 - **No `--admin`** — do not bypass branch protection or failing required checks. If the merge is blocked by checks/protection, report why and stop (pause the cycle for that task); do not force it.
 
-### 7. Report
-Confirm the merge landed, give the PR URL, note the branch was kept. If anything blocked it (failing checks, protection, unresolved/ambiguous conflict), report the exact `gh`/`git` output and the reason — never claim success you did not verify.
+### 7. Deploy (when applicable)
+Merging is not shipping when the project has no GitHub-linked deploy. After a successful merge:
+- Check `.claude/reference/deployment.md`. If it documents a **manual deploy** (e.g. this repo: Railway, `railway up --detach` from an up-to-date `main` checkout — merges do NOT auto-deploy), run it as part of the cycle. If deploys are automatic on merge, or no deploy is documented, skip this step.
+- Deploy from the **primary repo checkout on `main`** (not the session worktree): verify it is on `main` and clean (`git status --short`), `git pull`, then run the documented deploy command.
+- If the primary checkout is dirty or on another branch, do NOT switch branches or discard anything — report the state and ask.
+- Wait for the deploy to finish (e.g. poll `railway deployment list --json` until SUCCESS; Railway builds take ~15 min), then verify the shipped change on the live site per the project's verification rules.
+- If the deploy fails, report the exact output; do not retry destructively or roll back without asking.
+
+### 8. Report
+Confirm the merge landed, give the PR URL, note the branch was kept, and state the deploy result (deployed + verified live, deploy skipped as N/A, or blocked and why). If anything blocked the cycle (failing checks, protection, unresolved/ambiguous conflict, failed deploy), report the exact `gh`/`git`/deploy output and the reason — never claim success you did not verify.
 
 ## Why no per-merge confirm
 
@@ -82,3 +90,6 @@ Turn the mode OFF when the user says "stop merge", "stop auto-merge", "normal mo
 - Don't bypass protections/checks (`--admin`) without an explicit ask — report the block and stop.
 - Don't guess on semantic merge conflicts — resolve the unambiguous ones, stop and ask on the rest.
 - Don't fabricate success — report the real `gh pr merge` / `git merge` outcome.
+- Don't stop at the merge when the project documents a manual deploy — merged-but-undeployed means production is stale; run the deploy step.
+- Don't claim a change is live before the deploy reports success AND the live site shows it.
+- Don't switch branches or discard work in the primary checkout to deploy — if it is dirty or off `main`, report and ask.
