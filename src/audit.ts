@@ -8,13 +8,14 @@ import { checkCrawlerAccess } from './checks/crawlerAccess.js';
 import { checkRenderability } from './checks/renderability.js';
 import { checkStructuredData } from './checks/structuredData.js';
 import { checkAnswerReadiness } from './checks/answerReadiness.js';
+import { checkTopicalFocus } from './checks/topicalFocus.js';
 import { checkEvidenceDensity } from './checks/evidenceDensity.js';
 import { checkFreshness } from './checks/freshness.js';
 import { checkEntityEeat } from './checks/entityEeat.js';
 import { checkLlmsTxt } from './checks/llmsTxt.js';
 import { overallScore, verdictFor, prioritize } from './score.js';
 
-export const VERSION = '1.2.0';
+export const VERSION = '1.3.0';
 const MAX_PAGES = 10;
 const OWN_BOT_TOKEN = 'geo-audit';
 
@@ -183,6 +184,7 @@ export function buildResult(inputUrl: string, ctx: AuditContext, now: Date = new
     ['renderability', () => checkRenderability(ctx)],
     ['structuredData', () => checkStructuredData(ctx)],
     ['answerReadiness', () => checkAnswerReadiness(ctx)],
+    ['topicalFocus', () => checkTopicalFocus(ctx)],
     ['evidenceDensity', () => checkEvidenceDensity(ctx)],
     ['freshness', () => checkFreshness(ctx, now)],
     ['entityEeat', () => checkEntityEeat(ctx)],

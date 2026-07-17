@@ -104,7 +104,7 @@ describe('audit server', () => {
     const result = events.find((e) => e.event === 'result');
     expect(result).toBeDefined();
     expect(result!.data.result.overallScore).toBeGreaterThanOrEqual(85);
-    expect(result!.data.result.dimensions).toHaveLength(7);
+    expect(result!.data.result.dimensions).toHaveLength(8);
     expect(Array.isArray(result!.data.fixFirst)).toBe(true);
     expect(result!.data.markdown).toContain('# GEO Audit');
   });

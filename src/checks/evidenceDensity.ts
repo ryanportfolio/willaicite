@@ -3,11 +3,18 @@ import type { DimensionResult, Evidence, Recommendation } from '../types.js';
 import { extractLinks, extractVisibleText, mainContentHtml, wordCount, countTag } from '../html.js';
 
 /**
- * Evidence density, grounded in the original GEO research (Aggarwal et al.
- * 2023, "GEO: Generative Engine Optimization", KDD 2024): adding quotations
- * lifted generative-engine visibility +27.8%, statistics +25.9%, and citing
- * sources +24.9% relative to baseline. Those numbers are cited in the
- * recommendations so they carry their evidence.
+ * Evidence density. The original GEO research (Aggarwal et al., "GEO:
+ * Generative Engine Optimization", KDD 2024) measured visibility lifts from
+ * adding quotations (+27.8%), statistics (+25.9%) and cited sources (+24.9%)
+ * — but with the source already placed in the generator's context. The
+ * 2025-2026 replication work narrows the claim: C-SEO Bench (Puerto et al.
+ * 2025) found only 3 of 54 method-domain combinations significantly positive,
+ * and the 252,000-trial SIGIR 2026 study (Vishwakarma et al.) found topical
+ * relevance and retrieval position dominate, with concrete facts and fresh
+ * dates helping moderately. Evidence density is therefore scored as a
+ * post-retrieval tie-break (weight: medium, was high in v1.2), not a primary
+ * lever: it decides which retrieved page gets quoted, not which page gets
+ * retrieved.
  */
 
 // `%` sits outside the trailing \b group: a word boundary after `%` would
@@ -25,7 +32,7 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
     return {
       key: 'evidenceDensity',
       name: dim,
-      weight: 3,
+      weight: 2,
       score: null,
       evidence: [{ status: 'unverified', message: 'could not verify: page HTML unavailable' }],
       recommendations: [],
@@ -45,7 +52,7 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
     return {
       key: 'evidenceDensity',
       name: dim,
-      weight: 3,
+      weight: 2,
       score: 0,
       evidence: [
         { status: 'fail', message: `no extractable main content to assess (${words} words)` },
@@ -77,8 +84,8 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Add concrete statistics with units (%, $, counts) to the main content',
-      why: 'The GEO research (Aggarwal et al., KDD 2024) measured a +25.9% generative-engine visibility lift from adding statistics (benchmark-specific; treat as directional, not guaranteed); engines preferentially quote sentences that carry numbers.',
-      impact: 3,
+      why: 'The original GEO research measured a +25.9% visibility lift from adding statistics (Aggarwal et al., KDD 2024 — with the source already in the generator\'s context). The 2026 controlled follow-up (Vishwakarma et al., SIGIR 2026) confirms concrete facts like explicit figures help moderately, once the page is retrieved; engines preferentially quote sentences that carry numbers.',
+      impact: 2,
       effort: 2,
     });
   }
@@ -98,8 +105,8 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Quote named experts or primary sources directly (blockquote or inline quotation marks with attribution)',
-      why: 'Quotations produced the single largest lift in the GEO research: +27.8% generative-engine visibility (Aggarwal et al., KDD 2024; benchmark-specific; treat as directional). Attributed speech reads as sourced rather than asserted.',
-      impact: 3,
+      why: 'Quotations produced the single largest lift in the original GEO research: +27.8% visibility (Aggarwal et al., KDD 2024 — measured with the source already retrieved; independent replication in C-SEO Bench 2025 found such rewrites help far less often than first reported). Attributed speech reads as sourced rather than asserted, which decides quote-worthiness among retrieved pages.',
+      impact: 2,
       effort: 2,
     });
   }
@@ -129,8 +136,8 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Cite sources: link claims to authoritative external references (.gov, .edu, journals, primary data)',
-      why: 'Citing sources lifted generative-engine visibility +24.9% in the GEO research (Aggarwal et al., KDD 2024; benchmark-specific; treat as directional); engines trust and re-surface content that shows its work.',
-      impact: 3,
+      why: 'Citing sources lifted visibility +24.9% in the original GEO research (Aggarwal et al., KDD 2024 — a post-retrieval effect; 2025-2026 replications show it is a tie-break, not a ranking lever); engines trust and re-surface content that shows its work.',
+      impact: 2,
       effort: 1,
     });
   }
@@ -141,7 +148,7 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
   }
 
   const score = Math.max(0, Math.min(100, statPts + quotePts + citePts));
-  return { key: 'evidenceDensity', name: dim, weight: 3, score, evidence, recommendations };
+  return { key: 'evidenceDensity', name: dim, weight: 2, score, evidence, recommendations };
 }
 
 function safeHost(url: string): string | null {

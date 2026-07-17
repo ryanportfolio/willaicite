@@ -20,11 +20,12 @@ function scoresOf(ctx: ReturnType<typeof makeCtx>) {
 describe('golden scores (scoring-model regression pins)', () => {
   it('rich article context', () => {
     expect(scoresOf(makeCtx())).toEqual({
-      overall: 98,
+      overall: 99,
       crawlerAccess: 100,
       renderability: 90,
       structuredData: 100,
       answerReadiness: 100,
+      topicalFocus: 100,
       evidenceDensity: 100,
       freshness: 100,
       entityEeat: 100,
@@ -33,11 +34,12 @@ describe('golden scores (scoring-model regression pins)', () => {
 
   it('thin page context', () => {
     expect(scoresOf(makeCtx({ target: makePage('https://example.com/guide', fixture('thin-page.html')) }))).toEqual({
-      overall: 35,
+      overall: 33,
       crawlerAccess: 100,
       renderability: 50,
       structuredData: 0,
       answerReadiness: 5,
+      topicalFocus: 10,
       evidenceDensity: 0,
       freshness: 30,
       entityEeat: 50,
@@ -46,11 +48,12 @@ describe('golden scores (scoring-model regression pins)', () => {
 
   it('empty SPA shell context', () => {
     expect(scoresOf(makeCtx({ target: makePage('https://example.com/guide', fixture('spa-shell.html')) }))).toEqual({
-      overall: 26,
+      overall: 25,
       crawlerAccess: 100,
       renderability: 0,
       structuredData: 0,
       answerReadiness: 0,
+      topicalFocus: 10,
       evidenceDensity: 0,
       freshness: 30,
       entityEeat: 50,

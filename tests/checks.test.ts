@@ -3,6 +3,7 @@ import { checkCrawlerAccess } from '../src/checks/crawlerAccess.js';
 import { checkRenderability } from '../src/checks/renderability.js';
 import { checkStructuredData } from '../src/checks/structuredData.js';
 import { checkAnswerReadiness } from '../src/checks/answerReadiness.js';
+import { checkTopicalFocus } from '../src/checks/topicalFocus.js';
 import { checkEvidenceDensity } from '../src/checks/evidenceDensity.js';
 import { checkFreshness } from '../src/checks/freshness.js';
 import { checkEntityEeat } from '../src/checks/entityEeat.js';
@@ -209,10 +210,59 @@ describe('checkAnswerReadiness', () => {
   });
 });
 
+describe('checkTopicalFocus', () => {
+  it('scores the good article at 100 (title, description, H1 agreement, topic echo, canonical, OG)', () => {
+    const r = checkTopicalFocus(makeCtx());
+    expect(r.score).toBe(100);
+    expect(r.weight).toBe(3);
+    expect(r.evidence.some((e) => e.status === 'pass' && e.message.includes('title and H1 agree'))).toBe(true);
+    expect(r.evidence.some((e) => e.status === 'pass' && e.message.includes('covers the stated topic'))).toBe(true);
+  });
+
+  it('scores a thin unfocused page low with metadata recommendations', () => {
+    const r = checkTopicalFocus(makeCtx({ target: makePage('https://example.com/guide', fixture('thin-page.html')) }));
+    expect(r.score).toBeLessThanOrEqual(20);
+    expect(r.recommendations.some((rec) => rec.action.includes('meta description'))).toBe(true);
+    expect(r.recommendations.some((rec) => rec.action.includes('Align the H1'))).toBe(true);
+  });
+
+  it('flags a title/H1 topic mismatch', () => {
+    const html =
+      '<html><head><title>Industrial Pump Maintenance Guide</title></head><body><main><h1>Our Company Blog</h1><p>Filler content that talks about many things in general terms without naming any single topic clearly across enough words to pass the floor.</p></main></body></html>';
+    const r = checkTopicalFocus(makeCtx({ target: makePage('https://example.com/guide', html) }));
+    expect(r.evidence.some((e) => e.status === 'fail' && e.message.includes('share no content words'))).toBe(true);
+  });
+
+  it('detects body drift from the stated topic', () => {
+    const html =
+      '<html><head><title>Solar Panel Installation Costs</title><meta name="description" content="What solar panel installation costs in 2026, itemized by system size and region."></head><body><main><h1>Solar Panel Installation Costs</h1><p>Our team has decades of combined experience and a passion for customer service. We pride ourselves on integrity, family values and community involvement across the region every single day.</p></main></body></html>';
+    const r = checkTopicalFocus(makeCtx({ target: makePage('https://example.com/guide', html) }));
+    expect(r.evidence.some((e) => e.status === 'fail' && e.message.includes('rarely mentions the topic'))).toBe(true);
+    expect(r.recommendations.some((rec) => rec.action.includes('substantively cover the topic'))).toBe(true);
+  });
+
+  it('on a no-content shell: still scores metadata but redirects the content rec to renderability', () => {
+    const r = checkTopicalFocus(makeCtx({ target: makePage('https://example.com/guide', fixture('spa-shell.html')) }));
+    expect(r.score).toBeLessThanOrEqual(20);
+    expect(r.recommendations.some((rec) => rec.action.includes('Renderability'))).toBe(true);
+  });
+
+  it('cites the 2026 research in recommendation whys', () => {
+    const r = checkTopicalFocus(makeCtx({ target: makePage('https://example.com/guide', fixture('thin-page.html')) }));
+    const whys = r.recommendations.map((rec) => rec.why).join(' ');
+    expect(whys).toContain('SIGIR 2026');
+  });
+
+  it('could not verify without HTML', () => {
+    expect(checkTopicalFocus(makeCtx({ target: null })).score).toBeNull();
+  });
+});
+
 describe('checkEvidenceDensity', () => {
-  it('scores stat/quote/citation-rich content highly', () => {
+  it('scores stat/quote/citation-rich content highly (weight recalibrated to medium in v1.3)', () => {
     const r = checkEvidenceDensity(makeCtx());
     expect(r.score).toBe(100);
+    expect(r.weight).toBe(2);
   });
 
   it('scores an unevidenced page at 0 and cites the GEO research numbers in recommendations', () => {
@@ -246,9 +296,10 @@ describe('checkEvidenceDensity', () => {
 });
 
 describe('checkFreshness', () => {
-  it('scores 100 for content updated within ~3 months (deterministic against fixed now)', () => {
+  it('scores 100 for content updated within ~3 months (weight recalibrated to high in v1.3)', () => {
     const r = checkFreshness(makeCtx(), NOW);
     expect(r.score).toBe(100);
+    expect(r.weight).toBe(3);
     expect(r.evidence.some((e) => e.message.includes('2026-06-20'))).toBe(true);
   });
 
@@ -261,7 +312,7 @@ describe('checkFreshness', () => {
   it('scores 30 with a recommendation when no dates exist anywhere', () => {
     const r = checkFreshness(makeCtx({ target: makePage('https://example.com/guide', fixture('thin-page.html')) }), NOW);
     expect(r.score).toBe(30);
-    expect(r.recommendations[0].why).toContain('roughly 3 months');
+    expect(r.recommendations[0].why).toContain('~3-month');
   });
 
   it('caps header-only freshness at 60 (deploy time is weak evidence)', () => {

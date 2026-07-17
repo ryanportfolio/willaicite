@@ -19,10 +19,15 @@ interface DatedSignal {
 }
 
 /**
- * Freshness. AI engines have a strong recency bias — citation likelihood
- * drops off sharply for content older than ~3 months — so visible, machine-
- * readable dates matter twice: once for the ranking bias, once so the engine
- * can tell the content is fresh at all.
+ * Freshness (weight: high, was medium in v1.2). Two independent 2025-2026
+ * studies moved this up: the 252,000-trial controlled study (Vishwakarma et
+ * al., SIGIR 2026) found a recent timestamp is one of the few content factors
+ * that consistently lifts citation odds across all six LLMs tested, and the
+ * GEO-16 field audit (Kumar & Palkhouski 2025) found metadata/freshness the
+ * pillar most strongly associated with real citations on Brave, Google AI
+ * Overviews and Perplexity. Visible, machine-readable dates matter twice:
+ * once for the recency preference, once so the engine can date the content
+ * at all.
  */
 export function checkFreshness(ctx: AuditContext, now: Date = new Date()): DimensionResult {
   const dim = 'Freshness';
@@ -90,17 +95,17 @@ export function checkFreshness(ctx: AuditContext, now: Date = new Date()): Dimen
 
   if (valid.length === 0) {
     if (html === null && !lastModified && !ctx.sitemap) {
-      return { key: 'freshness', name: dim, weight: 2, score: null, evidence, recommendations };
+      return { key: 'freshness', name: dim, weight: 3, score: null, evidence, recommendations };
     }
     evidence.push({ status: 'fail', message: 'no publish/updated dates found (no visible dates, no JSON-LD dates, no sitemap lastmod, no usable Last-Modified header)' });
     recommendations.push({
       dimension: dim,
       action: 'Add a visible "Last updated" date plus dateModified in JSON-LD, and lastmod in the sitemap',
-      why: 'AI engines have a strong recency bias; citation likelihood reportedly drops off sharply past roughly 3 months (a directional heuristic, not a hard cliff). Undated content cannot demonstrate freshness at all, so it defaults to looking stale.',
+      why: 'A recent, machine-readable date is one of the few content factors that consistently lifted citation odds across all six LLMs in the 252,000-trial SIGIR 2026 study (Vishwakarma et al.); the ~3-month drop-off remains a directional heuristic, not a hard cliff. Undated content cannot demonstrate freshness at all, so it defaults to looking stale.',
       impact: 2,
       effort: 1,
     });
-    return { key: 'freshness', name: dim, weight: 2, score: 30, evidence, recommendations };
+    return { key: 'freshness', name: dim, weight: 3, score: 30, evidence, recommendations };
   }
 
   const newest = valid.reduce((a, b) => (a.date.getTime() >= b.date.getTime() ? a : b));
@@ -147,13 +152,13 @@ export function checkFreshness(ctx: AuditContext, now: Date = new Date()): Dimen
     recommendations.push({
       dimension: dim,
       action: 'Refresh the content and bump the visible + structured dateModified honestly (real edits, not date-only bumps)',
-      why: 'AI engines have a strong recency bias; citation likelihood reportedly drops off sharply past roughly 3 months (directional heuristic). Genuine updates restore eligibility; date-only bumps risk trust penalties when the content contradicts the claimed date.',
+      why: 'Recent timestamps consistently lifted citation odds in controlled 2026 testing (Vishwakarma et al., SIGIR 2026); the ~3-month drop-off is a directional heuristic. Genuine updates restore eligibility; date-only bumps risk trust penalties when the content contradicts the claimed date.',
       impact: 2,
       effort: 2,
     });
   }
 
-  return { key: 'freshness', name: dim, weight: 2, score, evidence, recommendations };
+  return { key: 'freshness', name: dim, weight: 3, score, evidence, recommendations };
 }
 
 function parseDate(raw: string): Date | null {
