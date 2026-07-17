@@ -48,14 +48,14 @@
 .hero-copy {
   position: relative; z-index: 2; height: 100%;
   display: flex; flex-direction: column; justify-content: center;
-  padding: 0 var(--s-4); max-width: 1200px; margin: 0 auto;
+  padding: 7rem var(--s-4) 4.5rem; max-width: 70rem; margin: 0 auto;
   pointer-events: none;
 }
 .hero-copy > * { pointer-events: auto; width: fit-content; }
-.hero-kicker { color: var(--accent-deep); margin-bottom: var(--s-3); }
+.hero-kicker { color: var(--accent-deep); margin-bottom: var(--s-2); }
 .hero h1 {
   font-family: var(--font-display);
-  font-size: clamp(3rem, 8.5vw, var(--text-4xl));
+  font-size: clamp(2.6rem, 7vw, 4.1rem);
   line-height: 1.02; letter-spacing: 0.005em;
   max-width: 12ch;
 }
@@ -70,9 +70,9 @@
 @keyframes fadein { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .hero .dek {
   font-size: var(--text-md); font-style: italic; color: var(--ink-soft);
-  max-width: 44ch; margin-top: var(--s-3);
+  max-width: 44ch; margin-top: var(--s-2);
 }
-.hero-ctas { display: flex; gap: var(--s-3); margin-top: var(--s-6); }
+.hero-ctas { display: flex; gap: var(--s-3); margin-top: var(--s-4); }
 .btn {
   font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-caps); text-transform: uppercase;
   text-decoration: none; padding: 12px 22px; border: 1px solid var(--accent-deep); color: var(--accent-deep);
@@ -82,20 +82,20 @@
 .btn.solid { background: var(--accent-deep); color: var(--paper); }
 .btn:hover { background: var(--accent); color: var(--paper); border-color: var(--accent); }
 .corner { position: absolute; z-index: 2; font-family: var(--font-mono); font-size: var(--text-2xs); letter-spacing: var(--tracking-caps); text-transform: uppercase; color: var(--ink-mute); }
-.corner.tl { top: 76px; left: var(--s-4); } .corner.tr { top: 76px; right: var(--s-4); text-align: right; }
+.corner.tl { top: 4.5rem; left: var(--s-4); } .corner.tr { top: 4.5rem; right: var(--s-4); text-align: right; }
 .corner.bl { bottom: var(--s-3); left: var(--s-4); } .corner.br { bottom: var(--s-3); right: var(--s-4); text-align: right; }
 .corner .v { color: var(--accent-deep); }
 .hero-scroll { position: absolute; bottom: var(--s-3); left: 50%; transform: translateX(-50%); z-index: 2; color: var(--ink-mute); font-family: var(--font-mono); font-size: var(--text-2xs); letter-spacing: var(--tracking-caps); animation: bob 2.6s var(--ease) infinite; }
 @keyframes bob { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, 6px); } }
 
 /* ---------------- sections ---------------- */
-section { max-width: 1200px; margin: 0 auto; padding: var(--s-12) var(--s-4); }
+section { max-width: 70rem; margin: 0 auto; padding: var(--s-12) var(--s-4); }
 .sec-head { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid var(--ink); padding-bottom: var(--s-2); margin-bottom: 0; }
 .sec-head h2 { font-family: var(--font-display); font-size: var(--text-2xl); }
 .sec-head .mono-label { color: var(--ink-mute); }
 
 /* tracks ledger */
-.track { display: grid; grid-template-columns: 90px 1.2fr 1.6fr 340px; gap: var(--s-3); align-items: start; padding: var(--s-4) 0; border-bottom: 1px solid var(--line); transition: background var(--dur) var(--ease); position: relative; }
+.track { display: grid; grid-template-columns: 5.3rem 1.2fr 1.6fr 20rem; gap: var(--s-3); align-items: start; padding: var(--s-4) 0; border-bottom: 1px solid var(--line); transition: background var(--dur) var(--ease); position: relative; }
 .track:hover { background: var(--accent-wash); }
 .track .num { font-family: var(--font-display); font-size: var(--text-xl); color: var(--accent-deep); }
 .track h3 { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 400; }
@@ -109,7 +109,7 @@ section { max-width: 1200px; margin: 0 auto; padding: var(--s-12) var(--s-4); }
 
 /* latest charted — catalog cards on a hairline grid */
 .charted { display: grid; grid-template-columns: repeat(3, 1fr); border-left: 1px solid var(--line); border-top: 1px solid var(--line); margin-top: 0; }
-.entry { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: var(--s-4); position: relative; transition: background var(--dur) var(--ease); min-height: 240px; display: flex; flex-direction: column; }
+.entry { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: var(--s-4); position: relative; transition: background var(--dur) var(--ease); min-height: 14rem; display: flex; flex-direction: column; }
 .entry:hover { background: var(--accent-wash); }
 .entry .mono-label { margin-bottom: var(--s-2); }
 .entry h3 { font-family: var(--font-display); font-size: var(--text-md); font-weight: 400; line-height: 1.15; margin-bottom: var(--s-2); }
@@ -125,7 +125,7 @@ section { max-width: 1200px; margin: 0 auto; padding: var(--s-12) var(--s-4); }
 
 /* enrolment — the one dark-inverted band (flips in night theme too) */
 .enrol { background: var(--ink); color: var(--paper); max-width: none; padding: var(--s-12) var(--s-4); position: relative; overflow: hidden; }
-.enrol-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--s-8); align-items: center; }
+.enrol-inner { max-width: 70rem; margin: 0 auto; display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--s-8); align-items: center; }
 .enrol h2 { font-family: var(--font-display); font-size: var(--text-2xl); margin-bottom: var(--s-3); }
 .enrol p { color: color-mix(in srgb, var(--paper) 75%, transparent); max-width: 50ch; }
 .enrol .mono-label { color: color-mix(in srgb, var(--paper) 55%, transparent); }
@@ -170,7 +170,7 @@ footer a { color: var(--ink-soft); }
 <div class="hero">
   <canvas id="sky" aria-label="An interactive star chart of the curriculum: each star is a guide, each line a prerequisite"></canvas>
   <div class="graticule"></div>
-  <p class="corner tl">Observatory open<br><span class="v">Admission free · tuition is attention</span></p>
+  <p class="corner tl">Observatory open<br><span class="v">Admission always free</span></p>
   <p class="corner tr">Stars <span class="v" data-star-count>—</span> · Links <span class="v" data-link-count>—</span><br>Sky — drifting</p>
   <p class="corner bl">Vol. I — MMXXVI<br><span class="v">Sapere aude</span></p>
   <p class="corner br">Cursor is a lantern<br><span class="v">Bring it near the stars</span></p>
@@ -285,7 +285,7 @@ footer a { color: var(--ink-soft); }
     <div class="reveal">
       <p class="mono-label">Enrolment · rolling admission</p>
       <h2>The observatory never closes.</h2>
-      <p>No accounts, no fees, no forms. Walk in, pick a constellation, and start connecting stars. The only tuition is attention, payable nightly.</p>
+      <p>No accounts, no fees, no forms. Walk in, pick a constellation, and start connecting stars. The doors were never locked to begin with.</p>
       <p style="margin-top: var(--s-4)"><a class="btn" href="#tracks">Begin with first light</a></p>
     </div>
     <svg class="stamp reveal" width="230" height="230" viewBox="0 0 230 230" aria-hidden="true">
