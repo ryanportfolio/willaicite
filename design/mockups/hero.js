@@ -276,11 +276,22 @@ function updateLantern(dt) {
   pairs.sort((p, q) => p[0] - q[0]);
   const degree = new Map();
   const wanted = new Set();
-  for (const [, a, b] of pairs) {
-    if ((degree.get(a) ?? 0) >= 3 || (degree.get(b) ?? 0) >= 3) continue;
-    wanted.add(a < b ? `${a}_${b}` : `${b}_${a}`);
+  const claim = (a, b, key) => {
+    wanted.add(key);
     degree.set(a, (degree.get(a) ?? 0) + 1);
     degree.set(b, (degree.get(b) ?? 0) + 1);
+  };
+  // living strands keep their claim first — otherwise the greedy re-selection
+  // flips a strand's fate frame to frame while the lantern moves, and it flickers
+  for (const [key, edge] of edgeLife) {
+    if (edge.s > 0.04 && aLantern[edge.a] > 0.16 && aLantern[edge.b] > 0.16) claim(edge.a, edge.b, key);
+  }
+  // new strands only fill the remaining degree budget
+  for (const [, a, b] of pairs) {
+    const key = a < b ? `${a}_${b}` : `${b}_${a}`;
+    if (wanted.has(key)) continue;
+    if ((degree.get(a) ?? 0) >= 3 || (degree.get(b) ?? 0) >= 3) continue;
+    claim(a, b, key);
   }
   for (const key of wanted) {
     if (!edgeLife.has(key) && edgeLife.size < MAX_LANTERN_EDGES) {
