@@ -208,17 +208,35 @@ new MutationObserver(readTheme).observe(document.documentElement, { attributes: 
 const raycaster = new THREE.Raycaster();
 const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 const mouseNdc = new THREE.Vector2(10, 10); // offscreen until first move
-const lantern = new THREE.Vector3(999, 999, 0);
-const lanternTarget = new THREE.Vector3(999, 999, 0); // mutated in place, never reassigned
+const lantern = new THREE.Vector3(6.5, 3.2, 0); // enters from just beyond the sky's edge
+const lanternTarget = new THREE.Vector3(6.5, 3.2, 0); // mutated in place, never reassigned
+
+// With no visitor, the lantern keeps its own rounds: it wanders from
+// constellation to constellation, lacing webs as it goes.
+let pointerActive = false;
+const wander = { wp: new THREE.Vector3(), idx: -1 };
+function pickWaypoint() {
+  let next;
+  do { next = Math.floor(Math.random() * TRACKS.length); } while (next === wander.idx);
+  wander.idx = next;
+  const t = TRACKS[next];
+  wander.wp.set(
+    t.cx + (Math.random() - 0.5) * t.spread * 0.8,
+    t.cy + (Math.random() - 0.5) * t.spread * 0.5,
+    0,
+  );
+}
+pickWaypoint();
 
 canvas.parentElement.addEventListener('pointermove', (e) => {
+  pointerActive = true;
   const r = canvas.getBoundingClientRect();
   mouseNdc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   raycaster.setFromCamera(mouseNdc, camera);
   const hit = new THREE.Vector3();
   if (raycaster.ray.intersectPlane(plane, hit)) lanternTarget.copy(sky.worldToLocal(hit));
 });
-canvas.parentElement.addEventListener('pointerleave', () => { lanternTarget.set(999, 999, 0); });
+canvas.parentElement.addEventListener('pointerleave', () => { pointerActive = false; });
 
 const LANTERN_R = 1.6;
 const smooth = (t) => t * t * (3 - 2 * t); // smoothstep 0..1
@@ -226,7 +244,12 @@ const smooth = (t) => t * t * (3 - 2 * t); // smoothstep 0..1
 // fraction of remaining distance covered per second, applied as 1-e^(-k*dt)
 const ease = (k, dt) => 1 - Math.exp(-k * dt);
 function updateLantern(dt) {
-  lantern.lerp(lanternTarget, ease(5.5, dt)); // the light drifts, it doesn't snap
+  if (!pointerActive) {
+    // unattended: glide toward the current waypoint, then choose the next room
+    lanternTarget.lerp(wander.wp, ease(0.5, dt));
+    if (lanternTarget.distanceTo(wander.wp) < 0.35) pickWaypoint();
+  }
+  lantern.lerp(lanternTarget, ease(pointerActive ? 5.5 : 2.2, dt)); // the light drifts, it doesn't snap
   const near = [];
   for (let i = 0; i < N; i++) {
     const dx = starPos[i * 3] - lantern.x, dy = starPos[i * 3 + 1] - lantern.y;
