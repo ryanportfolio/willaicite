@@ -113,10 +113,12 @@ const schema = {
         Search engines rank you in a list of links; answer engines quote you.
         willaicite measures whether they can.
       </p>
-      <div class="cta-row">
-        <a class="cta" href="/app">Audit your site</a>
-        <span class="fineprint">free &middot; deterministic &middot; same input, same score</span>
-      </div>
+      <form class="run" action="/app" method="get">
+        <label class="visually-hidden" for="url">Your page URL</label>
+        <input id="url" name="url" type="text" placeholder="yoursite.com/your-best-page" autocomplete="off" spellcheck="false" />
+        <button type="submit">Audit</button>
+      </form>
+      <p class="fineprint">free &middot; deterministic &middot; same input, same score &middot; results in about 30 seconds</p>
 
       <figure class="answerfig">
         <figcaption>Fig. 1 · the outcome under audit: a verbatim quote, with attribution, inside someone else&rsquo;s answer.</figcaption>
@@ -330,7 +332,32 @@ const schema = {
   }
   .hero h1 em { font-style: italic; color: var(--accent); }
   .hero .sub { margin-top: 22px; max-width: 62ch; color: var(--ink-soft); font-size: 17px; }
-  .cta-row { margin-top: 34px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+
+  /* the audit form IS the primary CTA: oversized, one vermilion button */
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .hero form.run {
+    margin-top: 36px; display: flex; gap: 0; max-width: 680px;
+    border: 2px solid var(--ink); background: var(--paper-raised);
+  }
+  .hero form.run input {
+    flex: 1; min-width: 0; border: 0; outline: none; background: transparent;
+    font-family: var(--mono); font-size: 17px; color: var(--ink);
+    padding: 21px 20px;
+  }
+  .hero form.run input::placeholder { color: var(--ink-faint); }
+  .hero form.run input:focus-visible { outline: none; }
+  .hero form.run:focus-within { border-color: var(--accent); }
+  .hero form.run button {
+    border: 0; cursor: pointer; background: var(--accent); color: #fbf8f1;
+    font-family: var(--mono); font-size: 16px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0 40px; transition: background 0.15s ease;
+  }
+  .hero form.run button:hover { background: var(--ink); }
+  .hero .fineprint { margin-top: 14px; }
 
   /* answer figure */
   .answerfig { margin-top: 56px; }

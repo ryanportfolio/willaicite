@@ -103,6 +103,15 @@ export function createAuditServer(opts: ServerOptions = {}): Server {
   return createServer(async (req: IncomingMessage, res: ServerResponse) => {
     const url = new URL(req.url ?? '/', 'http://localhost');
 
+    // Canonical host: www serves a valid cert via its own domain attachment,
+    // then 301s to the apex so one origin carries all the SEO signals.
+    const host = (req.headers.host ?? '').toLowerCase();
+    if (host.startsWith('www.')) {
+      res.writeHead(301, { location: `https://${host.slice(4)}${req.url ?? '/'}` });
+      res.end();
+      return;
+    }
+
     // The audit app: at /app when the landing occupies '/', and also at '/'
     // when there is no landing build (local CLI, tests).
     const appPaths = ['/app', '/app/', '/app/index.html'];
