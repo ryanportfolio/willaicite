@@ -1,0 +1,12 @@
+# willaicite
+
+> willaicite is a free, deterministic audit that scores whether AI answer engines (ChatGPT, Perplexity, Google AI Overviews, Claude) can retrieve a web page, extract it without executing JavaScript, and cite it in a synthesized answer. No LLM calls; same input, same score.
+
+## Pages
+
+- [Home](https://willaicite.com/): what the audit tests and why SEO tooling misses it — WAF/CDN bot blocking, no-JavaScript extraction, the outbound-citation inversion, per-engine crawler verdicts, liftable answers.
+- [About](https://willaicite.com/about): who runs willaicite, how the audit works, evidence basis and contact.
+
+## Evidence basis
+
+- Aggarwal et al., "GEO: Generative Engine Optimization", KDD 2024: https://arxiv.org/abs/2311.09735

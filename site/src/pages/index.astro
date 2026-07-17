@@ -1,7 +1,13 @@
 ---
-// willaicite landing page — static, self-contained, zero external resources.
-// Visual language shared with the audit app (public/index.html in the tool repo):
-// warm paper, warm ink, one vermilion accent, serif display + mono data.
+// willaicite landing page — static, self-contained, zero external resources
+// at render time. Visual language shared with the audit app (public/index.html
+// in the tool repo): warm paper, warm ink, one vermilion accent, serif display
+// + mono data. External links below are citations; each was verified live.
+import Base, { UPDATED_ISO } from '../layouts/Base.astro';
+
+const TITLE = 'willaicite — SEO gets you listed. GEO gets you quoted.';
+const DESCRIPTION =
+  'willaicite is a free, deterministic audit that scores whether AI answer engines — ChatGPT, Perplexity, Google AI Overviews and Claude — can retrieve your page, extract it without JavaScript, and cite it. No LLM calls, no fabricated numbers.';
 
 const dimensions = [
   { name: 'AI crawler access', weight: 'high', note: 'Can the engines that cite pages fetch this one at all — per crawler token, robots.txt and firewall both.' },
@@ -12,31 +18,100 @@ const dimensions = [
   { name: 'Freshness', weight: 'medium', note: 'Visible and machine-readable dates; engines discount the undatable.' },
   { name: 'Entity & E-E-A-T', weight: 'medium', note: 'A nameable author, organization and provenance an engine can attribute.' },
 ];
+
+// FAQ is single-sourced: this array renders the visible section AND the
+// FAQPage JSON-LD, so the markup can never disagree with the page.
+const faqs = [
+  {
+    q: 'How is GEO different from SEO?',
+    a: 'SEO answers the question “where do we rank in the list of links?” GEO answers the question “does the synthesized answer quote us?” The two overlap less than you would hope: an answer engine must fetch your page with its own crawler, extract it without running JavaScript, and find a passage worth quoting verbatim — three steps no ranking audit tests.',
+  },
+  {
+    q: 'Does blocking GPTBot stop ChatGPT from citing my page?',
+    a: 'No. GPTBot is OpenAI’s training crawler; retrieval for ChatGPT search runs through OAI-SearchBot and ChatGPT-User. Blocking GPTBot is a legitimate policy choice about model training. Blocking OAI-SearchBot removes you from ChatGPT’s citations entirely. willaicite reports each token separately so you can tell the two decisions apart.',
+  },
+  {
+    q: 'Why does my JavaScript-rendered site score low?',
+    a: 'AI crawlers read the raw HTML your server sends and do not execute JavaScript. If your content only exists after a framework boots in the browser, those crawlers see an empty shell. Server-render or prerender everything you want an engine to be able to quote.',
+  },
+  {
+    q: 'How fresh does my content need to be?',
+    a: 'Answer engines cite pages updated within the last 90 days far more readily; reported citation likelihood drops off sharply past roughly 3 months. Keep a visible and machine-readable date, and bump it only with genuine edits — willaicite reads both and flags undatable pages.',
+  },
+  {
+    q: 'What does an audit cost, and what happens to my data?',
+    a: 'Nothing — willaicite is free. An audit fetches at most ten URLs from your site, politely, and typically finishes in under 30 seconds. It is deterministic: no LLM calls, no sampling, and the same input produces the same score.',
+  },
+];
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://willaicite.com/#org',
+      name: 'willaicite',
+      url: 'https://willaicite.com/',
+      logo: 'https://willaicite.com/favicon.svg',
+      sameAs: ['https://github.com/ryanportfolio'],
+    },
+    {
+      '@type': 'Person',
+      '@id': 'https://willaicite.com/#ryan',
+      name: 'Ryan',
+      url: 'https://github.com/ryanportfolio',
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://willaicite.com/#site',
+      name: 'willaicite',
+      url: 'https://willaicite.com/',
+      publisher: { '@id': 'https://willaicite.com/#org' },
+    },
+    {
+      '@type': 'TechArticle',
+      '@id': 'https://willaicite.com/#article',
+      headline: 'SEO gets you listed. GEO gets you quoted.',
+      description: DESCRIPTION,
+      author: { '@id': 'https://willaicite.com/#ryan' },
+      publisher: { '@id': 'https://willaicite.com/#org' },
+      datePublished: UPDATED_ISO,
+      dateModified: UPDATED_ISO,
+      mainEntityOfPage: 'https://willaicite.com/',
+    },
+    {
+      '@type': 'FAQPage',
+      '@id': 'https://willaicite.com/#faq',
+      mainEntity: faqs.map((f) => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': 'https://willaicite.com/#crumbs',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'willaicite', item: 'https://willaicite.com/' },
+        { '@type': 'ListItem', position: 2, name: 'About', item: 'https://willaicite.com/about' },
+      ],
+    },
+  ],
+};
 ---
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="willaicite audits whether AI answer engines — ChatGPT, Perplexity, Google AI Overviews, Claude — can fetch, extract and cite your page. Deterministic, evidence-based, no fabricated numbers." />
-  <title>willaicite — SEO gets you listed. GEO gets you quoted.</title>
-</head>
-<body>
+<Base title={TITLE} description={DESCRIPTION} canonical="https://willaicite.com/" schema={schema}>
 
-<div class="sheet">
-  <header class="masthead">
-    <div class="wordmark">will<span class="ai">ai</span>cite</div>
-    <div class="masthead-meta">generative engine optimization &middot; field notes</div>
-  </header>
-
-  <main>
+<main>
+  <div class="sheet">
     <!-- ================= hero ================= -->
     <section class="hero" aria-labelledby="hero-h">
       <h1 id="hero-h">SEO gets you listed.<br /><em>GEO gets you quoted.</em></h1>
       <p class="sub">
-        Search engines rank your page in a list of links. Answer engines — ChatGPT, Perplexity,
-        Google AI Overviews, Claude — fetch it, read whatever survives without your JavaScript,
-        and quote the best-evidenced passage inside a synthesized answer.
-        willaicite audits whether your page survives that pipeline.
+        willaicite is a free, deterministic audit that scores whether AI answer engines —
+        ChatGPT, Perplexity, Google AI Overviews and Claude — can retrieve your page, extract
+        it without running your JavaScript, and quote it inside a synthesized answer.
+        Search engines rank you in a list of links; answer engines quote you.
+        willaicite measures whether they can.
       </p>
       <div class="cta-row">
         <a class="cta" href="https://willaicite.com">Audit your site</a>
@@ -59,7 +134,7 @@ const dimensions = [
 
     <!-- ================= five differentiators ================= -->
     <section aria-labelledby="miss-h">
-      <div class="report-rule"><span id="miss-h">What your SEO tool doesn&rsquo;t test</span></div>
+      <div class="report-rule"><h2 class="rulelabel" id="miss-h">What your SEO tool doesn&rsquo;t test</h2></div>
       <p class="section-intro">
         SEO tooling audits the path to a ranking. willaicite audits the path to a citation.
         Five places the two roads split.
@@ -67,13 +142,14 @@ const dimensions = [
 
       <ol class="diffs">
         <li>
-          <h2>The block robots.txt won&rsquo;t admit to</h2>
+          <h3>The block robots.txt won&rsquo;t admit to</h3>
           <p>
             willaicite fetches your page twice — once as an ordinary browser, once wearing an
             AI crawler&rsquo;s user agent — and compares what comes back. A CDN firewall rule like
-            Cloudflare&rsquo;s &ldquo;Block AI bots&rdquo; returns 403 to the real crawler while robots.txt
-            keeps saying <em>allowed</em>. SEO crawlers never walk the AI-bot path, so they report
-            clean while the engine silently drops your page.
+            Cloudflare&rsquo;s <a class="body-link" href="https://blog.cloudflare.com/declaring-your-aindependence-block-ai-bots-scrapers-and-crawlers-with-a-single-click/">one-click &ldquo;block AI bots&rdquo; toggle</a>
+            returns 403 to the real crawler while robots.txt keeps saying <em>allowed</em>.
+            SEO crawlers never walk the AI-bot path, so they report clean while the engine
+            silently drops your page.
           </p>
           <figure class="minifig">
             <table class="ledger">
@@ -87,13 +163,14 @@ const dimensions = [
         </li>
 
         <li>
-          <h2>The single-page app nobody&rsquo;s reading</h2>
+          <h3>The single-page app nobody&rsquo;s reading</h3>
           <p>
-            Googlebot executes JavaScript; so does Lighthouse. GPTBot, ClaudeBot and PerplexityBot
-            do not — they see whatever the server sends and nothing more. A client-rendered page
-            audits perfectly and arrives at the answer engine as an empty shell. willaicite scores
-            how much of your content survives in the raw HTML, from the exact no-JavaScript vantage
-            those crawlers have.
+            <a class="body-link" href="https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics">Googlebot renders JavaScript</a>;
+            so does Lighthouse. GPTBot, ClaudeBot and PerplexityBot do not — they see whatever
+            the server sends and nothing more. A client-rendered page audits perfectly and
+            arrives at the answer engine as an empty shell. willaicite scores how much of your
+            content survives in the raw HTML, from the exact no-JavaScript vantage those
+            crawlers have.
           </p>
           <figure class="minifig split">
             <div class="pane">
@@ -112,12 +189,14 @@ const dimensions = [
         </li>
 
         <li>
-          <h2>The outbound-citation inversion</h2>
+          <h3>The outbound-citation inversion</h3>
           <p>
             Classic SEO folklore says external links leak PageRank, so pages hoard authority and
-            cite no one. The GEO study measured the opposite effect on AI visibility: pages that
-            cite sources, quote experts and carry statistics get retrieved and quoted more.
-            Optimizing for the ranking can quietly cost you the quote.
+            cite no one. The <a class="body-link" href="https://arxiv.org/abs/2311.09735">GEO study</a>
+            (Aggarwal et&nbsp;al., KDD&nbsp;2024) measured the opposite effect on AI visibility:
+            citing sources lifted it 24.9 percent, statistics 25.9 percent, and quotations
+            27.8 percent. One benchmark, directional rather than guaranteed — but it means
+            optimizing for the ranking can quietly cost you the quote.
           </p>
           <figure class="minifig">
             <div class="stats">
@@ -130,7 +209,7 @@ const dimensions = [
         </li>
 
         <li>
-          <h2>A verdict per engine, weighed by what it costs you</h2>
+          <h3>A verdict per engine, weighed by what it costs you</h3>
           <p>
             &ldquo;Is Googlebot allowed&rdquo; is one question. willaicite asks it for a roster of AI crawler
             tokens and separates <em>retrieval</em> crawlers — where a block means that engine can never
@@ -140,9 +219,9 @@ const dimensions = [
           <figure class="minifig">
             <table class="ledger roster">
               <tbody>
-                <tr><td class="k">OAI-SearchBot</td><td class="tier hot">retrieval</td><td class="c">blocked &rarr; ChatGPT can never cite you</td></tr>
-                <tr><td class="k">Claude-SearchBot</td><td class="tier hot">retrieval</td><td class="c">blocked &rarr; Claude can never cite you</td></tr>
-                <tr><td class="k">PerplexityBot</td><td class="tier hot">retrieval</td><td class="c">blocked &rarr; Perplexity can never cite you</td></tr>
+                <tr><td class="k"><a href="https://developers.openai.com/api/docs/bots">OAI-SearchBot</a></td><td class="tier hot">retrieval</td><td class="c">blocked &rarr; ChatGPT can never cite you</td></tr>
+                <tr><td class="k"><a href="https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler">Claude-SearchBot</a></td><td class="tier hot">retrieval</td><td class="c">blocked &rarr; Claude can never cite you</td></tr>
+                <tr><td class="k"><a href="https://docs.perplexity.ai/guides/bots">PerplexityBot</a></td><td class="tier hot">retrieval</td><td class="c">blocked &rarr; Perplexity can never cite you</td></tr>
                 <tr><td class="k">GPTBot &middot; ClaudeBot &middot; CCBot</td><td class="tier">training</td><td class="c">blocking is a policy choice, not a citation bug</td></tr>
               </tbody>
             </table>
@@ -150,12 +229,14 @@ const dimensions = [
         </li>
 
         <li>
-          <h2>Is there a liftable answer?</h2>
+          <h3>Is there a liftable answer?</h3>
           <p>
             Engines quote a chunk, verbatim. willaicite checks whether one exists: a self-contained
-            answer near the top of the page (&ldquo;X is&nbsp;&hellip;&rdquo;), headings phrased as the questions
-            people actually ask, an FAQ ready to be lifted whole. A page can rank first for a query
-            and still contain nothing an engine can quote.
+            answer near the top of the page, headings phrased as the questions people actually ask,
+            an FAQ ready to be lifted whole. A page that opens with a sentence like
+            <q>willaicite is a free audit that scores citation readiness</q> hands the engine its
+            quote; a page that opens with a hero animation hands it nothing. You can rank first
+            for a query and still contain nothing an engine can use.
           </p>
           <figure class="minifig">
             <ul class="checks">
@@ -170,7 +251,7 @@ const dimensions = [
 
     <!-- ================= seven dimensions ================= -->
     <section aria-labelledby="dims-h">
-      <div class="report-rule"><span id="dims-h">The seven dimensions</span></div>
+      <div class="report-rule"><h2 class="rulelabel" id="dims-h">The seven dimensions</h2></div>
       <p class="section-intro">
         Every audit scores the same seven dimensions, weighted by how often each one decides
         whether a citation happens.
@@ -186,30 +267,36 @@ const dimensions = [
         ))}
       </ol>
     </section>
-  </main>
-</div>
 
-<!-- ================= method band (full bleed, inverted) ================= -->
-<section class="band" aria-labelledby="method-h">
-  <div class="band-inner">
-    <div class="band-rule"><span id="method-h">Method</span></div>
-    <h2>Scored like a ledger,<br />not a horoscope.</h2>
-    <p>
-      willaicite is deterministic. No LLM calls, no sampling, no drift — the same input produces
-      the same score, and every point is tied to evidence you can check. When something cannot be
-      observed, the report says <em>could not verify</em> instead of inventing a number. It fetches
-      at most ten URLs, politely, and respects robots.txt — while telling you what robots.txt won&rsquo;t.
-    </p>
-    <a class="cta inverted" href="https://willaicite.com">Audit your site — willaicite.com</a>
+    <!-- ================= FAQ ================= -->
+    <section aria-labelledby="faq-h">
+      <div class="report-rule"><h2 class="rulelabel" id="faq-h">Frequently asked questions</h2></div>
+      <div class="faq">
+        {faqs.map((f) => (
+          <div class="faq-item">
+            <h3>{f.q}</h3>
+            <p>{f.a}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   </div>
-</section>
 
-<div class="sheet">
-  <footer class="colophon">
-    <span>willaicite &middot; generative engine optimization</span>
-    <span>evidence basis: Aggarwal et&nbsp;al., KDD&nbsp;2024</span>
-  </footer>
-</div>
+  <!-- ================= method band (full bleed, inverted) ================= -->
+  <section class="band" aria-labelledby="method-h">
+    <div class="band-inner">
+      <div class="band-rule"><h2 class="rulelabel" id="method-h">Method</h2></div>
+      <p class="band-head">Scored like a ledger,<br />not a horoscope.</p>
+      <p>
+        willaicite is deterministic. No LLM calls, no sampling, no drift — the same input produces
+        the same score, and every point is tied to evidence you can check. When something cannot be
+        observed, the report says <em>could not verify</em> instead of inventing a number. It fetches
+        at most ten URLs, politely, and respects robots.txt — while telling you what robots.txt won&rsquo;t.
+      </p>
+      <a class="cta inverted" href="https://willaicite.com">Audit your site — willaicite.com</a>
+    </div>
+  </section>
+</main>
 
 <script>
   // Grow the stat bars when they scroll into view. Motion stands down under
@@ -235,57 +322,6 @@ const dimensions = [
 </script>
 
 <style is:global>
-  :root {
-    --paper: #f4f0e6;
-    --paper-raised: #fbf8f1;
-    --ink: #1c1914;
-    --ink-soft: #4a443a;
-    --ink-faint: #8a8172;
-    --rule: #d8d0bd;
-    --accent: #cf3b1a;
-    --accent-soft: #f3ddd4;
-    --ok: #2c6e49;
-    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
-    --mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
-    --ease: cubic-bezier(0.22, 0.9, 0.35, 1);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --paper: #171511;
-      --paper-raised: #201d17;
-      --ink: #eae3d2;
-      --ink-soft: #b5ac97;
-      --ink-faint: #7d7563;
-      --rule: #383327;
-      --accent: #f05a35;
-      --accent-soft: #3a2018;
-      --ok: #6dbb8f;
-    }
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    background: var(--paper);
-    color: var(--ink);
-    font-family: var(--serif);
-    font-size: 17px;
-    line-height: 1.55;
-    background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(128,116,90,0.025) 3px, rgba(128,116,90,0.025) 4px);
-  }
-  .sheet { max-width: 880px; margin: 0 auto; padding: 0 28px; }
-  a { color: inherit; }
-  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-  /* ---------- masthead ---------- */
-  .masthead {
-    display: flex; align-items: baseline; justify-content: space-between;
-    padding: 22px 0 14px; border-bottom: 2px solid var(--ink);
-  }
-  .wordmark { font-family: var(--mono); font-size: 15px; font-weight: 600; letter-spacing: 0.04em; }
-  .wordmark .ai { color: var(--accent); }
-  .masthead-meta { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); letter-spacing: 0.06em; text-transform: uppercase; }
-
   /* ---------- hero ---------- */
   .hero { padding: 72px 0 24px; }
   .hero h1 {
@@ -293,16 +329,8 @@ const dimensions = [
     font-weight: 500; line-height: 1.06; letter-spacing: -0.015em;
   }
   .hero h1 em { font-style: italic; color: var(--accent); }
-  .hero .sub { margin-top: 22px; max-width: 60ch; color: var(--ink-soft); font-size: 17px; }
+  .hero .sub { margin-top: 22px; max-width: 62ch; color: var(--ink-soft); font-size: 17px; }
   .cta-row { margin-top: 34px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
-  .cta {
-    display: inline-block; background: var(--ink); color: var(--paper);
-    font-family: var(--mono); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;
-    text-decoration: none; padding: 14px 28px; border: 1.5px solid var(--ink);
-    transition: background 0.15s ease, color 0.15s ease;
-  }
-  .cta:hover { background: var(--accent); border-color: var(--accent); }
-  .fineprint { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); }
 
   /* answer figure */
   .answerfig { margin-top: 56px; }
@@ -322,14 +350,6 @@ const dimensions = [
   .answercard .marker { color: var(--accent); font-weight: 700; }
   .answercard .arrow { color: var(--ink-faint); font-style: italic; }
 
-  /* ---------- section chrome ---------- */
-  .report-rule { margin-top: 72px; border-top: 2px solid var(--ink); position: relative; }
-  .report-rule span {
-    position: absolute; top: -11px; left: 0; background: var(--paper); padding-right: 14px;
-    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft);
-  }
-  .section-intro { margin-top: 34px; max-width: 60ch; color: var(--ink-soft); }
-
   /* ---------- differentiators ---------- */
   .diffs { list-style: none; counter-reset: diff; margin-top: 12px; }
   .diffs > li {
@@ -342,9 +362,9 @@ const dimensions = [
     font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 700; padding-top: 7px;
   }
   .diffs > li:first-child { border-top: 0; margin-top: 28px; padding-top: 0; }
-  .diffs > li:first-child::before { padding-top: 7px; }
-  .diffs h2 { font-size: 24px; font-weight: 500; line-height: 1.25; letter-spacing: -0.01em; grid-column: 2; }
+  .diffs h3 { font-size: 24px; font-weight: 500; line-height: 1.25; letter-spacing: -0.01em; grid-column: 2; }
   .diffs p { grid-column: 2; margin-top: 12px; max-width: 66ch; color: var(--ink-soft); font-size: 16px; }
+  .diffs q { quotes: "“" "”"; font-style: italic; }
   .minifig { grid-column: 2; margin-top: 20px; }
   .minifig figcaption { margin-top: 10px; font-family: var(--mono); font-size: 11px; color: var(--ink-faint); max-width: 60ch; line-height: 1.6; }
 
@@ -353,6 +373,8 @@ const dimensions = [
   .ledger td { font-family: var(--mono); font-size: 12.5px; padding: 9px 14px; border-top: 1px solid var(--rule); vertical-align: baseline; }
   .ledger tr:first-child td { border-top: 0; }
   .ledger .k { color: var(--ink); white-space: nowrap; }
+  .ledger .k a { text-decoration-color: var(--rule); text-underline-offset: 3px; }
+  .ledger .k a:hover { color: var(--accent); }
   .ledger .ok { color: var(--ok); font-weight: 600; white-space: nowrap; }
   .ledger .bad { color: var(--accent); font-weight: 700; white-space: nowrap; }
   .ledger .c { color: var(--ink-faint); width: 55%; }
@@ -407,32 +429,31 @@ const dimensions = [
   .dimweight { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); }
   .dimnote { font-size: 14.5px; color: var(--ink-soft); }
 
+  /* ---------- FAQ ---------- */
+  .faq { margin-top: 14px; }
+  .faq-item { border-top: 1px solid var(--rule); margin-top: 26px; padding-top: 22px; }
+  .faq-item:first-child { border-top: 0; margin-top: 20px; }
+  .faq h3 { font-size: 20px; font-weight: 500; line-height: 1.3; letter-spacing: -0.01em; }
+  .faq p { margin-top: 10px; max-width: 66ch; color: var(--ink-soft); font-size: 16px; }
+
   /* ---------- method band ---------- */
   .band { margin-top: 88px; background: var(--ink); color: var(--paper); }
   .band-inner { max-width: 880px; margin: 0 auto; padding: 64px 28px 72px; }
   .band-rule { border-top: 2px solid var(--paper); position: relative; }
-  .band-rule span {
+  .band-rule .rulelabel {
     position: absolute; top: -11px; left: 0; background: var(--ink); padding-right: 14px;
-    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.75;
+    font-family: var(--mono); font-size: 11px; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: var(--paper); opacity: 0.75;
   }
-  .band h2 { margin-top: 44px; font-size: clamp(30px, 5vw, 44px); font-weight: 500; line-height: 1.1; letter-spacing: -0.01em; }
-  .band p { margin-top: 20px; max-width: 62ch; font-size: 16.5px; opacity: 0.85; }
+  .band-head { margin-top: 44px; font-size: clamp(30px, 5vw, 44px); font-weight: 500; line-height: 1.1; letter-spacing: -0.01em; }
+  .band p:not(.band-head) { margin-top: 20px; max-width: 62ch; font-size: 16.5px; opacity: 0.85; }
   .band p em { font-style: italic; }
   .band .cta.inverted {
     margin-top: 34px; background: var(--paper); color: var(--ink); border-color: var(--paper);
   }
-  .band .cta.inverted:hover { background: var(--accent); border-color: var(--accent); color: var(--paper); }
-
-  /* ---------- colophon ---------- */
-  .colophon {
-    margin-top: 0; padding: 20px 0 60px;
-    font-family: var(--mono); font-size: 11px; color: var(--ink-faint);
-    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
-  }
+  .band .cta.inverted:hover { background: var(--accent); border-color: var(--accent); color: #fbf8f1; }
 
   /* ---------- responsive ---------- */
   @media (max-width: 760px) {
-    .masthead-meta { display: none; }
     .hero { padding-top: 52px; }
     .diffs > li { grid-template-columns: 36px 1fr; }
     .split { grid-template-columns: 1fr; }
@@ -442,11 +463,8 @@ const dimensions = [
     .ledger .c { display: none; }
     .ledger td { white-space: normal; }
   }
-
   @media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; }
     .stat-bar i { transition: none; }
   }
 </style>
-</body>
-</html>
+</Base>

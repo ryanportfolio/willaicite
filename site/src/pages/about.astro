@@ -1,0 +1,97 @@
+---
+import Base, { UPDATED_ISO } from '../layouts/Base.astro';
+
+const TITLE = 'About — willaicite';
+const DESCRIPTION =
+  'Who runs willaicite and how the audit works: a deterministic, evidence-based score of whether AI answer engines can retrieve, extract and cite a page. No LLM calls, no fabricated numbers.';
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'AboutPage',
+      '@id': 'https://willaicite.com/about#page',
+      name: 'About willaicite',
+      url: 'https://willaicite.com/about',
+      description: DESCRIPTION,
+      dateModified: UPDATED_ISO,
+      about: { '@id': 'https://willaicite.com/#org' },
+    },
+    {
+      '@type': 'Organization',
+      '@id': 'https://willaicite.com/#org',
+      name: 'willaicite',
+      url: 'https://willaicite.com/',
+      logo: 'https://willaicite.com/favicon.svg',
+    },
+    {
+      '@type': 'Person',
+      '@id': 'https://willaicite.com/#ryan',
+      name: 'Ryan',
+      url: 'https://github.com/ryanportfolio',
+    },
+  ],
+};
+---
+<Base title={TITLE} description={DESCRIPTION} canonical="https://willaicite.com/about" schema={schema}>
+
+<main>
+  <div class="sheet">
+    <article class="aboutpage">
+      <h1>About willaicite</h1>
+
+      <p class="lede">
+        willaicite is a free audit that scores how ready a web page is to be retrieved and
+        cited by AI answer engines — ChatGPT, Perplexity, Google AI Overviews and Claude.
+        It is built and run by Ryan, an independent developer, as a working application of
+        the published GEO research.
+      </p>
+
+      <div class="report-rule"><h2 class="rulelabel">How the audit works</h2></div>
+      <p>
+        An audit fetches at most ten URLs from the target site — the page itself (twice: once
+        with a normal browser user agent, once with an AI crawler&rsquo;s), robots.txt, the sitemap,
+        an about page, favicon and llms.txt — then scores seven weighted dimensions: AI crawler
+        access, renderability, structured data, answer-readiness, evidence density, freshness,
+        and entity &amp; E-E-A-T.
+      </p>
+      <p>
+        The scoring is deterministic. There are no LLM calls and no sampling; the same input
+        produces the same score. Every point is tied to observable evidence — an HTTP status,
+        a robots.txt rule, a byte count of extractable text — and when a check cannot run, the
+        report says <em>could not verify</em> rather than inventing a number.
+      </p>
+
+      <div class="report-rule"><h2 class="rulelabel">Evidence basis</h2></div>
+      <p>
+        The dimension weights and recommendations follow the GEO research:
+        <a class="body-link" href="https://arxiv.org/abs/2311.09735">Aggarwal et&nbsp;al., &ldquo;GEO: Generative Engine Optimization&rdquo;, KDD&nbsp;2024</a>,
+        plus the engines&rsquo; own crawler documentation
+        (<a class="body-link" href="https://developers.openai.com/api/docs/bots">OpenAI</a>,
+        <a class="body-link" href="https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler">Anthropic</a>,
+        <a class="body-link" href="https://docs.perplexity.ai/guides/bots">Perplexity</a>).
+        Findings from single studies are presented as directional, never as guarantees.
+      </p>
+
+      <div class="report-rule"><h2 class="rulelabel">Privacy &amp; contact</h2></div>
+      <p>
+        An audit touches only the site you ask it to audit, politely, honoring robots.txt.
+        There are no trackers, no analytics scripts and no external resources on these pages.
+        Questions and corrections are welcome: <a class="body-link" href="mailto:hello@willaicite.com">hello@willaicite.com</a>.
+      </p>
+
+      <p class="backlink"><a class="cta" href="https://willaicite.com">Audit your site</a></p>
+    </article>
+  </div>
+</main>
+
+<style is:global>
+  .aboutpage { padding-top: 64px; }
+  .aboutpage h1 { font-size: clamp(32px, 5vw, 46px); font-weight: 500; line-height: 1.1; letter-spacing: -0.015em; }
+  .aboutpage .lede { margin-top: 20px; max-width: 62ch; font-size: 18px; color: var(--ink-soft); }
+  .aboutpage .report-rule { margin-top: 56px; }
+  .aboutpage p { margin-top: 28px; max-width: 66ch; color: var(--ink-soft); }
+  .aboutpage .report-rule + p { margin-top: 34px; }
+  .aboutpage .backlink { margin-top: 48px; padding-bottom: 24px; }
+</style>
+</Base>

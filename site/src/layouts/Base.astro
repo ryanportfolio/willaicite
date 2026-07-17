@@ -1,0 +1,151 @@
+---
+// Shared shell for the willaicite landing site: head metadata, masthead,
+// colophon, and the whole design system (shared with the audit app's UI).
+interface Props {
+  title: string;
+  description: string;
+  /** Absolute canonical URL of this page on the production origin. */
+  canonical: string;
+  /** JSON-LD graph for this page (rendered verbatim). */
+  schema?: object | null;
+}
+const { title, description, canonical, schema = null } = Astro.props;
+
+// Content date, shown in the masthead/colophon and mirrored in JSON-LD.
+export const UPDATED_ISO = '2026-07-17';
+export const UPDATED_HUMAN = 'July 17, 2026';
+---
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <meta name="author" content="Ryan" />
+  <link rel="canonical" href={canonical} />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <meta property="og:site_name" content="willaicite" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:image" content="https://willaicite.com/og.png" />
+  <meta property="article:modified_time" content={UPDATED_ISO} />
+  {schema && <script type="application/ld+json" set:html={JSON.stringify(schema)} />}
+</head>
+<body>
+
+<div class="sheet">
+  <header class="masthead">
+    <div class="wordmark"><a href="/">will<span class="ai">ai</span>cite</a></div>
+    <div class="masthead-meta">
+      generative engine optimization &middot; updated <time datetime={UPDATED_ISO}>{UPDATED_HUMAN}</time>
+    </div>
+  </header>
+</div>
+
+<slot />
+
+<div class="sheet">
+  <footer class="colophon">
+    <span>willaicite &middot; generative engine optimization &middot; made by Ryan</span>
+    <span>
+      <a href="/about">about</a> &middot;
+      <a href="mailto:hello@willaicite.com">contact</a> &middot;
+      evidence basis: <a href="https://arxiv.org/abs/2311.09735">Aggarwal et&nbsp;al., KDD&nbsp;2024</a> &middot;
+      updated <time datetime={UPDATED_ISO}>{UPDATED_HUMAN}</time>
+    </span>
+  </footer>
+</div>
+
+<style is:global>
+  :root {
+    --paper: #f4f0e6;
+    --paper-raised: #fbf8f1;
+    --ink: #1c1914;
+    --ink-soft: #4a443a;
+    --ink-faint: #8a8172;
+    --rule: #d8d0bd;
+    --accent: #cf3b1a;
+    --accent-soft: #f3ddd4;
+    --ok: #2c6e49;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+    --ease: cubic-bezier(0.22, 0.9, 0.35, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #171511;
+      --paper-raised: #201d17;
+      --ink: #eae3d2;
+      --ink-soft: #b5ac97;
+      --ink-faint: #7d7563;
+      --rule: #383327;
+      --accent: #f05a35;
+      --accent-soft: #3a2018;
+      --ok: #6dbb8f;
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.55;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(128,116,90,0.025) 3px, rgba(128,116,90,0.025) 4px);
+  }
+  .sheet { max-width: 880px; margin: 0 auto; padding: 0 28px; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------- masthead ---------- */
+  .masthead {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 22px 0 14px; border-bottom: 2px solid var(--ink);
+  }
+  .wordmark { font-family: var(--mono); font-size: 15px; font-weight: 600; letter-spacing: 0.04em; }
+  .wordmark a { text-decoration: none; }
+  .wordmark .ai { color: var(--accent); }
+  .masthead-meta { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); letter-spacing: 0.06em; text-transform: uppercase; }
+
+  /* ---------- section chrome ---------- */
+  .report-rule { margin-top: 72px; border-top: 2px solid var(--ink); position: relative; }
+  .report-rule .rulelabel {
+    position: absolute; top: -11px; left: 0; background: var(--paper); padding-right: 14px;
+    font-family: var(--mono); font-size: 11px; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  .section-intro { margin-top: 34px; max-width: 60ch; color: var(--ink-soft); }
+  .section-intro a, .body-link { color: var(--ink); text-decoration-color: var(--accent); text-underline-offset: 2px; }
+  .section-intro a:hover, .body-link:hover { color: var(--accent); }
+
+  /* ---------- CTA ---------- */
+  .cta {
+    display: inline-block; background: var(--ink); color: var(--paper);
+    font-family: var(--mono); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;
+    text-decoration: none; padding: 14px 28px; border: 1.5px solid var(--ink);
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .cta:hover { background: var(--accent); border-color: var(--accent); color: #fbf8f1; }
+  .fineprint { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); }
+
+  /* ---------- colophon ---------- */
+  .colophon {
+    padding: 20px 0 60px;
+    font-family: var(--mono); font-size: 11px; color: var(--ink-faint);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+  .colophon a { color: var(--ink-soft); }
+  .colophon a:hover { color: var(--accent); }
+
+  @media (max-width: 760px) {
+    .masthead-meta { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+</style>
+</body>
+</html>
