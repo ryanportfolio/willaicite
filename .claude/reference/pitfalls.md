@@ -12,3 +12,8 @@ Worktree changes are isolated. Before claiming a template change is available
 somewhere else, verify the exact branch or checkout the user asked about. Do not
 merge, pull into another checkout, or touch paths outside the current workspace
 unless the user explicitly asks in the current session.
+
+## Copy style (2026-07-17)
+
+Em dashes ("—") are banned in all prose and site copy, permanently. Restructure
+with a colon, comma, period, or parentheses instead.

@@ -87,10 +87,8 @@ const schema = {
     <article class="proof">
       <h1>Proof</h1>
       <p class="lede">
-        This page is the audit trail of willaicite scoring its own site: the baseline report,
-        the fixes it prescribed, and the reproducible result. The site you are reading was
-        optimized by the tool it sells, and every number below comes from logged runs on
-        July 17, 2026.
+        willaicite ran on its own site. Below: the baseline report, the fixes it
+        prescribed, and the result. Every number comes from logged runs on July 17, 2026.
       </p>
 
       <div class="report-rule"><h2 class="rulelabel">Where did the site start?</h2></div>
@@ -135,7 +133,7 @@ const schema = {
         research (v1.3): a new eighth dimension, topical focus &amp; metadata, weighs how
         legibly a page states one topic. Under it, this site re-scored <strong>97/100</strong>:
         the new dimension flagged the slogan-only H1 and a 238-character meta description.
-        Real findings, so we fixed them &mdash; the homepage now leads with the question it
+        Real findings, so we fixed them: the homepage now leads with the question it
         answers, and the description fits the band. The dogfood loop is the product, and it
         does not exempt us.
       </p>
@@ -144,11 +142,30 @@ const schema = {
       <p class="section-intro">
         The after column above is the v1.2 re-run, and its fix-first list is empty.
         Independent measures agree: <a class="body-link" href="https://github.com/GoogleChrome/lighthouse">Lighthouse</a>
-        scores the page 100 for accessibility, best practices, SEO, and agentic browsing, and
+        scores the page 100 for performance, accessibility, best practices, and SEO, and
         <a class="body-link" href="https://pagespeed.web.dev/">PageSpeed Insights</a> measured
-        first paint at 0.9 seconds with 0 ms of blocking time and zero layout shift
-        (mobile, July 17, 2026).
+        first paint at 1.0 seconds with 20 ms of blocking time and zero layout shift
+        (mobile, July 17, 2026). Because a claim like that belongs in the file, here is the
+        capture itself:
       </p>
+      <figure class="exhibit">
+        <span class="exhibit-tag">third-party capture</span>
+        <a class="exhibit-frame" href="https://pagespeed.web.dev/analysis/https-willaicite-com/uoe1yosh5o?form_factor=mobile">
+          <img
+            src="/pagespeed-2026-07-17.png"
+            alt="PageSpeed Insights mobile report for willaicite.com: 100 Performance, 100 Accessibility, 100 Best Practices, 100 SEO, and 3/3 Agentic Browsing, with first and largest contentful paint at 1.0 seconds, 20 ms total blocking time, and zero layout shift"
+            width="1060"
+            height="895"
+            loading="lazy"
+          />
+        </a>
+        <figcaption>
+          PageSpeed Insights, mobile, captured July 17, 2026 at 7:25&nbsp;PM EDT
+          (Lighthouse 13.4.0, emulated Moto&nbsp;G Power).
+          <a class="body-link" href="https://pagespeed.web.dev/analysis/https-willaicite-com/uoe1yosh5o?form_factor=mobile">The live report</a>
+          is one click away, and a fresh run is one paste away.
+        </figcaption>
+      </figure>
 
       <div class="report-rule"><h2 class="rulelabel">Proof FAQ</h2></div>
       <div class="faq">
@@ -201,6 +218,23 @@ const schema = {
   .proof .fixes { margin: 20px 0 0 22px; max-width: 66ch; color: var(--ink-soft); }
   .proof .fixes li { margin-top: 14px; font-size: 16px; }
   .proof .fixes strong { color: var(--ink); font-weight: 600; }
+  .proof .exhibit { margin: 30px 0 0; max-width: 680px; position: relative; }
+  .proof .exhibit-tag {
+    position: absolute; top: -9px; left: 14px; z-index: 1;
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-faint); background: var(--paper); padding: 0 8px;
+  }
+  .proof .exhibit-frame {
+    display: block; background: #fff; border: 1px solid var(--rule);
+    padding: 10px; transform: rotate(-0.4deg);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 10px 24px rgba(0, 0, 0, 0.07);
+    transition: transform 0.15s ease;
+  }
+  .proof .exhibit-frame:hover { transform: rotate(0deg); }
+  .proof .exhibit-frame img { display: block; width: 100%; height: auto; }
+  .proof .exhibit figcaption {
+    margin-top: 12px; font-size: 13.5px; color: var(--ink-faint); max-width: 60ch;
+  }
   .proof .faq { margin-top: 10px; }
   .proof .faq-item { border-top: 1px solid var(--rule); margin-top: 24px; padding-top: 20px; }
   .proof .faq-item:first-child { border-top: 0; margin-top: 22px; }
