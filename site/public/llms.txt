@@ -8,7 +8,7 @@
 - [About](https://willaicite.com/about): who runs willaicite, how the audit works, evidence basis and contact.
 - [AI crawler registry](https://willaicite.com/crawlers): every AI crawler token willaicite audits (OAI-SearchBot, GPTBot, ClaudeBot, PerplexityBot and more), retrieval vs training, and the robots.txt lines that control each.
 - [Proof](https://willaicite.com/proof): the dogfood receipt, willaicite audited with willaicite, baseline 51/100 to 100/100 with every fix listed and reproducible; re-flagged and re-fixed under the stricter v1.3 scoring model.
-- [Audit app](https://willaicite.com/app): run a free deterministic audit of any URL.
+- [Audit app](https://willaicite.com/audit): run a free deterministic audit of any URL.
 
 ## Evidence basis
 

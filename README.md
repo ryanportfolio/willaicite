@@ -13,7 +13,7 @@
 [![Runtime deps](https://img.shields.io/badge/runtime%20deps-0-2c6e49?style=flat-square)](package.json)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square)](tsconfig.json)
 
-[Run a live audit](https://willaicite.com/app) &middot; [How it works](https://willaicite.com) &middot; [Crawler registry](https://willaicite.com/crawlers) &middot; [Proof](https://willaicite.com/proof)
+[Run a live audit](https://willaicite.com/audit) &middot; [How it works](https://willaicite.com) &middot; [Crawler registry](https://willaicite.com/crawlers) &middot; [Proof](https://willaicite.com/proof)
 
 </div>
 
@@ -23,7 +23,7 @@ Search engines rank you in a list of links. Answer engines quote you inside a sy
 
 Point it at a URL and get a 0 to 100 score across eight weighted dimensions, with evidence on every line: the exact robots.txt rule that blocks a bot, the HTTP status a crawler actually receives, the sentence an engine could quote. There are no LLM calls, so the same input always produces the same score.
 
-Try it now at **[willaicite.com/app](https://willaicite.com/app)**, or run it locally.
+Try it now at **[willaicite.com/audit](https://willaicite.com/audit)**, or run it locally.
 
 ## What your SEO tool does not test
 
@@ -87,7 +87,7 @@ node dist/cli.js https://example.com
 
 `geo-audit serve` starts a local, zero-dependency web UI. Nothing leaves your machine except the fetches to the site being audited. Enter a URL and watch the real fetch progress stream in over Server-Sent Events (every progress line is an actual request, never cosmetic), then read the full report: overall score, per-dimension bars with expandable evidence, the prioritized fix-first list, and one-click downloads of `report.md` and `result.json`. It is the same audit engine as the CLI, so identical input produces an identical score in both.
 
-The hosted version at [willaicite.com/app](https://willaicite.com/app) is this exact UI.
+The hosted version at [willaicite.com/audit](https://willaicite.com/audit) is this exact UI.
 
 ## Running it as a public service
 

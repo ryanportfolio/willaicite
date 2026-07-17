@@ -1,7 +1,7 @@
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  // Static output (default). Landing page for willaicite; audit app lives at /app.
+  // Static output (default). Landing page for willaicite; audit app lives at /audit.
   site: 'https://willaicite.com',
   vite: {
     // /crawlers imports the audit engine's AI_BOTS roster (../src/aiBots.ts)

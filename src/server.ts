@@ -112,13 +112,21 @@ export function createAuditServer(opts: ServerOptions = {}): Server {
       return;
     }
 
-    // The audit app: at /app when the landing occupies '/', and also at '/'
+    // The audit app: at /audit when the landing occupies '/', and also at '/'
     // when there is no landing build (local CLI, tests).
-    const appPaths = ['/app', '/app/', '/app/index.html'];
+    const appPaths = ['/audit', '/audit/', '/audit/index.html'];
     if (!landingRoot) appPaths.push('/', '/index.html');
     if (req.method === 'GET' && appPaths.includes(url.pathname)) {
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
       res.end(uiHtml);
+      return;
+    }
+
+    // Legacy path: the app shipped at /app before moving to /audit. Redirect
+    // permanently, preserving the query (?url= prefill links in the wild).
+    if (req.method === 'GET' && ['/app', '/app/', '/app/index.html'].includes(url.pathname)) {
+      res.writeHead(301, { location: '/audit' + url.search });
+      res.end();
       return;
     }
 
