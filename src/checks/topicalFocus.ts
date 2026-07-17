@@ -94,7 +94,7 @@ export function checkTopicalFocus(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Add a meta description that summarizes the page topic in 50-170 characters',
-      why: 'Metadata quality was among the strongest correlates of real citations across Brave, Google AI Overviews and Perplexity in the GEO-16 empirical study (Kumar & Palkhouski 2025; 1,702 citations audited). The description is also the snippet many engines feed their retriever.',
+      why: 'Metadata quality was among the strongest correlates of observed citations across Brave, Google AI Overviews and Perplexity in the GEO-16 empirical study (Kumar & Palkhouski 2025; 1,702 citations audited). The description is also the snippet many engines feed their retriever.',
       impact: 2,
       effort: 1,
     });
@@ -145,7 +145,7 @@ export function checkTopicalFocus(ctx: AuditContext): DimensionResult {
     evidence.push({ status: 'fail', message: `no extractable main content to measure topical coverage against (${bodyWords} words)` });
     recommendations.push({
       dimension: dim,
-      action: 'Get real text into this page first (see Renderability), or run the audit against the page that actually carries your content',
+      action: 'Get crawler-visible text into this page first (see Renderability), or run the audit against the page that actually carries your content',
       why: 'Topical relevance is the top controllable citation driver (Vishwakarma et al., SIGIR 2026), and it is computed over extractable text; a page without text cannot be relevant to anything.',
       impact: 3,
       effort: 1,

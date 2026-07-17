@@ -51,7 +51,7 @@ export function checkAnswerReadiness(ctx: AuditContext): DimensionResult {
       recommendations: [
         {
           dimension: dim,
-          action: 'Get real text into this page first (see Renderability), or run the audit against the page that actually carries your content',
+          action: 'Get crawler-visible text into this page first (see Renderability), or run the audit against the page that actually carries your content',
           why: 'Answer-readiness heuristics (definitional opening, question headings, FAQ) are meaningless on a page with no extractable text; fixing those here would decorate an empty shell.',
           impact: 3,
           effort: 1,
@@ -145,7 +145,7 @@ export function checkAnswerReadiness(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Add a short FAQ section answering the 3-5 most common questions on this topic',
-      why: 'Each Q+A pair is a pre-packaged retrieval chunk aligned to a real query: the exact unit answer engines quote.',
+      why: 'Each Q+A pair is a pre-packaged retrieval chunk aligned to the queries users ask: the exact unit answer engines quote.',
       impact: 2,
       effort: 2,
     });

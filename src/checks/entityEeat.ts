@@ -35,7 +35,7 @@ export function checkEntityEeat(ctx: AuditContext): DimensionResult {
     evidence.push({ status: 'fail', message: 'no author byline detected (no JSON-LD author, meta author, or visible "By <name>" pattern)' });
     recommendations.push({
       dimension: dim,
-      action: 'Add a visible author byline with a real name (plus author in Article JSON-LD)',
+      action: 'Add a visible author byline naming a person (plus author in Article JSON-LD)',
       why: 'E-E-A-T source selection favors accountable authorship; engines preferring citable sources treat anonymous content as lower-trust, and Google documents authorship as an AI Overview quality input.',
       impact: 2,
       effort: 1,

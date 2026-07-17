@@ -61,7 +61,7 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
       recommendations: [
         {
           dimension: dim,
-          action: 'Get real text into this page first (see Renderability), or run the audit against the page that actually carries your content',
+          action: 'Get crawler-visible text into this page first (see Renderability), or run the audit against the page that actually carries your content',
           why: 'Statistics, quotations and citations (the GEO-research visibility levers) can only lift content that engines can extract; there is no text here to enrich.',
           impact: 3,
           effort: 1,
