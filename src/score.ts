@@ -25,18 +25,35 @@ export function verdictFor(score: number | null): string {
 /**
  * Prioritized "fix first" ordering: impact-per-effort first, then raw impact,
  * then the weight of the dimension it belongs to. Deterministic tie-break on
- * the action text.
+ * the action text. Recommendations with identical action text (several
+ * dimensions pointing at the same root cause, e.g. "get real text into this
+ * page") collapse into one entry tagged with every affected dimension.
  */
 export function prioritize(dimensions: DimensionResult[]): Recommendation[] {
   const weightOf = new Map(dimensions.map((d) => [d.name, d.weight]));
   const all = dimensions.flatMap((d) => d.recommendations);
-  return [...all].sort((a, b) => {
+  const sorted = [...all].sort((a, b) => {
     const ratio = b.impact / b.effort - a.impact / a.effort;
     if (ratio !== 0) return ratio;
     if (b.impact !== a.impact) return b.impact - a.impact;
     const wa = weightOf.get(a.dimension) ?? 0;
     const wb = weightOf.get(b.dimension) ?? 0;
     if (wb !== wa) return wb - wa;
-    return a.action.localeCompare(b.action);
+    return a.action < b.action ? -1 : a.action > b.action ? 1 : 0;
   });
+  const byAction = new Map<string, Recommendation>();
+  const out: Recommendation[] = [];
+  for (const rec of sorted) {
+    const existing = byAction.get(rec.action);
+    if (existing) {
+      if (!existing.dimension.split(' + ').includes(rec.dimension)) {
+        existing.dimension += ' + ' + rec.dimension;
+      }
+      continue;
+    }
+    const copy = { ...rec };
+    byAction.set(copy.action, copy);
+    out.push(copy);
+  }
+  return out;
 }

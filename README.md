@@ -42,8 +42,9 @@ geo-audit serve [--port 4173]
 
 ## What it fetches (politely)
 
-- Identifies as `geo-audit/1.0` and **respects robots.txt for its own fetching** (if robots.txt disallows the tool for a path, that page is skipped and reported as such).
-- Max ~10 pages: the given URL, the homepage, an about page, and a few pages from the sitemap if present — plus robots.txt, sitemap.xml, llms.txt and favicon.
+- Identifies as `geo-audit/1.1` and **respects robots.txt for its own fetching** — pages *and* auxiliary files (sitemap.xml, llms.txt, favicon) are skipped and reported as such when robots.txt disallows the tool.
+- Hard cap of **10 requests total** per audit: the given URL, the homepage, an about page, and a few pages from the sitemap if present — including robots.txt, sitemap.xml, llms.txt and favicon.
+- A robots-declared sitemap on a different host is ignored in favor of the same-origin `/sitemap.xml` (robots.txt cannot point the tool at third-party URLs).
 - Per-request timeout with graceful failure: a failed fetch or crashed check is reported as **"could not verify"** and excluded from the weighted score. It is never guessed and never crashes the audit.
 
 ## The seven dimensions
@@ -52,7 +53,7 @@ Each scores 0–100 with per-check evidence lines (e.g. the exact robots.txt lin
 
 | Dimension | Weight | What it measures |
 |---|---|---|
-| **AI crawler access** | high | robots.txt verdicts for GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, Claude-SearchBot, PerplexityBot, Google-Extended and Bingbot; meta robots / X-Robots-Tag noindex; and a UA differential test — the page is fetched once with a normal UA and once with GPTBot's UA string to catch CDN/WAF-level bot blocking that robots.txt doesn't show. |
+| **AI crawler access** | high | robots.txt verdicts for 17 AI crawler tokens, scored by role: **retrieval/citation crawlers** (OAI-SearchBot, ChatGPT-User, Claude-SearchBot, Claude-User, PerplexityBot, Perplexity-User, Bingbot, Amazonbot, DuckAssistBot, Applebot, MistralAI-User — blocking one means that engine can never cite the page) weigh heavily, while **training-only tokens** (GPTBot, ClaudeBot, CCBot, meta-externalagent, Google-Extended, Applebot-Extended) draw a light "confirm this is deliberate" note, since blocking training is a legitimate mainstream policy. Also: meta robots / X-Robots-Tag noindex, Cloudflare Content Signals lines (informational), and a UA differential test — the page is fetched once with a normal UA and once with GPTBot's UA string to catch CDN/WAF-level bot blocking that robots.txt doesn't show. |
 | **Renderability** | high | How much content is extractable from the raw HTML with no JS execution — which is how GPTBot, ClaudeBot and PerplexityBot see the page. Flags empty SPA shells (`<div id="root">` with no server-rendered text), low text volume, and low text-to-HTML ratio. |
 | **Structured data** | medium | JSON-LD presence and validity: Article/BlogPosting (with author and dates), FAQPage, Organization, Person, BreadcrumbList. Weighted honestly — schema mainly moves Google AI Overviews and entity trust; ChatGPT/Claude/Perplexity largely tokenize the text rather than parse the graph, and the recommendations say so. |
 | **Answer-readiness** | high | Can an engine lift an answer straight off the page? Direct definitional statement ("X is …") in the first ~200 tokens, question-formatted headings, an FAQ section, lists/tables for enumerable content, one clear H1. |
@@ -66,7 +67,7 @@ Each scores 0–100 with per-check evidence lines (e.g. the exact robots.txt lin
 
 - Overall score and a one-line verdict up top.
 - Per-dimension sections: score, what passed, what failed — with exact evidence (the robots.txt line, the HTTP statuses, the matched sentence).
-- A **"Fix first"** list ordered by impact-per-effort, where every recommendation states *why* (the mechanism or the research number), not just what to do.
+- A **"Fix first"** list ordered by impact-per-effort, where every recommendation states *why* (the mechanism or the research number), not just what to do. Recommendations that share one root cause (e.g. several content checks pointing at renderability) collapse into a single entry tagged with every affected dimension.
 - No fabricated metrics anywhere: anything unverifiable says "could not verify".
 
 ## Development
@@ -81,7 +82,7 @@ npm run dev <url> # run from source via tsx
 - **No JS rendering.** Renderability is a heuristic on raw HTML (shell detection, text volume/ratio). Pages that hydrate real server-rendered HTML are judged fairly; lazy-loaded sections are undercounted. No headless browser in v1.
 - **Heuristic answer-readiness.** "Direct answer" detection is lexical (subject + is/are/means/helps near the top), not semantic. A well-written page can fail the pattern and vice versa.
 - **No live AI-engine querying.** This measures retrieval/citation *readiness*, not whether engines actually cite you today.
-- Robots matching implements the practically relevant parts of RFC 9309 (longest-match, allow-wins-ties, `*`/`$` wildcards), not every percent-encoding corner case.
+- Robots matching implements the practically relevant parts of RFC 9309 (longest-match, allow-wins-ties, `*`/`$` wildcards, percent-encoding normalization for non-ASCII paths); exotic corner cases may still differ from Google's reference matcher.
 - The evidence-density research numbers come from one study (Aggarwal et al., "GEO: Generative Engine Optimization", KDD 2024) measured on Perplexity-style engines; treat them as directional, not gospel.
 
 ## v2 (planned, not built)

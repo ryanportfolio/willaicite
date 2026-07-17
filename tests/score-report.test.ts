@@ -46,6 +46,22 @@ describe('prioritize', () => {
     const order = prioritize([d]).map((r) => r.action);
     expect(order).toEqual(['quick win', 'medium', 'slow big', 'cheap small']);
   });
+
+  it('collapses identical actions from different dimensions into one entry tagged with both', () => {
+    const a = dim({
+      name: 'Answer-readiness',
+      recommendations: [{ dimension: 'Answer-readiness', action: 'Get real text into this page first', why: 'w1', impact: 3, effort: 1 }],
+    });
+    const b = dim({
+      name: 'Evidence density',
+      recommendations: [{ dimension: 'Evidence density', action: 'Get real text into this page first', why: 'w2', impact: 3, effort: 1 }],
+    });
+    const out = prioritize([a, b]);
+    expect(out).toHaveLength(1);
+    expect(out[0].dimension).toBe('Answer-readiness + Evidence density');
+    // and the source recommendation objects are not mutated
+    expect(a.recommendations[0].dimension).toBe('Answer-readiness');
+  });
 });
 
 describe('buildResult + renderMarkdown (integration, no network)', () => {

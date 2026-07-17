@@ -78,6 +78,13 @@ describe('pathMatches wildcards', () => {
     expect(pathMatches('/a+b', '/a+b')).toBe(true);
     expect(pathMatches('/a+b', '/aab')).toBe(false);
   });
+
+  it('normalizes percent-encoding: raw UTF-8 pattern matches encoded path and vice versa', () => {
+    expect(pathMatches('/café', '/caf%C3%A9')).toBe(true);
+    expect(pathMatches('/caf%C3%A9', '/café')).toBe(true);
+    expect(pathMatches('/caf%c3%a9', '/caf%C3%A9')).toBe(true); // hex case-insensitive
+    expect(pathMatches('/café', '/cafe')).toBe(false);
+  });
 });
 
 describe('rulesFor group selection', () => {

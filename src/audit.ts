@@ -14,7 +14,7 @@ import { checkEntityEeat } from './checks/entityEeat.js';
 import { checkLlmsTxt } from './checks/llmsTxt.js';
 import { overallScore, verdictFor, prioritize } from './score.js';
 
-export const VERSION = '1.0.0';
+export const VERSION = '1.1.0';
 const MAX_PAGES = 10;
 const OWN_BOT_TOKEN = 'geo-audit';
 
@@ -57,6 +57,14 @@ export async function runAudit(inputUrl: string, opts: AuditOptions = {}): Promi
     } catch {
       return true;
     }
+  };
+
+  /** Auxiliary fetches (sitemap, llms.txt, favicon) also honor robots.txt for our own token. */
+  const politeGetIfAllowed = async (url: string, ua?: string, discardBody = false): Promise<FetchResult> => {
+    if (!allowedForSelf(url)) {
+      return { ok: false, status: null, headers: {}, body: null, finalUrl: null, error: `skipped — robots.txt disallows ${OWN_BOT_TOKEN} for this path` };
+    }
+    return politeGet(url, ua, discardBody);
   };
 
   const fetchPage = async (url: string): Promise<PageData | null> => {
@@ -114,16 +122,20 @@ export async function runAudit(inputUrl: string, opts: AuditOptions = {}): Promi
     if (page.fetch.status === 200) break;
   }
 
-  // 5. Sitemap
-  const sitemapUrl = robotsParsed?.sitemaps[0] ?? origin + '/sitemap.xml';
+  // 5. Sitemap. A robots-declared sitemap on a different host is ignored in
+  // favor of the same-origin default (a hostile robots.txt must not be able to
+  // point this tool at arbitrary third-party URLs).
+  const declaredSitemap = robotsParsed?.sitemaps[0];
+  const sitemapUrl = declaredSitemap && sameHost(declaredSitemap, origin) ? declaredSitemap : origin + '/sitemap.xml';
   let sitemap: AuditContext['sitemap'] = null;
-  const sitemapFetch = await politeGet(sitemapUrl);
+  const sitemapFetch = await politeGetIfAllowed(sitemapUrl);
   let entries: SitemapEntry[] = [];
   if (sitemapFetch.status === 200 && sitemapFetch.body) {
     const parsed = parseSitemap(sitemapFetch.body);
     entries = parsed.entries;
-    if (entries.length === 0 && parsed.childSitemaps.length > 0 && pagesFetched < MAX_PAGES) {
-      const child = await politeGet(parsed.childSitemaps[0]);
+    const childUrl = parsed.childSitemaps[0];
+    if (entries.length === 0 && childUrl && sameHost(childUrl, origin) && pagesFetched < MAX_PAGES) {
+      const child = await politeGetIfAllowed(childUrl);
       if (child.status === 200 && child.body) entries = parseSitemap(child.body).entries;
     }
   }
@@ -141,8 +153,8 @@ export async function runAudit(inputUrl: string, opts: AuditOptions = {}): Promi
 
   // 7. llms.txt + favicon (small, not counted toward the HTML page budget)
   const llmsUrl = origin + '/llms.txt';
-  const llmsFetch = await politeGet(llmsUrl);
-  const faviconFetch = await politeGet(origin + '/favicon.ico', undefined, true);
+  const llmsFetch = await politeGetIfAllowed(llmsUrl);
+  const faviconFetch = await politeGetIfAllowed(origin + '/favicon.ico', undefined, true);
 
   const ctx: AuditContext = {
     targetUrl: target.href,

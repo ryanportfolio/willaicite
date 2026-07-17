@@ -45,7 +45,7 @@ export function pickExtraPages(entries: SitemapEntry[], exclude: Set<string>, ma
     const va = Number.isNaN(ta) ? -Infinity : ta;
     const vb = Number.isNaN(tb) ? -Infinity : tb;
     if (va !== vb) return vb - va;
-    return a.loc.localeCompare(b.loc);
+    return a.loc < b.loc ? -1 : a.loc > b.loc ? 1 : 0;
   });
   const out: SitemapEntry[] = [];
   for (const e of sorted) {

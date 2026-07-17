@@ -60,7 +60,7 @@ export function checkRenderability(ctx: AuditContext): DimensionResult {
     shellPts = 0;
     evidence.push({
       status: 'fail',
-      message: `empty SPA shell detected (mount point ${shell} with almost no server-rendered text) — content is invisible to non-JS crawlers`,
+      message: `empty SPA shell detected (mount point ${shell} with almost no server-rendered text) — invisible to ChatGPT, Claude and Perplexity crawlers, which do not execute JavaScript; Googlebot can render JS, so Google AI surfaces may still see the hydrated content`,
     });
   } else {
     evidence.push({ status: 'pass', message: 'no empty SPA shell detected' });
