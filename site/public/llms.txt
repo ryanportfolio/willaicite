@@ -7,9 +7,12 @@
 - [Home](https://willaicite.com/): what the audit tests and why SEO tooling misses it, including WAF/CDN bot blocking, no-JavaScript extraction, the outbound-citation inversion, per-engine crawler verdicts, liftable answers.
 - [About](https://willaicite.com/about): who runs willaicite, how the audit works, evidence basis and contact.
 - [AI crawler registry](https://willaicite.com/crawlers): every AI crawler token willaicite audits (OAI-SearchBot, GPTBot, ClaudeBot, PerplexityBot and more), retrieval vs training, and the robots.txt lines that control each.
-- [Proof](https://willaicite.com/proof): the dogfood receipt, willaicite audited with willaicite, baseline 51/100 to 100/100 with every fix listed and reproducible.
+- [Proof](https://willaicite.com/proof): the dogfood receipt, willaicite audited with willaicite, baseline 51/100 to 100/100 with every fix listed and reproducible; re-flagged and re-fixed under the stricter v1.3 scoring model.
 - [Audit app](https://willaicite.com/app): run a free deterministic audit of any URL.
 
 ## Evidence basis
 
 - Aggarwal et al., "GEO: Generative Engine Optimization", KDD 2024: https://arxiv.org/abs/2311.09735
+- Vishwakarma et al., "What Gets Cited: Competitive GEO in AI Answer Engines", SIGIR 2026: https://arxiv.org/abs/2605.25517
+- Puerto et al., "C-SEO Bench: Does Conversational SEO Work?", NeurIPS Datasets & Benchmarks 2025: https://arxiv.org/abs/2506.11097
+- Kumar & Palkhouski, "AI Answer Engine Citation Behavior: The GEO-16 Framework", 2025: https://arxiv.org/abs/2509.10762

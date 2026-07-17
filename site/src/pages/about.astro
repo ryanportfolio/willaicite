@@ -9,9 +9,10 @@ const dims = [
   { name: 'AI crawler access', weight: 3, asks: 'Can retrieval crawlers fetch the page, and does a WAF treat them differently' },
   { name: 'Renderability', weight: 3, asks: 'Is the content readable without executing JavaScript' },
   { name: 'Answer-readiness', weight: 3, asks: 'Can an engine lift a definition, a heading, an answer block whole' },
-  { name: 'Evidence density', weight: 3, asks: 'Does the page carry statistics, quotations and cited sources' },
+  { name: 'Topical focus & metadata', weight: 3, asks: 'Do title, heading, description and body present one topic a retriever can match' },
+  { name: 'Evidence density', weight: 2, asks: 'Does the page carry statistics, quotations and cited sources for engines to quote once it is retrieved' },
   { name: 'Structured data', weight: 2, asks: 'Does JSON-LD tell engines who wrote what, and when' },
-  { name: 'Freshness', weight: 2, asks: 'Is there a machine-readable date signal from the last 90 days' },
+  { name: 'Freshness', weight: 3, asks: 'Is there a machine-readable date signal from the last 90 days' },
   { name: 'Entity & E-E-A-T', weight: 2, asks: 'Can the author and organization behind the page be identified' },
 ];
 
@@ -22,7 +23,7 @@ const faqs = [
   },
   {
     q: 'Why does the audit stop at ten requests?',
-    a: 'Courtesy to the site being audited. Ten requests are enough to score all seven dimensions (the page twice, robots.txt, the sitemap, an about page, the favicon and llms.txt), and a small fixed cap means an audit can never hammer the site it is inspecting. The audit honors robots.txt while it works.',
+    a: 'Courtesy to the site being audited. Ten requests are enough to score all eight dimensions (the page twice, robots.txt, the sitemap, an about page, the favicon and llms.txt), and a small fixed cap means an audit can never hammer the site it is inspecting. The audit honors robots.txt while it works.',
   },
 ];
 
@@ -117,7 +118,7 @@ const schema = {
         retrieved and cited by AI answer engines&rdquo;.
       </p>
 
-      <div class="report-rule"><h2 class="rulelabel">What do the seven dimensions measure?</h2></div>
+      <div class="report-rule"><h2 class="rulelabel">What do the eight dimensions measure?</h2></div>
       <table class="dims">
         <thead><tr><th>dimension</th><th>weight</th><th>question it answers</th></tr></thead>
         <tbody>
@@ -133,10 +134,21 @@ const schema = {
 
       <div class="report-rule"><h2 class="rulelabel">What evidence backs the scoring?</h2></div>
       <p>
-        The dimension weights and recommendations follow the GEO research:
-        <a class="body-link" href="https://arxiv.org/abs/2311.09735">Aggarwal et&nbsp;al., &ldquo;GEO: Generative Engine Optimization&rdquo;, KDD&nbsp;2024</a>,
-        which measured that citing sources lifted generative visibility by 24.9%, adding
-        statistics by 25.9%, and quotations by 27.8%. The crawler roster tracks the engines&rsquo;
+        The dimension weights and recommendations track the empirical GEO literature, weighted
+        toward controlled and replicated results.
+        <a class="body-link" href="https://arxiv.org/abs/2311.09735">Aggarwal et&nbsp;al., &ldquo;GEO: Generative Engine Optimization&rdquo;, KDD&nbsp;2024</a>
+        measured that citing sources lifted generative visibility by 24.9%, adding statistics
+        by 25.9%, and quotations by 27.8%, with the source already placed in the model&rsquo;s
+        context. The 2025&ndash;2026 replications narrowed that claim:
+        <a class="body-link" href="https://arxiv.org/abs/2605.25517">Vishwakarma et&nbsp;al., SIGIR&nbsp;2026</a>
+        (252,000 controlled trials across six LLMs) found topical relevance and retrieval
+        position dominate citation choice,
+        <a class="body-link" href="https://arxiv.org/abs/2506.11097">C-SEO&nbsp;Bench, NeurIPS&nbsp;D&amp;B&nbsp;2025</a>
+        found only 3 of 54 content-rewrite combinations significantly positive, and the
+        <a class="body-link" href="https://arxiv.org/abs/2509.10762">GEO-16 field audit (2025)</a>
+        found metadata, freshness and structured data the pillars most strongly associated
+        with 1,702 real citations. That is why topical focus and freshness weigh high while
+        evidence density weighs medium. The crawler roster tracks the engines&rsquo;
         own documentation
         (<a class="body-link" href="https://developers.openai.com/api/docs/bots">OpenAI</a>,
         <a class="body-link" href="https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler">Anthropic</a>,
