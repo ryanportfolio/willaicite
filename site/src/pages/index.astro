@@ -5,17 +5,18 @@
 // + mono data. External links below are citations; each was verified live.
 import Base, { UPDATED_ISO } from '../layouts/Base.astro';
 
-const TITLE = 'willaicite · SEO gets you listed, GEO gets you quoted';
+const TITLE = 'willaicite · will AI engines cite your site?';
 const DESCRIPTION =
-  'willaicite is a free, deterministic audit that scores whether AI answer engines (ChatGPT, Perplexity, Google AI Overviews and Claude) can retrieve your page, extract it without JavaScript, and cite it. No LLM calls, no fabricated numbers.';
+  'willaicite is a free, deterministic audit: can AI answer engines (ChatGPT, Perplexity, Google AI Overviews, Claude) retrieve, read and cite your page?';
 
 const dimensions = [
   { name: 'AI crawler access', weight: 'high', note: 'Can the engines that cite pages fetch this one at all: per crawler token, robots.txt and firewall both.' },
   { name: 'Renderability', weight: 'high', note: 'How much of the content survives in raw HTML, with no JavaScript executed.' },
   { name: 'Answer-readiness', weight: 'high', note: 'Is there a self-contained, liftable answer near the top, under question-shaped headings.' },
-  { name: 'Evidence density', weight: 'high', note: 'The material engines prefer to quote: statistics, quotations and cited sources.' },
+  { name: 'Topical focus & metadata', weight: 'high', note: 'Does title, heading, description and body legibly present one topic a retriever can match a query against.' },
+  { name: 'Evidence density', weight: 'medium', note: 'The material engines prefer to quote once a page is retrieved: statistics, quotations and cited sources.' },
   { name: 'Structured data', weight: 'medium', note: 'Schema.org markup that helps Google AI Overviews and entity trust.' },
-  { name: 'Freshness', weight: 'medium', note: 'Visible and machine-readable dates; engines discount the undatable.' },
+  { name: 'Freshness', weight: 'high', note: 'Visible and machine-readable dates; a recent timestamp is one of the few factors that consistently lifted citation odds in controlled 2026 testing.' },
   { name: 'Entity & E-E-A-T', weight: 'medium', note: 'A nameable author, organization and provenance an engine can attribute.' },
 ];
 
@@ -36,7 +37,7 @@ const faqs = [
   },
   {
     q: 'How fresh does my content need to be?',
-    a: 'Answer engines cite pages updated within the last 90 days far more readily; reported citation likelihood drops off sharply past roughly 3 months. Keep a visible and machine-readable date, and bump it only with genuine edits; willaicite reads both and flags undatable pages.',
+    a: 'Answer engines cite pages updated within the last 90 days far more readily, and a 252,000-trial controlled study in 2026 found a recent timestamp is one of the few content factors that consistently lifts citation odds across engines. Keep a visible and machine-readable date, and bump it only with genuine edits; willaicite reads both and flags undatable pages.',
   },
   {
     q: 'Does willaicite check SEO too?',
@@ -75,7 +76,7 @@ const schema = {
     {
       '@type': 'TechArticle',
       '@id': 'https://willaicite.com/#article',
-      headline: 'SEO gets you listed, GEO gets you quoted',
+      headline: 'Will AI engines cite your site?',
       description: DESCRIPTION,
       author: { '@id': 'https://willaicite.com/#ryan' },
       publisher: { '@id': 'https://willaicite.com/#org' },
@@ -109,7 +110,8 @@ const schema = {
   <div class="sheet">
     <!-- ================= hero ================= -->
     <section class="hero" aria-labelledby="hero-h">
-      <h1 id="hero-h">SEO gets you listed<br /><em>GEO gets you quoted</em></h1>
+      <h1 id="hero-h">Will AI engines <em>cite</em> your site?</h1>
+      <p class="slogan">SEO gets you listed. <em>GEO gets you quoted.</em></p>
       <p class="sub">
         willaicite is a free, deterministic audit that scores whether AI answer engines
         (ChatGPT, Perplexity, Google AI Overviews and Claude) can retrieve your page, extract
@@ -204,8 +206,11 @@ const schema = {
             cite no one. The <a class="body-link" href="https://arxiv.org/abs/2311.09735">GEO study</a>
             (Aggarwal et&nbsp;al., KDD&nbsp;2024) measured the opposite effect on AI visibility:
             citing sources lifted it 24.9 percent, statistics 25.9 percent, and quotations
-            27.8 percent. One benchmark, directional rather than guaranteed. But it means
-            optimizing for the ranking can quietly cost you the quote.
+            27.8 percent. Independent replications in 2025 and 2026 shrank those effects to a
+            tie-break among already-retrieved pages, with
+            <a class="body-link" href="https://arxiv.org/abs/2605.25517">a 252,000-trial controlled study</a>
+            finding topical relevance and retrieval position matter more. But the direction held,
+            and it still means optimizing for the ranking can quietly cost you the quote.
           </p>
           <figure class="minifig">
             <div class="stats">
@@ -213,7 +218,7 @@ const schema = {
               <div class="stat"><span class="stat-k">statistics</span><span class="stat-bar"><i style="--w:93%"></i></span><span class="stat-v">+25.9%</span></div>
               <div class="stat"><span class="stat-k">quotations</span><span class="stat-bar"><i style="--w:100%"></i></span><span class="stat-v">+27.8%</span></div>
             </div>
-            <figcaption>Visibility lift in generative answers (Aggarwal et&nbsp;al., <cite>GEO: Generative Engine Optimization</cite>, KDD&nbsp;2024). One study; directional, not a guarantee.</figcaption>
+            <figcaption>Visibility lift in generative answers (Aggarwal et&nbsp;al., <cite>GEO: Generative Engine Optimization</cite>, KDD&nbsp;2024), measured with the source already retrieved. Later replications find smaller, conditional effects; directional, not a guarantee.</figcaption>
           </figure>
         </li>
 
@@ -260,12 +265,13 @@ const schema = {
       </ol>
     </section>
 
-    <!-- ================= seven dimensions ================= -->
+    <!-- ================= eight dimensions ================= -->
     <section aria-labelledby="dims-h">
-      <div class="report-rule"><h2 class="rulelabel" id="dims-h">The seven dimensions</h2></div>
+      <div class="report-rule"><h2 class="rulelabel" id="dims-h">The eight dimensions</h2></div>
       <p class="section-intro">
-        Every audit scores the same seven dimensions, weighted by how often each one decides
-        whether a citation happens.
+        Every audit scores the same eight dimensions, weighted by how often each one decides
+        whether a citation happens. The weights follow the 2025&ndash;2026 replication
+        literature, not the 2024 headline numbers.
       </p>
       <ol class="dims">
         {dimensions.map((d, i) => (
@@ -340,6 +346,11 @@ const schema = {
     font-weight: 500; line-height: 1.06; letter-spacing: -0.015em;
   }
   .hero h1 em { font-style: italic; color: var(--accent); }
+  .hero .slogan {
+    margin-top: 14px; font-size: clamp(19px, 3vw, 24px); line-height: 1.3;
+    letter-spacing: -0.01em; color: var(--ink-soft);
+  }
+  .hero .slogan em { font-style: italic; color: var(--accent); }
   .hero .sub { margin-top: 22px; max-width: 62ch; color: var(--ink-soft); font-size: 17px; }
   /* the takeaway: a three-line stanza echoing the h1's roman-then-italic turn */
   .hero .takeaway {

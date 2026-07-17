@@ -1,4 +1,4 @@
-export const TOOL_UA = 'Mozilla/5.0 (compatible; geo-audit/1.2; +https://github.com/ryanportfolio/willaicite)';
+export const TOOL_UA = 'Mozilla/5.0 (compatible; geo-audit/1.3; +https://github.com/ryanportfolio/willaicite)';
 
 /** Real GPTBot UA string, used only for the WAF/CDN differential check. */
 export const GPTBOT_UA =

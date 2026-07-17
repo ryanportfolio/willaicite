@@ -5,7 +5,12 @@ import { extractJsonLd, jsonLdTypes } from '../html.js';
 /**
  * JSON-LD structured data. Weighted honestly: schema.org markup is strongest
  * for Google AI Overviews and entity/knowledge-graph trust; ChatGPT, Claude
- * and Perplexity largely tokenize the page rather than parse the graph.
+ * and Perplexity largely tokenize the page rather than parse the graph. The
+ * GEO-16 field audit (Kumar & Palkhouski 2025) did find structured data among
+ * the pillars most strongly associated with real citations across Brave,
+ * Google AI Overviews and Perplexity — but that evidence is correlational
+ * (well-marked-up pages tend to be well-made pages), so the weight stays
+ * medium rather than high.
  */
 export function checkStructuredData(ctx: AuditContext): DimensionResult {
   const evidence: Evidence[] = [];
@@ -43,7 +48,7 @@ export function checkStructuredData(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Add JSON-LD structured data (start with Organization on the homepage and Article/BlogPosting on content pages)',
-      why: 'Structured data is the strongest machine-readable trust signal for Google AI Overviews and knowledge-graph entity resolution. Honest caveat: ChatGPT, Claude and Perplexity mostly tokenize the visible text rather than parse the schema graph, so this helps Google surfaces most.',
+      why: 'Structured data is the strongest machine-readable trust signal for Google AI Overviews and knowledge-graph entity resolution, and the GEO-16 audit (Kumar & Palkhouski 2025) found it strongly associated with real citations across three engines (correlational evidence). Honest caveat: ChatGPT, Claude and Perplexity mostly tokenize the visible text rather than parse the schema graph.',
       impact: 2,
       effort: 2,
     });
@@ -132,7 +137,7 @@ export function checkStructuredData(ctx: AuditContext): DimensionResult {
   if (otherTypes) evidence.push({ status: 'info', message: `all @type values seen: ${otherTypes}` });
   evidence.push({
     status: 'info',
-    message: 'weighting note: structured data mainly moves Google AI Overviews + entity trust; ChatGPT/Claude/Perplexity largely tokenize text rather than parse the graph',
+    message: 'weighting note: structured data mainly moves Google AI Overviews + entity trust; ChatGPT/Claude/Perplexity largely tokenize text rather than parse the graph. GEO-16 (2025) found it correlates with real citations across engines, but correlation ≠ causation, so the weight stays medium',
   });
 
   return {
