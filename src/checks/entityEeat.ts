@@ -183,13 +183,16 @@ interface NameCandidate {
 function orgNameCandidates(htmls: string[]): NameCandidate[] {
   const out: NameCandidate[] = [];
   const seenSources = new Set<string>();
+  const titleSegments: string[] = [];
+
   for (const html of htmls) {
-    const title = extractTitle(html);
-    if (title && !seenSources.has('title')) {
-      const seg = title.split(/\s+[|·–—-]\s+/).pop()?.trim();
-      if (seg && seg.length >= 2 && seg.length <= 60) {
-        out.push({ source: 'title suffix', value: seg });
-        seenSources.add('title');
+    if (titleSegments.length === 0) {
+      const title = extractTitle(html);
+      if (title) {
+        for (const seg of title.split(/\s+[|·–—-]\s+/)) {
+          const t = seg.trim();
+          if (t.length >= 2 && t.length <= 60) titleSegments.push(t);
+        }
       }
     }
     const siteName = findMeta(html, 'og:site_name');
@@ -199,14 +202,24 @@ function orgNameCandidates(htmls: string[]): NameCandidate[] {
     }
     const { nodes } = extractJsonLd(html);
     for (const node of nodes) {
-      if (jsonLdTypes([node]).includes('organization')) {
+      if (jsonLdTypes([node]).includes('organization') || jsonLdTypes([node]).includes('website')) {
         const name = node['name'];
         if (typeof name === 'string' && !seenSources.has('schema')) {
-          out.push({ source: 'Organization schema', value: name });
+          out.push({ source: `${jsonLdTypes([node]).includes('organization') ? 'Organization' : 'WebSite'} schema`, value: name });
           seenSources.add('schema');
         }
       }
     }
+  }
+
+  // The brand can sit at either end of the title ("Brand | Page" or
+  // "Page | Brand"). Prefer whichever segment matches another source; only
+  // fall back to the suffix convention when nothing else corroborates.
+  if (titleSegments.length > 0) {
+    const others = out.map((n) => n.value.toLowerCase().trim());
+    const matching = titleSegments.find((seg) => others.includes(seg.toLowerCase().trim()));
+    if (matching) out.push({ source: 'title', value: matching });
+    else out.push({ source: 'title suffix', value: titleSegments[titleSegments.length - 1] });
   }
   return out;
 }

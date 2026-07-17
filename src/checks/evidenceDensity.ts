@@ -35,6 +35,31 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
   const text = extractVisibleText(mainHtml);
   const words = wordCount(text);
 
+  // No extractable text → the score is honestly 0, but stat/quote/citation
+  // recommendations would be mis-aimed at an empty shell. Point at the root
+  // cause instead.
+  if (words < 15) {
+    return {
+      key: 'evidenceDensity',
+      name: dim,
+      weight: 3,
+      score: 0,
+      evidence: [
+        { status: 'fail', message: `no extractable main content to assess (${words} words)` },
+        { status: 'info', message: 'content-level checks scored the URL you gave; if the content lives elsewhere (e.g. /about or a docs page), audit that page directly' },
+      ],
+      recommendations: [
+        {
+          dimension: dim,
+          action: 'Get real text into this page first (see Renderability), or run the audit against the page that actually carries your content',
+          why: 'Statistics, quotations and citations (the GEO-research visibility levers) can only lift content that engines can extract — there is no text here to enrich.',
+          impact: 3,
+          effort: 1,
+        },
+      ],
+    };
+  }
+
   // Statistics (0-35)
   const stats = text.match(STAT_RE) ?? [];
   let statPts = 0;
@@ -49,7 +74,7 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Add concrete statistics with units (%, $, counts) to the main content',
-      why: 'The GEO research (Aggarwal et al., KDD 2024) measured a +25.9% generative-engine visibility lift from adding statistics — engines preferentially quote sentences that carry numbers.',
+      why: 'The GEO research (Aggarwal et al., KDD 2024) measured a +25.9% generative-engine visibility lift from adding statistics (benchmark-specific — treat as directional, not guaranteed); engines preferentially quote sentences that carry numbers.',
       impact: 3,
       effort: 2,
     });
@@ -70,7 +95,7 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Quote named experts or primary sources directly (blockquote or inline quotation marks with attribution)',
-      why: 'Quotations produced the single largest lift in the GEO research: +27.8% generative-engine visibility (Aggarwal et al., KDD 2024). Attributed speech reads as sourced rather than asserted.',
+      why: 'Quotations produced the single largest lift in the GEO research: +27.8% generative-engine visibility (Aggarwal et al., KDD 2024; benchmark-specific — treat as directional). Attributed speech reads as sourced rather than asserted.',
       impact: 3,
       effort: 2,
     });
@@ -101,7 +126,7 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Cite sources: link claims to authoritative external references (.gov, .edu, journals, primary data)',
-      why: 'Citing sources lifted generative-engine visibility +24.9% in the GEO research (Aggarwal et al., KDD 2024) — engines trust and re-surface content that shows its work.',
+      why: 'Citing sources lifted generative-engine visibility +24.9% in the GEO research (Aggarwal et al., KDD 2024; benchmark-specific — treat as directional) — engines trust and re-surface content that shows its work.',
       impact: 3,
       effort: 1,
     });

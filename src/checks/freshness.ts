@@ -94,7 +94,7 @@ export function checkFreshness(ctx: AuditContext, now: Date = new Date()): Dimen
     recommendations.push({
       dimension: dim,
       action: 'Add a visible "Last updated" date plus dateModified in JSON-LD, and lastmod in the sitemap',
-      why: 'AI engines have a strong recency bias — citations drop off sharply for content older than ~3 months. Undated content cannot demonstrate freshness at all, so it defaults to looking stale.',
+      why: 'AI engines have a strong recency bias — citation likelihood reportedly drops off sharply past roughly 3 months (a directional heuristic, not a hard cliff). Undated content cannot demonstrate freshness at all, so it defaults to looking stale.',
       impact: 2,
       effort: 1,
     });
@@ -145,7 +145,7 @@ export function checkFreshness(ctx: AuditContext, now: Date = new Date()): Dimen
     recommendations.push({
       dimension: dim,
       action: 'Refresh the content and bump the visible + structured dateModified honestly (real edits, not date-only bumps)',
-      why: 'AI engines have a strong recency bias; citations drop off sharply past ~3 months. Genuine updates restore eligibility — date-only bumps risk trust penalties when the content contradicts the claimed date.',
+      why: 'AI engines have a strong recency bias; citation likelihood reportedly drops off sharply past roughly 3 months (directional heuristic). Genuine updates restore eligibility — date-only bumps risk trust penalties when the content contradicts the claimed date.',
       impact: 2,
       effort: 2,
     });

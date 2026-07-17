@@ -1,6 +1,6 @@
 import type { AuditContext } from '../context.js';
 import type { DimensionResult, Evidence, Recommendation } from '../types.js';
-import { extractHeadings, extractJsonLd, extractVisibleText, firstWords, jsonLdTypes, mainContentHtml, countTag } from '../html.js';
+import { extractHeadings, extractJsonLd, extractVisibleText, firstWords, jsonLdTypes, mainContentHtml, countTag, wordCount } from '../html.js';
 
 const QUESTION_START = /^(who|what|why|how|when|where|which|can|does|do|is|are|should|will)\b/i;
 const ANSWER_VERB = /\b(is|are|means|refers to|helps|enables|provides|allows|lets)\b/i;
@@ -30,6 +30,32 @@ export function checkAnswerReadiness(ctx: AuditContext): DimensionResult {
 
   const mainHtml = mainContentHtml(html);
   const mainText = extractVisibleText(mainHtml);
+
+  // A page with essentially no extractable text (SPA shell, sign-in screen)
+  // scores 0 here, but the useful advice is to fix renderability or audit the
+  // actual content page — not to bolt an FAQ onto an empty shell.
+  if (wordCount(mainText) < 15) {
+    return {
+      key: 'answerReadiness',
+      name: dim,
+      weight: 3,
+      score: 0,
+      evidence: [
+        { status: 'fail', message: `no extractable main content to assess (${wordCount(mainText)} words) — engines that retrieve this page find nothing to answer with` },
+        { status: 'info', message: 'content-level checks scored the URL you gave; if the content lives elsewhere (e.g. /about or a docs page), audit that page directly' },
+      ],
+      recommendations: [
+        {
+          dimension: dim,
+          action: 'Get real text into this page first (see Renderability), or run the audit against the page that actually carries your content',
+          why: 'Answer-readiness heuristics (definitional opening, question headings, FAQ) are meaningless on a page with no extractable text — fixing those here would decorate an empty shell.',
+          impact: 3,
+          effort: 1,
+        },
+      ],
+    };
+  }
+
   const opening = firstWords(mainText, 200);
 
   // 1. Direct answer statement in the first ~200 tokens (0-30)

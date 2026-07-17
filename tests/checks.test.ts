@@ -71,7 +71,7 @@ describe('checkRenderability', () => {
     const r = checkRenderability(makeCtx({ target: makePage('https://example.com/guide', fixture('spa-shell.html')) }));
     expect(r.score).toBeLessThanOrEqual(20);
     expect(r.evidence.some((e) => e.message.includes('#root'))).toBe(true);
-    expect(r.recommendations.some((rec) => rec.action.includes('Server-render'))).toBe(true);
+    expect(r.recommendations.some((rec) => rec.action.includes('content in the initial HTML'))).toBe(true);
   });
 
   it('states the no-JS limitation', () => {
@@ -125,13 +125,22 @@ describe('checkAnswerReadiness', () => {
   });
 
   it('detects question headings partially (1-2 questions)', () => {
-    const html = '<html><body><main><h1>Topic</h1><h2>How does it work?</h2><p>The system is a pipeline that processes text.</p></main></body></html>';
+    const html = '<html><body><main><h1>Topic</h1><h2>How does it work?</h2><p>The system is a pipeline that processes text through several stages and produces structured output for downstream consumers.</p></main></body></html>';
     const r = checkAnswerReadiness(makeCtx({ target: makePage('https://example.com/guide', html) }));
     expect(r.evidence.some((e) => e.message.includes('1 question-formatted heading'))).toBe(true);
   });
 
   it('could not verify without HTML', () => {
     expect(checkAnswerReadiness(makeCtx({ target: null })).score).toBeNull();
+  });
+
+  it('on a no-content shell: scores 0 but redirects advice to renderability instead of FAQ/heading recs', () => {
+    const r = checkAnswerReadiness(makeCtx({ target: makePage('https://example.com/guide', fixture('spa-shell.html')) }));
+    expect(r.score).toBe(0);
+    expect(r.evidence.some((e) => e.message.includes('no extractable main content'))).toBe(true);
+    expect(r.recommendations).toHaveLength(1);
+    expect(r.recommendations[0].action).toContain('Renderability');
+    expect(r.recommendations.some((rec) => rec.action.includes('FAQ'))).toBe(false);
   });
 });
 
@@ -150,8 +159,15 @@ describe('checkEvidenceDensity', () => {
     expect(whys).toContain('+24.9%');
   });
 
+  it('on a no-content shell: scores 0 with a single root-cause rec, not stat/quote/citation recs', () => {
+    const r = checkEvidenceDensity(makeCtx({ target: makePage('https://example.com/guide', fixture('spa-shell.html')) }));
+    expect(r.score).toBe(0);
+    expect(r.recommendations).toHaveLength(1);
+    expect(r.recommendations[0].action).toContain('Renderability');
+  });
+
   it('does not count same-domain links as outbound citations', () => {
-    const html = '<html><body><main><p>text</p><a href="https://example.com/other">internal</a><a href="https://www.example.com/other2">internal www</a></main></body></html>';
+    const html = '<html><body><main><p>Some ordinary body copy that talks about the topic at hand in a fairly plain way without numbers.</p><a href="https://example.com/other">internal</a><a href="https://www.example.com/other2">internal www</a></main></body></html>';
     const r = checkEvidenceDensity(makeCtx({ target: makePage('https://example.com/guide', html) }));
     expect(r.evidence.some((e) => e.message.includes('0 outbound citation link(s)'))).toBe(true);
   });
@@ -173,7 +189,7 @@ describe('checkFreshness', () => {
   it('scores 30 with a recommendation when no dates exist anywhere', () => {
     const r = checkFreshness(makeCtx({ target: makePage('https://example.com/guide', fixture('thin-page.html')) }), NOW);
     expect(r.score).toBe(30);
-    expect(r.recommendations[0].why).toContain('~3 months');
+    expect(r.recommendations[0].why).toContain('roughly 3 months');
   });
 
   it('caps header-only freshness at 60 (deploy time is weak evidence)', () => {
@@ -235,6 +251,21 @@ describe('checkEntityEeat', () => {
       '<html><head><title>Page | Alpha Corp</title><meta property="og:site_name" content="Beta Inc"></head><body><main><p>content</p></main></body></html>';
     const r = checkEntityEeat(makeCtx({ target: makePage('https://example.com/guide', html) }));
     expect(r.evidence.some((e) => e.status === 'warn' && e.message.includes('disagree'))).toBe(true);
+  });
+
+  it('accepts a brand-prefix title ("Brand | Tagline") when it matches another source', () => {
+    const html =
+      '<html><head><title>Truenote | Cited Knowledge Answers</title><meta property="og:site_name" content="Truenote"></head><body><main><p>content here for the page</p></main></body></html>';
+    const r = checkEntityEeat(makeCtx({ target: makePage('https://example.com/guide', html) }));
+    expect(r.evidence.some((e) => e.status === 'pass' && e.message.includes('org name consistent'))).toBe(true);
+    expect(r.evidence.some((e) => e.message.includes('disagree'))).toBe(false);
+  });
+
+  it('accepts a WebSite-schema name as an org-name source', () => {
+    const html =
+      '<html><head><title>Cited Answers | Truenote</title><script type="application/ld+json">{"@type":"WebSite","name":"Truenote"}</script></head><body><main><p>content here for the page</p></main></body></html>';
+    const r = checkEntityEeat(makeCtx({ target: makePage('https://example.com/guide', html) }));
+    expect(r.evidence.some((e) => e.status === 'pass' && e.message.includes('org name consistent'))).toBe(true);
   });
 });
 
