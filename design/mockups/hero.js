@@ -111,6 +111,7 @@ const starUniforms = {
 const starMat = new THREE.ShaderMaterial({
   transparent: true,
   depthWrite: false,
+  depthTest: false,
   blending: THREE.NormalBlending,
   uniforms: starUniforms,
   vertexShader: /* glsl */ `
@@ -141,6 +142,7 @@ const starMat = new THREE.ShaderMaterial({
     }`,
 });
 const stars = new THREE.Points(starGeo, starMat);
+stars.renderOrder = 4; // stars draw last, always on top of their strands
 sky.add(stars);
 
 // ---- constellation lines (faint, always on) ----
@@ -151,9 +153,10 @@ for (let i = 0; i < linkPairs.length; i++) {
 }
 const lineGeo = new THREE.BufferGeometry();
 lineGeo.setAttribute('position', new THREE.BufferAttribute(linePos, 3));
-const lineMat = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.22, color: '#2743d0' });
+const lineMat = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.22, color: '#2743d0', depthTest: false, depthWrite: false });
 const constellations = new THREE.LineSegments(lineGeo, lineMat);
-sky.add(constellations);
+constellations.renderOrder = 1; // painter's order for all overlays — depth-sort flips between
+sky.add(constellations);        // transparent layers read as pixel flicker while the sky drifts
 
 // ---- lantern edges (drawn live between stars near the cursor) ----
 // Each strand has a lifecycle: it eases in slowly, grows outward from its
@@ -169,6 +172,7 @@ lanternGeo.setDrawRange(0, 0);
 const lanternMat = new THREE.ShaderMaterial({
   transparent: true,
   depthWrite: false,
+  depthTest: false,
   uniforms: { uColor: { value: new THREE.Color('#2743d0') }, uOpacity: { value: 0.5 } },
   vertexShader: /* glsl */ `
     attribute float aAlpha;
@@ -184,6 +188,7 @@ const lanternMat = new THREE.ShaderMaterial({
     void main() { gl_FragColor = vec4(uColor, vAlpha * uOpacity); }`,
 });
 const lanternLines = new THREE.LineSegments(lanternGeo, lanternMat);
+lanternLines.renderOrder = 2;
 sky.add(lanternLines);
 const edgeLife = new Map(); // "a_b" -> { a, b, s: strength 0..1, on: bool }
 
@@ -305,8 +310,12 @@ function updateLantern(dt) {
   for (const [key, edge] of edgeLife) {
     const alive = wanted.has(key) && aLantern[edge.a] > 0.12 && aLantern[edge.b] > 0.12;
     edge.s += ((alive ? 1 : 0) - edge.s) * ease(alive ? 3.2 : 2.0, dt); // slow bloom, slower fade
+    if (edge.s > 0.985) edge.s = 1; // settle exactly — an endless exponential crawl reads as shimmer
     if (!alive && edge.s < 0.02) { edgeLife.delete(key); continue; }
-    const g = smooth(edge.s);
+    // geometry reaches the stars sooner than the alpha finishes — the line stops
+    // moving early (sub-pixel endpoint motion is the flicker), the glow keeps blooming
+    const g = smooth(Math.min(1, edge.s * 1.6));
+    const ga = smooth(edge.s);
     const a3 = edge.a * 3, b3 = edge.b * 3;
     const mx = (starPos[a3] + starPos[b3]) / 2, my = (starPos[a3 + 1] + starPos[b3 + 1]) / 2, mz = (starPos[a3 + 2] + starPos[b3 + 2]) / 2;
     // the strand grows outward from its midpoint toward both stars
@@ -315,8 +324,8 @@ function updateLantern(dt) {
       mx + (starPos[b3] - mx) * g, my + (starPos[b3 + 1] - my) * g, mz + (starPos[b3 + 2] - mz) * g,
     ], e * 6);
     // feather each strand by how warm its endpoint is — the web breathes at the rim
-    lanternAlpha[e * 2] = g * Math.min(1, aLantern[edge.a] * 1.4);
-    lanternAlpha[e * 2 + 1] = g * Math.min(1, aLantern[edge.b] * 1.4);
+    lanternAlpha[e * 2] = ga * Math.min(1, aLantern[edge.a] * 1.4);
+    lanternAlpha[e * 2 + 1] = ga * Math.min(1, aLantern[edge.b] * 1.4);
     e++;
     if (e >= MAX_LANTERN_EDGES) break;
   }
@@ -332,8 +341,9 @@ const meteorPos = new Float32Array(MAX_METEORS * 6);
 const meteorGeo = new THREE.BufferGeometry();
 meteorGeo.setAttribute('position', new THREE.BufferAttribute(meteorPos, 3));
 meteorGeo.setDrawRange(0, 0);
-const meteorMat = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.9, color: '#2743d0' }); // recolored by readTheme
+const meteorMat = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.9, color: '#2743d0', depthTest: false, depthWrite: false }); // recolored by readTheme
 const meteorLines = new THREE.LineSegments(meteorGeo, meteorMat);
+meteorLines.renderOrder = 3;
 sky.add(meteorLines);
 
 canvas.parentElement.addEventListener('pointerdown', (e) => {
