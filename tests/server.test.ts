@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { AddressInfo } from 'node:net';
-import type { Server } from 'node:http';
+import { request as httpRequest, type Server } from 'node:http';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -48,6 +48,24 @@ describe('audit server', () => {
     const res = await fetch(base + '/app');
     expect(res.status).toBe(200);
     expect(await res.text()).toContain('/api/audit');
+  });
+
+  it('301s www hosts to the apex, preserving the path', async () => {
+    // fetch/undici refuses custom Host headers, so use raw http.request.
+    const port = (server.address() as AddressInfo).port;
+    const { status, location } = await new Promise<{ status: number; location: string | undefined }>((resolve, reject) => {
+      const req = httpRequest(
+        { host: '127.0.0.1', port, path: '/app?url=example.com', headers: { host: 'www.willaicite.com' } },
+        (res) => {
+          res.resume();
+          resolve({ status: res.statusCode ?? 0, location: res.headers.location });
+        },
+      );
+      req.on('error', reject);
+      req.end();
+    });
+    expect(status).toBe(301);
+    expect(location).toBe('https://willaicite.com/app?url=example.com');
   });
 
   it('rejects a missing url param with 400', async () => {

@@ -287,6 +287,14 @@
     start(url);
   });
 
+  // Landing-page handoff: /app?url=example.com prefills and starts the audit
+  // immediately, so the homepage form is one submit away from a result.
+  const handoff = new URLSearchParams(location.search).get('url');
+  if (handoff && handoff.trim()) {
+    $('url').value = handoff.trim();
+    start(handoff.trim());
+  }
+
   function start(url) {
     $('runbtn').disabled = true;
     $('error').style.display = 'none';
