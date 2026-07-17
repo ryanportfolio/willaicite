@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>audit · willaicite</title>
 <meta name="description" content="Run a free, deterministic willaicite audit: will AI answer engines (ChatGPT, Perplexity, Google AI Overviews, Claude) retrieve and cite your page? Eight dimensions, exact evidence, no fabricated numbers.">
-<link rel="canonical" href="https://willaicite.com/app">
+<link rel="canonical" href="https://willaicite.com/audit">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta property="og:site_name" content="willaicite">
 <meta property="og:type" content="website">
 <meta property="og:title" content="audit · willaicite">
 <meta property="og:description" content="Run a free, deterministic willaicite audit: will AI answer engines retrieve and cite your page?">
-<meta property="og:url" content="https://willaicite.com/app">
+<meta property="og:url" content="https://willaicite.com/audit">
 <meta property="og:image" content="https://willaicite.com/og.png">
 <style>
   :root {
@@ -287,7 +287,7 @@
     start(url);
   });
 
-  // Landing-page handoff: /app?url=example.com prefills and starts the audit
+  // Landing-page handoff: /audit?url=example.com prefills and starts the audit
   // immediately, so the homepage form is one submit away from a result.
   const handoff = new URLSearchParams(location.search).get('url');
   if (handoff && handoff.trim()) {

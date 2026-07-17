@@ -44,10 +44,16 @@ describe('audit server', () => {
     expect(html).toContain('/api/audit');
   });
 
-  it('serves the UI at /app in both modes', async () => {
-    const res = await fetch(base + '/app');
+  it('serves the UI at /audit in both modes', async () => {
+    const res = await fetch(base + '/audit');
     expect(res.status).toBe(200);
     expect(await res.text()).toContain('/api/audit');
+  });
+
+  it('301s the legacy /app path to /audit, preserving the query', async () => {
+    const res = await fetch(base + '/app?url=example.com', { redirect: 'manual' });
+    expect(res.status).toBe(301);
+    expect(res.headers.get('location')).toBe('/audit?url=example.com');
   });
 
   it('301s www hosts to the apex, preserving the path', async () => {
@@ -55,7 +61,7 @@ describe('audit server', () => {
     const port = (server.address() as AddressInfo).port;
     const { status, location } = await new Promise<{ status: number; location: string | undefined }>((resolve, reject) => {
       const req = httpRequest(
-        { host: '127.0.0.1', port, path: '/app?url=example.com', headers: { host: 'www.willaicite.com' } },
+        { host: '127.0.0.1', port, path: '/audit?url=example.com', headers: { host: 'www.willaicite.com' } },
         (res) => {
           res.resume();
           resolve({ status: res.statusCode ?? 0, location: res.headers.location });
@@ -65,7 +71,7 @@ describe('audit server', () => {
       req.end();
     });
     expect(status).toBe(301);
-    expect(location).toBe('https://willaicite.com/app?url=example.com');
+    expect(location).toBe('https://willaicite.com/audit?url=example.com');
   });
 
   it('rejects a missing url param with 400', async () => {
@@ -111,7 +117,7 @@ describe('audit server', () => {
 });
 
 describe('audit server — landing mode', () => {
-  it('serves the landing at /, directory URLs, and the app at /app; blocks traversal', async () => {
+  it('serves the landing at /, directory URLs, and the app at /audit; blocks traversal', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'geo-landing-'));
     mkdirSync(join(dir, 'about'), { recursive: true });
     writeFileSync(join(dir, 'index.html'), '<html><body>LANDING</body></html>');
@@ -126,7 +132,7 @@ describe('audit server — landing mode', () => {
     expect(await (await fetch(b + '/about')).text()).toContain('ABOUT');
     const robots = await fetch(b + '/robots.txt');
     expect(robots.headers.get('content-type')).toContain('text/plain');
-    expect(await (await fetch(b + '/app')).text()).toContain('/api/audit');
+    expect(await (await fetch(b + '/audit')).text()).toContain('/api/audit');
     expect((await fetch(b + '/..%2f..%2fpackage.json')).status).toBe(404);
     expect((await fetch(b + '/nope')).status).toBe(404);
 
