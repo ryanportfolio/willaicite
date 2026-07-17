@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en" data-theme="day">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Context windows are a budget, not a bucket — CoreWise Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Caveat:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+.masthead {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--s-2) var(--s-4);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--paper) 86%, transparent);
+  backdrop-filter: blur(10px);
+}
+.wordmark { font-family: var(--font-display); font-size: var(--text-md); color: var(--ink); text-decoration: none; }
+.wordmark em { font-style: normal; color: var(--accent-deep); }
+.masthead nav { display: flex; gap: var(--s-4); align-items: center; }
+.masthead nav a { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-caps); text-transform: uppercase; color: var(--ink-soft); text-decoration: none; }
+.session-toggle { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-caps); border: 1px solid var(--line); background: none; color: var(--ink-soft); padding: 6px 12px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
+.session-toggle .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--glow); }
+
+/* ambient margins: faint graticule + drifting twinkles, outside the measure */
+.ambient { position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    repeating-linear-gradient(to right, var(--line-soft) 0 1px, transparent 1px 160px),
+    repeating-linear-gradient(to bottom, var(--line-soft) 0 1px, transparent 1px 160px);
+  mask-image: linear-gradient(to right, black 0 18%, transparent 30% 70%, black 82% 100%);
+}
+.twinkle { position: fixed; width: 5px; height: 5px; border-radius: 50%; background: var(--star); opacity: 0; pointer-events: none; z-index: 0;
+  animation: twk 7s var(--ease) infinite; box-shadow: 0 0 10px var(--glow); }
+@keyframes twk { 0%, 100% { opacity: 0; transform: scale(0.5); } 50% { opacity: 0.7; transform: scale(1); } }
+
+/* reading progress: a star ascends the left margin */
+.progress-track { position: fixed; left: 26px; top: 90px; bottom: 40px; width: 1px; background: var(--line); z-index: 40; }
+.progress-star { position: absolute; left: -5.5px; top: 0; width: 12px; height: 12px; color: var(--accent-deep); filter: drop-shadow(0 0 6px var(--glow)); transition: top 0.2s linear; }
+
+article { position: relative; z-index: 1; max-width: calc(var(--measure) + 2 * var(--s-4)); margin: 0 auto; padding: var(--s-8) var(--s-4) var(--s-12); }
+
+.kicker { display: flex; gap: var(--s-1); align-items: center; color: var(--accent-deep); }
+.kicker .lvl { color: var(--ink-mute); }
+h1 { font-family: var(--font-display); font-size: clamp(2.4rem, 6vw, var(--text-3xl)); line-height: 1.04; margin: var(--s-2) 0; text-wrap: balance; }
+.dek { font-size: var(--text-md); font-style: italic; color: var(--ink-soft); }
+.byline { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--ink-mute); letter-spacing: 0.05em; display: flex; gap: var(--s-2); flex-wrap: wrap; align-items: center; padding: var(--s-3) 0 var(--s-4); border-bottom: 1px solid var(--line); margin-bottom: var(--s-4); }
+.flag { color: var(--accent-deep); border: 1px solid currentColor; padding: 2px 8px; transform: rotate(-1.5deg); letter-spacing: 0.12em; }
+
+/* objective box — "upon leaving this room" */
+.objectives { border: 1px solid var(--line); border-top: 3px solid var(--accent-deep); background: var(--panel); padding: var(--s-3); margin: var(--s-4) 0; position: relative; }
+.panel-label { font-family: var(--font-mono); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--accent-deep); display: block; margin-bottom: var(--s-2); }
+.objectives ul { list-style: none; padding: 0; margin: 0; }
+.objectives li { padding-left: var(--s-3); position: relative; margin-bottom: var(--s-1); }
+.objectives li::before { content: '✦'; position: absolute; left: 0; color: var(--accent-deep); font-size: 0.8em; top: 0.25em; }
+.objectives b { color: var(--accent-deep); }
+
+/* prereq mini-chart: this guide's star + its prerequisite stars */
+.prereqs { display: flex; gap: var(--s-3); align-items: center; margin: var(--s-3) 0 var(--s-6); font-size: var(--text-sm); color: var(--ink-soft); }
+.prereqs svg { flex: 0 0 auto; color: var(--accent-deep); }
+.prereqs a { white-space: nowrap; }
+
+.body-text { position: relative; }
+.body-text > p { margin-bottom: var(--s-3); }
+.body-text > p:first-of-type::first-letter { font-family: var(--font-display); font-size: 3.4em; line-height: 0.82; float: left; padding: 0.1em 0.14em 0 0; color: var(--accent-deep); }
+h2 { font-family: var(--font-display); font-size: var(--text-xl); font-weight: 400; margin: var(--s-6) 0 var(--s-2); display: grid; grid-template-columns: auto 1fr; gap: 0 0.45em; align-items: baseline; }
+h2 .sec-no { color: var(--accent-deep); }
+.body-text ul { margin: 0 0 var(--s-3) var(--s-3); }
+.body-text li { margin-bottom: var(--s-1); }
+code { font-family: var(--font-mono); font-size: 0.85em; background: var(--accent-wash); padding: 1px 5px; }
+
+/* chalk note in the margin */
+.chalk { position: absolute; right: -215px; width: 185px; font-family: var(--font-hand); font-size: 1.25rem; line-height: 1.25; color: var(--ink-mute); transform: rotate(-2.5deg); }
+.chalk::before { content: '☞ '; }
+@media (max-width: 1200px) { .chalk { position: static; width: auto; transform: none; display: block; margin: var(--s-2) 0; } }
+
+/* pull quote — a star speaks */
+.pullquote { margin: var(--s-6) 0; padding-left: var(--s-3); border-left: 3px solid var(--accent-deep); position: relative; }
+.pullquote p { font-family: var(--font-body); font-style: italic; font-weight: 500; font-size: var(--text-lg); line-height: 1.32; }
+.pullquote p::first-letter { font-style: normal; }
+.pullquote cite { display: block; margin-top: var(--s-2); font-family: var(--font-mono); font-style: normal; font-size: var(--text-xs); color: var(--ink-mute); }
+.timestamp { font-family: var(--font-mono); color: var(--accent-deep); text-decoration: none; border-bottom: 1px dashed color-mix(in srgb, var(--accent) 55%, transparent); }
+.timestamp::before { content: '▶ '; font-size: 0.8em; }
+
+/* field exercise */
+.exercise { background: var(--accent-wash); border: 1px solid var(--line); border-left: 3px solid var(--accent-deep); padding: var(--s-3); margin: var(--s-6) 0; }
+.exercise ol { margin: 0 0 0 var(--s-3); }
+.exercise li { margin-bottom: var(--s-1); }
+
+/* oral examination */
+.selfcheck { margin: var(--s-6) 0; }
+.selfcheck details { border-bottom: 1px solid var(--line); padding: var(--s-2) 0; }
+.selfcheck details:first-of-type { border-top: 1px solid var(--line); }
+.selfcheck summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: var(--s-2); }
+.selfcheck summary::-webkit-details-marker { display: none; }
+.selfcheck summary::after { content: '✦'; color: var(--accent-deep); transition: transform var(--dur) var(--ease); }
+.selfcheck details[open] summary::after { transform: rotate(135deg); }
+.selfcheck details p { margin-top: var(--s-1); color: var(--ink-soft); font-size: var(--text-sm); }
+
+/* star catalogue (sources) */
+.sources { margin-top: var(--s-8); padding-top: var(--s-4); border-top: 3px double var(--line); }
+.sources ol { margin: 0 0 0 var(--s-3); font-size: var(--text-sm); }
+.sources li { margin-bottom: var(--s-2); }
+.sources .creator { font-weight: 600; }
+.sources .stamps { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--ink-mute); }
+
+footer { position: relative; z-index: 1; border-top: 1px solid var(--line); padding: var(--s-3) var(--s-4); display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: var(--text-2xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); }
+</style>
+</head>
+<body class="grain">
+
+<header class="masthead">
+  <a class="wordmark" href="home.html">CoreWise <em>Academy</em></a>
+  <nav>
+    <a href="home.html#tracks">Constellations</a>
+    <a href="#">About</a>
+    <button class="session-toggle" id="toggle"><span class="dot"></span><span id="toggle-label">DAY LECTURE</span></button>
+  </nav>
+</header>
+
+<div class="ambient"></div>
+<div class="twinkle" style="top:18%; left:6%; animation-delay:0s"></div>
+<div class="twinkle" style="top:42%; left:9%; animation-delay:2.2s"></div>
+<div class="twinkle" style="top:66%; left:5%; animation-delay:4.4s"></div>
+<div class="twinkle" style="top:30%; right:7%; animation-delay:1.1s"></div>
+<div class="twinkle" style="top:58%; right:5%; animation-delay:3.3s"></div>
+<div class="twinkle" style="top:80%; right:9%; animation-delay:5.5s"></div>
+
+<div class="progress-track" aria-hidden="true">
+  <svg class="progress-star" id="pstar" viewBox="0 0 12 12"><path d="M6 0 L7.4 4.6 L12 6 L7.4 7.4 L6 12 L4.6 7.4 L0 6 L4.6 4.6 Z" fill="currentColor"/></svg>
+</div>
+
+<article>
+  <p class="kicker mono-label accent">The Loom · Constellation II <span class="lvl">/ Practitioner — telescope</span></p>
+  <h1 class="display">Context windows are a budget, not a bucket</h1>
+  <p class="dek">Why stuffing more into the prompt makes models worse — and how to spend tokens where they earn their keep.</p>
+  <p class="byline">
+    <span>Nº 007 · Vol. I</span><span>·</span><span>14 min read</span><span>·</span><span>Charted July MMXXVI</span>
+    <span class="flag">PLACEHOLDER — MOCKUP CONTENT</span>
+  </p>
+
+  <aside class="objectives">
+    <span class="panel-label">Upon leaving this room, you can</span>
+    <ul>
+      <li><b>Estimate</b> the token cost of each component of a prompt and rank components by marginal value.</li>
+      <li><b>Restructure</b> an overloaded prompt into layered context: instructions, references, and retrieved material.</li>
+      <li><b>Diagnose</b> a “lost in the middle” failure from model output alone, without inspecting logits.</li>
+    </ul>
+  </aside>
+
+  <div class="prereqs">
+    <svg width="92" height="48" viewBox="0 0 92 48" aria-hidden="true">
+      <g fill="currentColor" stroke="currentColor">
+        <circle cx="10" cy="36" r="3"/><circle cx="38" cy="14" r="3"/>
+        <path d="M10 36 L38 14 L74 26" fill="none" stroke-width="1" stroke-dasharray="2 3"/>
+        <path d="M74 26 l1.7 5.6 5.6 1.7 -5.6 1.7 -1.7 5.6 -1.7 -5.6 -5.6 -1.7 5.6 -1.7 Z" stroke="none"/>
+        <text x="70" y="10" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" letter-spacing="1" stroke="none">YOU ARE HERE</text>
+      </g>
+    </svg>
+    <span><span class="panel-label" style="display:inline; margin:0">Approach via</span>&ensp;<a href="#">How a model reads your prompt</a> (The Lens · naked eye) &nbsp;·&nbsp; <a href="#">Tokens, roughly</a> (The Lens · naked eye)</span>
+  </div>
+
+  <div class="body-text">
+    <span class="chalk">forty pages of context, two lines of instructions — guess which one the model reads</span>
+    <p>Every model ships with a context window measured in tokens, and the number keeps going up — so the intuition forms early: more room means more context means better answers. That intuition is wrong in a specific, measurable way. Attention over a long sequence is not uniform. Material in the middle of a long prompt is recalled worse than material at the edges, and every marginal paragraph dilutes the instructions you actually care about.</p>
+    <p>The better mental model is a budget. Every token you spend on boilerplate is a token of attention you can’t spend on the task. A 200-line system prompt where 30 lines do the work isn’t thorough — it’s noise wearing a suit. The craft is deciding what earns a place in context at all, and where it sits.</p>
+    <h2><span class="sec-no">01</span>The three layers of a working prompt</h2>
+    <p>Prompts that survive contact with production tend to converge on the same shape:</p>
+    <ul>
+      <li><strong>Instructions</strong> — short, imperative, at the top or bottom, never buried. What to do, what never to do.</li>
+      <li><strong>Reference</strong> — schemas, examples, style rules. Compressed to the minimum that changes behavior.</li>
+      <li><strong>Retrieved material</strong> — the variable payload. Clearly delimited, labeled as data rather than instructions.</li>
+    </ul>
+    <p>When output quality drops after you add material, suspect placement before you suspect the model. Move the instruction block to the end, rerun, and compare — the fix is often free.</p>
+  </div>
+
+  <figure class="pullquote">
+    <p>“The model didn’t forget your instruction. You buried it under forty paragraphs it had no reason to prioritize.”</p>
+    <cite>— Placeholder Creator, <a href="#">“Long context is a lie (sort of)”</a> · <a class="timestamp" href="#">12:41</a></cite>
+  </figure>
+
+  <aside class="exercise">
+    <span class="panel-label">Field exercise — try this tonight</span>
+    <ol>
+      <li>Take the longest prompt you use regularly and paste it into a tokenizer playground.</li>
+      <li>Label each section: instruction, reference, or payload. Note the token count of each.</li>
+      <li>Delete the section you’re least sure earns its cost. Rerun your last three real tasks and compare outputs.</li>
+    </ol>
+  </aside>
+
+  <section class="selfcheck">
+    <span class="panel-label">Oral examination — self-administered</span>
+    <details>
+      <summary>Why does adding more context sometimes reduce output quality?</summary>
+      <p>Attention over long sequences is non-uniform — middle content is recalled worse — and every added token dilutes the relative weight of the instructions. More context raises the chance the model attends to the wrong thing.</p>
+    </details>
+    <details>
+      <summary>Where should critical instructions sit in a long prompt, and why?</summary>
+      <p>At the edges — top or bottom — because recall is strongest at sequence boundaries. Burying instructions mid-prompt is the most common self-inflicted failure.</p>
+    </details>
+    <details>
+      <summary>What distinguishes “reference” from “retrieved material” in the three-layer model?</summary>
+      <p>Reference is stable, curated, and compressed (schemas, style rules, examples); retrieved material is the variable per-task payload, delimited and labeled as data so it can’t masquerade as instructions.</p>
+    </details>
+  </section>
+
+  <section class="sources">
+    <span class="panel-label">Star catalogue — sources credited</span>
+    <ol>
+      <li><span class="creator">Placeholder Creator</span> — <a href="#">“Long context is a lie (sort of)”</a><br><span class="stamps">cited at 04:12 · 12:41 · 27:03 — observed June MMXXVI</span></li>
+      <li><span class="creator">Another Creator</span> — <a href="#">“Prompt anatomy for production systems”</a><br><span class="stamps">cited at 08:55 · 19:20 — observed June MMXXVI</span></li>
+    </ol>
+  </section>
+</article>
+
+<footer>
+  <span>CoreWise Academy · original syntheses, credited sources</span>
+  <span>Nº 007 · The Loom · Sapere aude</span>
+</footer>
+
+<script>
+  const root = document.documentElement;
+  const label = document.getElementById('toggle-label');
+  const apply = (t) => { root.dataset.theme = t; label.textContent = t === 'night' ? 'NIGHT LECTURE' : 'DAY LECTURE'; };
+  apply(localStorage.getItem('cw-theme') || (new URLSearchParams(location.search).get('theme')) || 'day');
+  document.getElementById('toggle').addEventListener('click', () => {
+    const next = root.dataset.theme === 'night' ? 'day' : 'night';
+    localStorage.setItem('cw-theme', next); apply(next);
+  });
+
+  // the reading star ascends as you read
+  const star = document.getElementById('pstar');
+  const track = document.querySelector('.progress-track');
+  addEventListener('scroll', () => {
+    const p = scrollY / (document.body.scrollHeight - innerHeight);
+    star.style.top = `${Math.min(0.99, Math.max(0, p)) * (track.clientHeight - 12)}px`;
+  }, { passive: true });
+</script>
+</body>
+</html>
