@@ -10,8 +10,11 @@ import { extractLinks, extractVisibleText, mainContentHtml, wordCount, countTag 
  * recommendations so they carry their evidence.
  */
 
+// `%` sits outside the trailing \b group: a word boundary after `%` would
+// require a word char to follow, which made "24.9%" unmatchable at end of
+// sentence/before space. Word units keep the \b so "5 kgx" doesn't match.
 const STAT_RE =
-  /(?:[$€£]\s?\d[\d,.]*(?:\s?(?:million|billion|trillion|thousand|[mbk]))?)|(?:\b\d[\d,.]*\s?(?:%|percent|percentage points?|million|billion|trillion|thousand|kg|km|mi|lbs?|GB|MB|TB|ms|seconds?|minutes?|hours?|days?|weeks?|months?|years?|users?|customers?|employees?|countries|times|x)\b)/gi;
+  /(?:[$€£]\s?\d[\d,.]*(?:\s?(?:million|billion|trillion|thousand|[mbk]))?)|(?:\b\d[\d,.]*\s?(?:%|(?:percent|percentage points?|million|billion|trillion|thousand|kg|km|mi|lbs?|GB|MB|TB|ms|seconds?|minutes?|hours?|days?|weeks?|months?|years?|users?|customers?|employees?|countries|times|x)\b))/gi;
 
 const AUTHORITATIVE_HINTS = /\.(gov|edu)(\/|$)|wikipedia\.org|nih\.gov|nature\.com|sciencedirect\.com|acm\.org|ieee\.org|arxiv\.org|who\.int|oecd\.org|reuters\.com|apnews\.com/i;
 
