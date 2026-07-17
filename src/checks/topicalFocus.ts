@@ -206,7 +206,7 @@ export function checkTopicalFocus(ctx: AuditContext): DimensionResult {
 
   evidence.push({
     status: 'info',
-    message: 'limitation: with no target query, this measures topical legibility (one coherent, consistently-stated topic), not relevance to any specific query; retrieval position — the other dominant factor in the 2026 studies — is not page-controllable and is not scored',
+    message: 'limitation: with no target query, this measures topical legibility (one coherent, consistently-stated topic), not relevance to any specific query; retrieval position (the other dominant factor in the 2026 studies) is not page-controllable and is not scored',
   });
 
   return {

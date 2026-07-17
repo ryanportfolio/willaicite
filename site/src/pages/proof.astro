@@ -21,7 +21,7 @@ const dims = [
 const faqs = [
   {
     q: 'Did you game your own tool?',
-    a: 'Gaming it would show. Every point is tied to a page property anyone can inspect: the JSON-LD is in the source, the citations resolve, the dates are real, the FAQ you are reading renders from the same data as its schema markup. The audit is deterministic, so re-running it reproduces the same evidence lines, and a faked signal would show up as a contradiction between the report and the page. The dogfood also cut the other way: running the tool on ourselves exposed a real scoring bug (percent-sign statistics could never be counted), which we fixed and shipped the same day.',
+    a: 'Gaming it would show. Every point is tied to a page property anyone can inspect: the JSON-LD is in the source, the citations resolve, the dates match the git history, the FAQ you are reading renders from the same data as its schema markup. The audit is deterministic, so re-running it reproduces the same evidence lines, and a faked signal would show up as a contradiction between the report and the page. The dogfood also cut the other way: running the tool on ourselves exposed a scoring bug (percent-sign statistics could never be counted), which we fixed and shipped the same day.',
   },
   {
     q: 'Can I reproduce these numbers?',
@@ -29,7 +29,7 @@ const faqs = [
   },
   {
     q: 'Why does this matter for my site?',
-    a: 'Because the loop that took this site from 51 to 100 is the product: audit, fix what the report flags in priority order, re-run until clean. The fix-first list is sorted by impact per effort, so the expensive-looking score usually falls to a handful of small, real changes.',
+    a: 'Because the loop that took this site from 51 to 100 is the product: audit, fix what the report flags in priority order, re-run until clean. The fix-first list is sorted by impact per effort, so the expensive-looking score usually falls to a handful of small, concrete changes.',
   },
 ];
 
@@ -124,7 +124,7 @@ const schema = {
         <li><strong>Answer-readiness, 45 to 100.</strong> No definitional opening, one question-shaped heading, no FAQ. The page now opens with a sentence an engine can lift whole, and the FAQ renders from the same array as its FAQPage markup, so the two cannot disagree.</li>
         <li><strong>Evidence density, 28 to 100.</strong> The baseline had zero statistics and one outbound link; the fix-first list read, verbatim: &ldquo;Add concrete statistics with units (%, $, counts) to the main content&rdquo;. The original GEO study measured lifts of 24.9 to 27.8 percent from cited sources, statistics and quotations (later replications find smaller, conditional effects), so the page now carries all three, with every external link verified live before shipping.</li>
         <li><strong>Freshness, 30 to 100.</strong> No dates anywhere, and the audit rewards a machine-readable date signal from the last 90 days. Dates went into the schema, the meta tags, and the sitemap.</li>
-        <li><strong>Entity &amp; E-E-A-T, 20 to 100.</strong> No author, about page, contact route, favicon, or Open Graph metadata. All added, all real.</li>
+        <li><strong>Entity &amp; E-E-A-T, 20 to 100.</strong> No author, about page, contact route, favicon, or Open Graph metadata. All added, none of it decorative.</li>
       </ul>
 
       <div class="report-rule"><h2 class="rulelabel">What happened when the model got stricter?</h2></div>
@@ -133,7 +133,7 @@ const schema = {
         research (v1.3): a new eighth dimension, topical focus &amp; metadata, weighs how
         legibly a page states one topic. Under it, this site re-scored <strong>97/100</strong>:
         the new dimension flagged the slogan-only H1 and a 238-character meta description.
-        Real findings, so we fixed them: the homepage now leads with the question it
+        The findings held, so we fixed them: the homepage now leads with the question it
         answers, and the description fits the band. The dogfood loop is the product, and it
         does not exempt us.
       </p>

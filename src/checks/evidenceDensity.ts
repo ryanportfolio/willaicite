@@ -84,7 +84,7 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Add concrete statistics with units (%, $, counts) to the main content',
-      why: 'The original GEO research measured a +25.9% visibility lift from adding statistics (Aggarwal et al., KDD 2024 — with the source already in the generator\'s context). The 2026 controlled follow-up (Vishwakarma et al., SIGIR 2026) confirms concrete facts like explicit figures help moderately, once the page is retrieved; engines preferentially quote sentences that carry numbers.',
+      why: 'The original GEO research measured a +25.9% visibility lift from adding statistics (Aggarwal et al., KDD 2024, with the source already in the generator\'s context). The 2026 controlled follow-up (Vishwakarma et al., SIGIR 2026) confirms concrete facts like explicit figures help moderately, once the page is retrieved; engines preferentially quote sentences that carry numbers.',
       impact: 2,
       effort: 2,
     });
@@ -105,7 +105,7 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Quote named experts or primary sources directly (blockquote or inline quotation marks with attribution)',
-      why: 'Quotations produced the single largest lift in the original GEO research: +27.8% visibility (Aggarwal et al., KDD 2024 — measured with the source already retrieved; independent replication in C-SEO Bench 2025 found such rewrites help far less often than first reported). Attributed speech reads as sourced rather than asserted, which decides quote-worthiness among retrieved pages.',
+      why: 'Quotations produced the single largest lift in the original GEO research: +27.8% visibility (Aggarwal et al., KDD 2024, measured with the source already retrieved; independent replication in C-SEO Bench 2025 found such rewrites help far less often than first reported). Attributed speech reads as sourced rather than asserted, which decides quote-worthiness among retrieved pages.',
       impact: 2,
       effort: 2,
     });
@@ -136,7 +136,7 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Cite sources: link claims to authoritative external references (.gov, .edu, journals, primary data)',
-      why: 'Citing sources lifted visibility +24.9% in the original GEO research (Aggarwal et al., KDD 2024 — a post-retrieval effect; 2025-2026 replications show it is a tie-break, not a ranking lever); engines trust and re-surface content that shows its work.',
+      why: 'Citing sources lifted visibility +24.9% in the original GEO research (Aggarwal et al., KDD 2024, a post-retrieval effect; 2025-2026 replications show it is a tie-break, not a ranking lever); engines trust and re-surface content that shows its work.',
       impact: 2,
       effort: 1,
     });
