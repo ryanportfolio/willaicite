@@ -62,7 +62,7 @@ export async function runAudit(inputUrl: string, opts: AuditOptions = {}): Promi
   /** Auxiliary fetches (sitemap, llms.txt, favicon) also honor robots.txt for our own token. */
   const politeGetIfAllowed = async (url: string, ua?: string, discardBody = false): Promise<FetchResult> => {
     if (!allowedForSelf(url)) {
-      return { ok: false, status: null, headers: {}, body: null, finalUrl: null, error: `skipped — robots.txt disallows ${OWN_BOT_TOKEN} for this path` };
+      return { ok: false, status: null, headers: {}, body: null, finalUrl: null, error: `skipped: robots.txt disallows ${OWN_BOT_TOKEN} for this path` };
     }
     return politeGet(url, ua, discardBody);
   };
@@ -82,7 +82,7 @@ export async function runAudit(inputUrl: string, opts: AuditOptions = {}): Promi
   if (allowedForSelf(target.href)) {
     targetPage = await fetchPage(target.href);
   } else {
-    targetSkippedReason = `robots.txt disallows ${OWN_BOT_TOKEN} (via the matching group) for this path — geo-audit respects robots.txt for its own fetching`;
+    targetSkippedReason = `robots.txt disallows ${OWN_BOT_TOKEN} (via the matching group) for this path; geo-audit respects robots.txt for its own fetching`;
   }
 
   let targetBotFetch: FetchResult | null = null;
@@ -197,7 +197,7 @@ export function buildResult(inputUrl: string, ctx: AuditContext, now: Date = new
         name: key,
         weight: 0,
         score: null,
-        evidence: [{ status: 'unverified' as const, message: `could not verify — check crashed: ${err instanceof Error ? err.message : String(err)}` }],
+        evidence: [{ status: 'unverified' as const, message: `could not verify; check crashed: ${err instanceof Error ? err.message : String(err)}` }],
         recommendations: [],
       };
     }
@@ -213,7 +213,7 @@ export function buildResult(inputUrl: string, ctx: AuditContext, now: Date = new
         name: 'llms.txt (informational)',
         weight: 0,
         score: null,
-        evidence: [{ status: 'unverified' as const, message: `could not verify — check crashed: ${err instanceof Error ? err.message : String(err)}` }],
+        evidence: [{ status: 'unverified' as const, message: `could not verify; check crashed: ${err instanceof Error ? err.message : String(err)}` }],
         recommendations: [],
       },
     ];
@@ -239,7 +239,7 @@ export function buildResult(inputUrl: string, ctx: AuditContext, now: Date = new
       'No JS execution: renderability is judged heuristically from raw HTML; lazy-loaded content may be undercounted.',
       'Answer-readiness uses lexical heuristics (short subject + is/are/means/helps + predicate patterns), not semantic understanding.',
       'No live AI-engine querying: this audit measures retrieval/citation readiness, not actual share of voice.',
-      'Checks that could not run are reported as "could not verify" and excluded from the weighted score — never guessed.',
+      'Checks that could not run are reported as "could not verify" and excluded from the weighted score.',
     ],
   };
 }

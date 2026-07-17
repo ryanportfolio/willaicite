@@ -23,7 +23,7 @@ export function checkAnswerReadiness(ctx: AuditContext): DimensionResult {
       name: dim,
       weight: 3,
       score: null,
-      evidence: [{ status: 'unverified', message: 'could not verify — page HTML unavailable' }],
+      evidence: [{ status: 'unverified', message: 'could not verify : page HTML unavailable' }],
       recommendations: [],
     };
   }
@@ -45,14 +45,14 @@ export function checkAnswerReadiness(ctx: AuditContext): DimensionResult {
       weight: 3,
       score: 0,
       evidence: [
-        { status: 'fail', message: `no extractable main content to assess (${wordCount(mainText)} words) — engines that retrieve this page find nothing to answer with` },
+        { status: 'fail', message: `no extractable main content to assess (${wordCount(mainText)} words); engines that retrieve this page find nothing to answer with` },
         { status: 'info', message: 'content-level checks scored the URL you gave; if the content lives elsewhere (e.g. /about or a docs page), audit that page directly' },
       ],
       recommendations: [
         {
           dimension: dim,
           action: 'Get real text into this page first (see Renderability), or run the audit against the page that actually carries your content',
-          why: 'Answer-readiness heuristics (definitional opening, question headings, FAQ) are meaningless on a page with no extractable text — fixing those here would decorate an empty shell.',
+          why: 'Answer-readiness heuristics (definitional opening, question headings, FAQ) are meaningless on a page with no extractable text; fixing those here would decorate an empty shell.',
           impact: 3,
           effort: 1,
         },
@@ -108,7 +108,7 @@ export function checkAnswerReadiness(ctx: AuditContext): DimensionResult {
     });
   } else {
     score += 5;
-    evidence.push({ status: 'warn', message: `${h1s.length} H1 headings found — topic signal is diluted` });
+    evidence.push({ status: 'warn', message: `${h1s.length} H1 headings found; topic signal is diluted` });
   }
 
   // 3. Question-formatted headings (0-25)
@@ -145,7 +145,7 @@ export function checkAnswerReadiness(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Add a short FAQ section answering the 3-5 most common questions on this topic',
-      why: 'Each Q+A pair is a pre-packaged retrieval chunk aligned to a real query — the exact unit answer engines quote.',
+      why: 'Each Q+A pair is a pre-packaged retrieval chunk aligned to a real query: the exact unit answer engines quote.',
       impact: 2,
       effort: 2,
     });

@@ -27,7 +27,7 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
       name: dim,
       weight: 3,
       score: null,
-      evidence: [{ status: 'unverified', message: 'could not verify — page HTML unavailable' }],
+      evidence: [{ status: 'unverified', message: 'could not verify: page HTML unavailable' }],
       recommendations: [],
     };
   }
@@ -55,7 +55,7 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
         {
           dimension: dim,
           action: 'Get real text into this page first (see Renderability), or run the audit against the page that actually carries your content',
-          why: 'Statistics, quotations and citations (the GEO-research visibility levers) can only lift content that engines can extract — there is no text here to enrich.',
+          why: 'Statistics, quotations and citations (the GEO-research visibility levers) can only lift content that engines can extract; there is no text here to enrich.',
           impact: 3,
           effort: 1,
         },
@@ -77,7 +77,7 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Add concrete statistics with units (%, $, counts) to the main content',
-      why: 'The GEO research (Aggarwal et al., KDD 2024) measured a +25.9% generative-engine visibility lift from adding statistics (benchmark-specific — treat as directional, not guaranteed); engines preferentially quote sentences that carry numbers.',
+      why: 'The GEO research (Aggarwal et al., KDD 2024) measured a +25.9% generative-engine visibility lift from adding statistics (benchmark-specific; treat as directional, not guaranteed); engines preferentially quote sentences that carry numbers.',
       impact: 3,
       effort: 2,
     });
@@ -98,7 +98,7 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Quote named experts or primary sources directly (blockquote or inline quotation marks with attribution)',
-      why: 'Quotations produced the single largest lift in the GEO research: +27.8% generative-engine visibility (Aggarwal et al., KDD 2024; benchmark-specific — treat as directional). Attributed speech reads as sourced rather than asserted.',
+      why: 'Quotations produced the single largest lift in the GEO research: +27.8% generative-engine visibility (Aggarwal et al., KDD 2024; benchmark-specific; treat as directional). Attributed speech reads as sourced rather than asserted.',
       impact: 3,
       effort: 2,
     });
@@ -129,7 +129,7 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Cite sources: link claims to authoritative external references (.gov, .edu, journals, primary data)',
-      why: 'Citing sources lifted generative-engine visibility +24.9% in the GEO research (Aggarwal et al., KDD 2024; benchmark-specific — treat as directional) — engines trust and re-surface content that shows its work.',
+      why: 'Citing sources lifted generative-engine visibility +24.9% in the GEO research (Aggarwal et al., KDD 2024; benchmark-specific; treat as directional); engines trust and re-surface content that shows its work.',
       impact: 3,
       effort: 1,
     });
@@ -137,7 +137,7 @@ export function checkEvidenceDensity(ctx: AuditContext): DimensionResult {
 
   evidence.push({ status: 'info', message: `main content length: ${words} words` });
   if (words < 150) {
-    evidence.push({ status: 'warn', message: 'main content is very short — density signals are weak on thin pages' });
+    evidence.push({ status: 'warn', message: 'main content is very short; density signals are weak on thin pages' });
   }
 
   const score = Math.max(0, Math.min(100, statPts + quotePts + citePts));

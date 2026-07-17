@@ -66,7 +66,7 @@ export function checkFreshness(ctx: AuditContext, now: Date = new Date()): Dimen
       if (d) signals.push({ source: 'visible date text', raw: m, date: d, weak: false });
     }
   } else {
-    evidence.push({ status: 'unverified', message: 'could not verify on-page dates — page HTML unavailable' });
+    evidence.push({ status: 'unverified', message: 'could not verify on-page dates: page HTML unavailable' });
   }
 
   // sitemap lastmod for the audited URL
@@ -96,7 +96,7 @@ export function checkFreshness(ctx: AuditContext, now: Date = new Date()): Dimen
     recommendations.push({
       dimension: dim,
       action: 'Add a visible "Last updated" date plus dateModified in JSON-LD, and lastmod in the sitemap',
-      why: 'AI engines have a strong recency bias — citation likelihood reportedly drops off sharply past roughly 3 months (a directional heuristic, not a hard cliff). Undated content cannot demonstrate freshness at all, so it defaults to looking stale.',
+      why: 'AI engines have a strong recency bias; citation likelihood reportedly drops off sharply past roughly 3 months (a directional heuristic, not a hard cliff). Undated content cannot demonstrate freshness at all, so it defaults to looking stale.',
       impact: 2,
       effort: 1,
     });
@@ -116,23 +116,23 @@ export function checkFreshness(ctx: AuditContext, now: Date = new Date()): Dimen
   let score: number;
   if (ageDays <= 90) {
     score = 100;
-    evidence.push({ status: 'pass', message: `content is ${ageDays} days old — inside the ~3-month window where AI engines cite most readily` });
+    evidence.push({ status: 'pass', message: `content is ${ageDays} days old, inside the ~3-month window where AI engines cite most readily` });
   } else if (ageDays <= 180) {
     score = 70;
-    evidence.push({ status: 'warn', message: `content is ${ageDays} days old (3-6 months) — past the ~3-month recency window where citation likelihood starts dropping` });
+    evidence.push({ status: 'warn', message: `content is ${ageDays} days old (3-6 months), past the ~3-month recency window where citation likelihood starts dropping` });
   } else if (ageDays <= 365) {
     score = 45;
-    evidence.push({ status: 'warn', message: `content is ${ageDays} days old (6-12 months) — AI engines' recency bias will suppress citations` });
+    evidence.push({ status: 'warn', message: `content is ${ageDays} days old (6-12 months); AI engines' recency bias will suppress citations` });
   } else {
     score = 20;
-    evidence.push({ status: 'fail', message: `content is ${ageDays} days old (>1 year) — strongly disfavored by recency-biased answer engines` });
+    evidence.push({ status: 'fail', message: `content is ${ageDays} days old (>1 year); strongly disfavored by recency-biased answer engines` });
   }
 
   if (strong.length === 0) {
     score = Math.min(score, 60);
     evidence.push({
       status: 'warn',
-      message: 'only the Last-Modified HTTP header carries a date — that is often deploy time, not content time, and engines cannot show it to users',
+      message: 'only the Last-Modified HTTP header carries a date; that is often deploy time, not content time, and engines cannot show it to users',
     });
     recommendations.push({
       dimension: dim,
@@ -147,7 +147,7 @@ export function checkFreshness(ctx: AuditContext, now: Date = new Date()): Dimen
     recommendations.push({
       dimension: dim,
       action: 'Refresh the content and bump the visible + structured dateModified honestly (real edits, not date-only bumps)',
-      why: 'AI engines have a strong recency bias; citation likelihood reportedly drops off sharply past roughly 3 months (directional heuristic). Genuine updates restore eligibility — date-only bumps risk trust penalties when the content contradicts the claimed date.',
+      why: 'AI engines have a strong recency bias; citation likelihood reportedly drops off sharply past roughly 3 months (directional heuristic). Genuine updates restore eligibility; date-only bumps risk trust penalties when the content contradicts the claimed date.',
       impact: 2,
       effort: 2,
     });

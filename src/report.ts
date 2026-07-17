@@ -15,7 +15,7 @@ export function renderMarkdown(result: AuditResult): string {
   const lines: string[] = [];
   const score = result.overallScore;
 
-  lines.push(`# GEO Audit — ${result.url}`);
+  lines.push(`# GEO Audit: ${result.url}`);
   lines.push('');
   lines.push(`## Overall score: ${score === null ? 'could not verify' : `${score}/100`}`);
   lines.push('');
@@ -41,14 +41,14 @@ export function renderMarkdown(result: AuditResult): string {
     lines.push('## Fix first (by impact-per-effort)');
     lines.push('');
     fixes.forEach((rec, i) => {
-      lines.push(`${i + 1}. **${rec.action}** _(${rec.dimension} — impact ${LEVEL[rec.impact]}, effort ${LEVEL[rec.effort]})_`);
+      lines.push(`${i + 1}. **${rec.action}** _(${rec.dimension}; impact ${LEVEL[rec.impact]}, effort ${LEVEL[rec.effort]})_`);
       lines.push(`   - Why: ${rec.why}`);
     });
     lines.push('');
   } else {
     lines.push('## Fix first');
     lines.push('');
-    lines.push('No recommendations — every verifiable check passed.');
+    lines.push('No recommendations: every verifiable check passed.');
     lines.push('');
   }
 
@@ -77,7 +77,7 @@ export function renderMarkdown(result: AuditResult): string {
 
 function renderDimension(d: DimensionResult, scored = true): string[] {
   const lines: string[] = [];
-  const scoreLabel = !scored ? '' : d.score === null ? ' — could not verify' : ` — ${d.score}/100`;
+  const scoreLabel = !scored ? '' : d.score === null ? ': could not verify' : `: ${d.score}/100`;
   lines.push(`### ${d.name}${scoreLabel}${scored ? ` (weight: ${weightLabel(d.weight)})` : ''}`);
   lines.push('');
   for (const e of d.evidence) {
@@ -87,7 +87,7 @@ function renderDimension(d: DimensionResult, scored = true): string[] {
     lines.push('');
     lines.push('**Recommendations:**');
     for (const r of d.recommendations) {
-      lines.push(`- ${r.action} — _${r.why}_`);
+      lines.push(`- ${r.action}: _${r.why}_`);
     }
   }
   lines.push('');

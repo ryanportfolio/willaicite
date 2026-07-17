@@ -42,7 +42,7 @@ export const AI_BOTS: { token: string; engine: string; role: 'retrieval' | 'trai
     token: 'Google-Extended',
     engine: 'Gemini training + grounding opt-out token (no crawler)',
     role: 'training',
-    caveat: 'this token also gates Gemini grounding — blocking it stops Gemini from pulling and citing this content at answer time, not just from training on it',
+    caveat: 'this token also gates Gemini grounding: blocking it stops Gemini from pulling and citing this content at answer time, not just from training on it',
   },
   { token: 'Applebot-Extended', engine: 'Apple Intelligence training opt-out token (no crawler)', role: 'training' },
 ];
@@ -70,7 +70,7 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
     verifiable = true;
     evidence.push({
       status: 'pass',
-      message: `no robots.txt (HTTP ${ctx.robots.fetch.status}) — all crawlers allowed by default`,
+      message: `no robots.txt (HTTP ${ctx.robots.fetch.status}); all crawlers allowed by default`,
     });
   } else {
     verifiable = true;
@@ -91,7 +91,7 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
         blockedAdvisory.push(bot.token);
         evidence.push({
           status: 'warn',
-          message: `${bot.token} disallowed for ${path} — ${ruleText} (${via})${caveat}. Engine: ${bot.engine}`,
+          message: `${bot.token} disallowed for ${path}: ${ruleText} (${via})${caveat}. Engine: ${bot.engine}`,
         });
         score -= ADVISORY_PENALTY;
         continue;
@@ -100,7 +100,7 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
       const stake = bot.role === 'retrieval' ? 'Engine affected' : 'Training pipeline affected';
       evidence.push({
         status: bot.role === 'retrieval' ? 'fail' : 'warn',
-        message: `${bot.token} BLOCKED for ${path} — ${ruleText} (${via}). ${stake}: ${bot.engine}${caveat}`,
+        message: `${bot.token} BLOCKED for ${path}: ${ruleText} (${via}). ${stake}: ${bot.engine}${caveat}`,
       });
       score -= bot.role === 'retrieval' ? RETRIEVAL_PENALTY : TRAINING_PENALTY;
     }
@@ -114,7 +114,7 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
       recommendations.push({
         dimension: dim,
         action: `Unblock ${blockedRetrieval.join(', ')} in robots.txt (or add explicit Allow rules for this path)`,
-        why: 'A retrieval crawler blocked in robots.txt cannot fetch the page at all, so the engine behind it can never retrieve or cite this content. This is the single hardest gate in GEO — every other optimization is irrelevant to an engine whose crawler is blocked.',
+        why: 'A retrieval crawler blocked in robots.txt cannot fetch the page at all, so the engine behind it can never retrieve or cite this content. This is the single hardest gate in GEO; every other optimization is irrelevant to an engine whose crawler is blocked.',
         impact: 3,
         effort: 1,
       });
@@ -126,7 +126,7 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
       recommendations.push({
         dimension: dim,
         action: `Confirm blocking ${blockedTraining.join(', ')} is a deliberate policy choice (training-only tokens)`,
-        why: `Blocking training crawlers is a legitimate, now-mainstream content policy and does not stop AI engines from citing the page today — but it does keep the content out of future model knowledge, which slightly reduces long-term unprompted mentions. Keep it if intentional.${groundingException}`,
+        why: `Blocking training crawlers is a legitimate, now-mainstream content policy and does not stop AI engines from citing the page today, but it does keep the content out of future model knowledge, which slightly reduces long-term unprompted mentions. Keep it if intentional.${groundingException}`,
         impact: 1,
         effort: 1,
       });
@@ -134,7 +134,7 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
     if (blockedAdvisory.length > 0) {
       recommendations.push({
         dimension: dim,
-        action: `If blocking ${blockedAdvisory.join(', ')} is intended, enforce it at the WAF/CDN — robots.txt alone does not stop user-initiated fetchers`,
+        action: `If blocking ${blockedAdvisory.join(', ')} is intended, enforce it at the WAF/CDN; robots.txt alone does not stop user-initiated fetchers`,
         why: 'The operator documents that this fetcher generally ignores robots.txt because a human initiated the request. The Disallow line records intent without changing behavior; if you did not mean to block it, remove the rule to keep the declared policy accurate.',
         impact: 1,
         effort: 2,
@@ -155,7 +155,7 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
     const metaRobots = findMeta(html, 'robots');
     if (metaRobots && /\b(noindex|none)\b/i.test(metaRobots)) {
       score -= 30;
-      evidence.push({ status: 'fail', message: `meta robots tag contains "${metaRobots}" — page opts out of indexing` });
+      evidence.push({ status: 'fail', message: `meta robots tag contains "${metaRobots}"; page opts out of indexing` });
       recommendations.push({
         dimension: dim,
         action: 'Remove noindex from the meta robots tag',
@@ -164,7 +164,7 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
         effort: 1,
       });
     } else {
-      evidence.push({ status: 'pass', message: metaRobots ? `meta robots present ("${metaRobots}") — no noindex` : 'no meta robots restriction' });
+      evidence.push({ status: 'pass', message: metaRobots ? `meta robots present ("${metaRobots}"); no noindex` : 'no meta robots restriction' });
     }
   } else {
     evidence.push({ status: 'unverified', message: 'could not verify meta robots (page HTML unavailable)' });
@@ -174,7 +174,7 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
   if (ctx.target) {
     if (xRobots && /\b(noindex|none)\b/i.test(xRobots)) {
       score -= 30;
-      evidence.push({ status: 'fail', message: `X-Robots-Tag header: "${xRobots}" — page opts out of indexing at the HTTP level` });
+      evidence.push({ status: 'fail', message: `X-Robots-Tag header: "${xRobots}"; page opts out of indexing at the HTTP level` });
       recommendations.push({
         dimension: dim,
         action: 'Remove noindex from the X-Robots-Tag response header',
@@ -183,7 +183,7 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
         effort: 1,
       });
     } else {
-      evidence.push({ status: 'pass', message: xRobots ? `X-Robots-Tag present ("${xRobots}") — no noindex` : 'no X-Robots-Tag restriction' });
+      evidence.push({ status: 'pass', message: xRobots ? `X-Robots-Tag present ("${xRobots}"); no noindex` : 'no X-Robots-Tag restriction' });
     }
   }
 
@@ -196,17 +196,17 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
       score -= 30;
       evidence.push({
         status: 'fail',
-        message: `UA differential: normal UA got HTTP ${normal.status}, GPTBot UA got HTTP ${bot.status} — a CDN/WAF is treating AI crawlers differently`,
+        message: `UA differential: normal UA got HTTP ${normal.status}, GPTBot UA got HTTP ${bot.status}; a CDN/WAF is treating AI crawlers differently`,
       });
       recommendations.push({
         dimension: dim,
         action: 'Check CDN/WAF bot-management rules (Cloudflare "Block AI bots", Akamai bot manager, etc.) and allow AI crawler user agents',
-        why: `robots.txt may say "allowed" while the WAF returns ${bot.status} to the actual crawler — the engine sees the error, not the content, and silently drops the page from its index.`,
+        why: `robots.txt may say "allowed" while the WAF returns ${bot.status} to the actual crawler; the engine sees the error, not the content, and silently drops the page from its index.`,
         impact: 3,
         effort: 2,
       });
     } else {
-      evidence.push({ status: 'pass', message: `UA differential: normal UA and GPTBot UA both got HTTP ${normal.status} — no WAF-level bot blocking detected` });
+      evidence.push({ status: 'pass', message: `UA differential: normal UA and GPTBot UA both got HTTP ${normal.status}; no WAF-level bot blocking detected` });
     }
   } else if (bot?.error) {
     evidence.push({ status: 'unverified', message: `could not verify UA differential (GPTBot-UA fetch failed: ${bot.error})` });
