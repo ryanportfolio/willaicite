@@ -23,6 +23,8 @@ export interface AuditOptions {
   /** Politeness delay between requests, ms. */
   delayMs?: number;
   now?: Date;
+  /** Real progress callback (one call per network request + per phase). */
+  onProgress?: (message: string) => void;
 }
 
 export async function runAudit(inputUrl: string, opts: AuditOptions = {}): Promise<AuditResult> {
@@ -38,6 +40,7 @@ export async function runAudit(inputUrl: string, opts: AuditOptions = {}): Promi
   const politeGet = async (url: string, ua?: string, discardBody = false): Promise<FetchResult> => {
     if (pagesFetched > 0 && delayMs > 0) await delay(delayMs);
     pagesFetched++;
+    opts.onProgress?.(`fetching ${url}${ua === GPTBOT_UA ? ' (as GPTBot)' : ''}`);
     return fetcher(url, ua ? { ua, discardBody } : { discardBody });
   };
 
@@ -157,6 +160,7 @@ export async function runAudit(inputUrl: string, opts: AuditOptions = {}): Promi
     faviconStatus: faviconFetch.status,
   };
 
+  opts.onProgress?.('running checks');
   return buildResult(inputUrl, ctx, now);
 }
 

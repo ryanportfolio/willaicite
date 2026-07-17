@@ -29,10 +29,16 @@ node dist/cli.js <url>
 
 ```
 geo-audit <url> [--json] [--out report.md]
+geo-audit serve [--port 4173]
 
 --json        machine-readable JSON instead of markdown
 --out <file>  write the report to a file instead of stdout
+--port <n>    port for the local web UI (default 4173)
 ```
+
+## Web UI
+
+`geo-audit serve` starts a local, zero-dependency web UI (nothing leaves your machine except the audited site's fetches). Enter a URL and watch the real fetch progress stream in (Server-Sent Events — every progress line is an actual request, never cosmetic), then get the full report: overall score, per-dimension bars with expandable evidence, the prioritized fix-first list, and one-click downloads of `report.md` / `result.json`. Same audit engine as the CLI — identical input produces the identical score in both.
 
 ## What it fetches (politely)
 
