@@ -115,9 +115,10 @@ const schema = {
         (ChatGPT, Perplexity, Google AI Overviews and Claude) can retrieve your page, extract
         it without running your JavaScript, and quote it inside a synthesized answer.
       </p>
-      <p class="sub">
-        Search engines rank you in a list of links; answer engines quote you.
-        willaicite measures whether they can.
+      <p class="takeaway">
+        <span class="t1">Search engines rank you in a list of links;</span>
+        <span class="t2">answer engines quote you.</span>
+        <span class="t3"><span class="tw">will<span class="ai">ai</span>cite</span> measures whether they can.</span>
       </p>
       <form class="run" action="/app" method="get">
         <label class="visually-hidden" for="url">Your page URL</label>
@@ -341,6 +342,20 @@ const schema = {
   }
   .hero h1 em { font-style: italic; color: var(--accent); }
   .hero .sub { margin-top: 22px; max-width: 62ch; color: var(--ink-soft); font-size: 17px; }
+  /* the takeaway: a three-line stanza echoing the h1's roman-then-italic turn */
+  .hero .takeaway {
+    margin-top: 30px; max-width: 62ch;
+    font-size: 21px; line-height: 1.4; letter-spacing: -0.01em;
+  }
+  .hero .takeaway > span { display: block; }
+  .hero .takeaway .t1 { color: var(--ink-soft); }
+  .hero .takeaway .t2 { font-style: italic; color: var(--accent); }
+  .hero .takeaway .t3 { color: var(--ink); margin-top: 10px; }
+  .hero .takeaway .tw { font-family: var(--mono); font-size: 0.82em; font-weight: 600; letter-spacing: 0.04em; }
+  .hero .takeaway .tw .ai { color: var(--accent); }
+  @media (max-width: 760px) {
+    .hero .takeaway { font-size: 19px; }
+  }
 
   /* the audit form IS the primary CTA: oversized, one vermilion button */
   .visually-hidden {
