@@ -18,7 +18,7 @@ export function verdictFor(score: number | null): string {
   if (score === null) return 'Could not verify: the audit was unable to score any dimension.';
   if (score >= 85) return 'Excellent: well positioned to be retrieved and cited by AI answer engines.';
   if (score >= 70) return 'Good: solid GEO foundation with a few addressable gaps.';
-  if (score >= 50) return 'Needs work: real gaps are limiting how AI engines retrieve and cite this site.';
+  if (score >= 50) return 'Needs work: measurable gaps are limiting how AI engines retrieve and cite this site.';
   return 'Poor: this site is largely invisible or unciteable to AI answer engines as-is.';
 }
 

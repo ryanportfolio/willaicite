@@ -31,7 +31,7 @@ export const AI_BOTS: AiBot[] = [
   { token: 'PerplexityBot', engine: 'Perplexity index', role: 'retrieval' },
   {
     token: 'Perplexity-User',
-    engine: 'Perplexity live fetch (sends real referrals)',
+    engine: 'Perplexity live fetch (sends referral traffic)',
     role: 'retrieval',
     robotsIgnored: true,
     caveat: 'Perplexity documents that user-initiated fetches generally ignore robots.txt, so this rule records intent but does not stop retrieval',

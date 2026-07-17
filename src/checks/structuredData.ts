@@ -48,7 +48,7 @@ export function checkStructuredData(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Add JSON-LD structured data (start with Organization on the homepage and Article/BlogPosting on content pages)',
-      why: 'Structured data is the strongest machine-readable trust signal for Google AI Overviews and knowledge-graph entity resolution, and the GEO-16 audit (Kumar & Palkhouski 2025) found it strongly associated with real citations across three engines (correlational evidence). Honest caveat: ChatGPT, Claude and Perplexity mostly tokenize the visible text rather than parse the schema graph.',
+      why: 'Structured data is the strongest machine-readable trust signal for Google AI Overviews and knowledge-graph entity resolution, and the GEO-16 audit (Kumar & Palkhouski 2025) found it strongly associated with observed citations across three engines (correlational evidence). Honest caveat: ChatGPT, Claude and Perplexity mostly tokenize the visible text rather than parse the schema graph.',
       impact: 2,
       effort: 2,
     });
@@ -137,7 +137,7 @@ export function checkStructuredData(ctx: AuditContext): DimensionResult {
   if (otherTypes) evidence.push({ status: 'info', message: `all @type values seen: ${otherTypes}` });
   evidence.push({
     status: 'info',
-    message: 'weighting note: structured data mainly moves Google AI Overviews + entity trust; ChatGPT/Claude/Perplexity largely tokenize text rather than parse the graph. GEO-16 (2025) found it correlates with real citations across engines, but correlation ≠ causation, so the weight stays medium',
+    message: 'weighting note: structured data mainly moves Google AI Overviews + entity trust; ChatGPT/Claude/Perplexity largely tokenize text rather than parse the graph. GEO-16 (2025) found it correlates with observed citations across engines, but correlation ≠ causation, so the weight stays medium',
   });
 
   return {

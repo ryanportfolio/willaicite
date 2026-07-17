@@ -82,7 +82,7 @@ export function checkRenderability(ctx: AuditContext): DimensionResult {
     recommendations.push({
       dimension: dim,
       action: 'Put content in the initial HTML: cheapest first is a static H1 + a 1-2 sentence description in the shell before hydration, or make a static page (e.g. /about) the canonical marketing surface; full SSR/SSG only if the whole app needs indexing',
-      why: 'GPTBot, ClaudeBot and PerplexityBot do not execute JavaScript; content that only appears after hydration is literally absent from what those crawlers retrieve, so it can never be cited. Even a static paragraph in the shell gives them something real to index.',
+      why: 'GPTBot, ClaudeBot and PerplexityBot do not execute JavaScript; content that only appears after hydration is literally absent from what those crawlers retrieve, so it can never be cited. Even a static paragraph in the shell gives them something to index.',
       impact: 3,
       effort: 2,
     });

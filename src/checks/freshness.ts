@@ -151,7 +151,7 @@ export function checkFreshness(ctx: AuditContext, now: Date = new Date()): Dimen
   if (ageDays > 90) {
     recommendations.push({
       dimension: dim,
-      action: 'Refresh the content and bump the visible + structured dateModified honestly (real edits, not date-only bumps)',
+      action: 'Refresh the content and bump the visible + structured dateModified honestly (substantive edits, not date-only bumps)',
       why: 'Recent timestamps consistently lifted citation odds in controlled 2026 testing (Vishwakarma et al., SIGIR 2026); the ~3-month drop-off is a directional heuristic. Genuine updates restore eligibility; date-only bumps risk trust penalties when the content contradicts the claimed date.',
       impact: 2,
       effort: 2,
