@@ -1,0 +1,269 @@
+import { describe, it, expect } from 'vitest';
+import { checkCrawlerAccess } from '../src/checks/crawlerAccess.js';
+import { checkRenderability } from '../src/checks/renderability.js';
+import { checkStructuredData } from '../src/checks/structuredData.js';
+import { checkAnswerReadiness } from '../src/checks/answerReadiness.js';
+import { checkEvidenceDensity } from '../src/checks/evidenceDensity.js';
+import { checkFreshness } from '../src/checks/freshness.js';
+import { checkEntityEeat } from '../src/checks/entityEeat.js';
+import { checkLlmsTxt } from '../src/checks/llmsTxt.js';
+import { makeCtx, makePage, makeFetch, fixture, robotsCtxFrom, NOW } from './helpers.js';
+
+describe('checkCrawlerAccess', () => {
+  it('scores 100 when nothing blocks (no robots.txt, clean headers, same status both UAs)', () => {
+    const r = checkCrawlerAccess(makeCtx());
+    expect(r.score).toBe(100);
+    expect(r.evidence.some((e) => e.message.includes('all crawlers allowed by default'))).toBe(true);
+  });
+
+  it('deducts per blocked bot and cites the exact robots.txt line', () => {
+    const r = checkCrawlerAccess(makeCtx({ robots: robotsCtxFrom('robots-blocking.txt') }));
+    // GPTBot, ClaudeBot, Claude-SearchBot blocked = 3 × 12
+    expect(r.score).toBe(100 - 36);
+    const gptbot = r.evidence.find((e) => e.message.startsWith('GPTBot BLOCKED'));
+    expect(gptbot?.status).toBe('fail');
+    expect(gptbot?.message).toContain('line 5');
+    expect(gptbot?.message).toContain('Disallow: /');
+    expect(r.recommendations.some((rec) => rec.action.includes('GPTBot, ClaudeBot, Claude-SearchBot'))).toBe(true);
+  });
+
+  it('flags meta robots noindex', () => {
+    const html = '<html><head><meta name="robots" content="noindex, nofollow"></head><body><p>hi</p></body></html>';
+    const r = checkCrawlerAccess(makeCtx({ target: makePage('https://example.com/guide', html) }));
+    expect(r.score).toBe(70);
+    expect(r.evidence.some((e) => e.status === 'fail' && e.message.includes('noindex'))).toBe(true);
+  });
+
+  it('flags X-Robots-Tag noindex from headers', () => {
+    const ctx = makeCtx();
+    ctx.target!.fetch.headers['x-robots-tag'] = 'noindex';
+    const r = checkCrawlerAccess(ctx);
+    expect(r.score).toBe(70);
+  });
+
+  it('flags a UA differential (WAF blocking bot UA)', () => {
+    const ctx = makeCtx({ targetBotFetch: makeFetch({ ok: false, status: 403 }) });
+    const r = checkCrawlerAccess(ctx);
+    expect(r.score).toBe(70);
+    expect(r.evidence.some((e) => e.message.includes('normal UA got HTTP 200, GPTBot UA got HTTP 403'))).toBe(true);
+  });
+
+  it('reports could-not-verify when nothing is checkable', () => {
+    const r = checkCrawlerAccess(
+      makeCtx({
+        robots: { url: 'https://example.com/robots.txt', fetch: makeFetch({ ok: false, status: null, error: 'timeout' }), parsed: null },
+        target: null,
+        targetBotFetch: null,
+      }),
+    );
+    expect(r.score).toBeNull();
+    expect(r.evidence.every((e) => e.status === 'unverified')).toBe(true);
+  });
+});
+
+describe('checkRenderability', () => {
+  it('scores a server-rendered article highly', () => {
+    const r = checkRenderability(makeCtx());
+    expect(r.score).toBeGreaterThanOrEqual(80);
+  });
+
+  it('caps an empty SPA shell at 20', () => {
+    const r = checkRenderability(makeCtx({ target: makePage('https://example.com/guide', fixture('spa-shell.html')) }));
+    expect(r.score).toBeLessThanOrEqual(20);
+    expect(r.evidence.some((e) => e.message.includes('#root'))).toBe(true);
+    expect(r.recommendations.some((rec) => rec.action.includes('Server-render'))).toBe(true);
+  });
+
+  it('states the no-JS limitation', () => {
+    const r = checkRenderability(makeCtx());
+    expect(r.evidence.some((e) => e.message.includes('does not execute JS'))).toBe(true);
+  });
+
+  it('could not verify without HTML', () => {
+    const r = checkRenderability(makeCtx({ target: null }));
+    expect(r.score).toBeNull();
+  });
+});
+
+describe('checkStructuredData', () => {
+  it('scores rich JSON-LD highly (Article+author+dates, FAQPage, Organization, Person, Breadcrumb)', () => {
+    const r = checkStructuredData(makeCtx());
+    expect(r.score).toBe(100);
+  });
+
+  it('scores zero with a recommendation when no JSON-LD exists', () => {
+    const r = checkStructuredData(makeCtx({ target: makePage('https://example.com/guide', fixture('thin-page.html')) }));
+    expect(r.score).toBe(0);
+    expect(r.recommendations[0].why).toContain('tokenize');
+  });
+
+  it('reports invalid JSON-LD blocks as failures', () => {
+    const html = '<html><body><script type="application/ld+json">{bad</script></body></html>';
+    const r = checkStructuredData(makeCtx({ target: makePage('https://example.com/guide', html) }));
+    expect(r.evidence.some((e) => e.status === 'fail' && e.message.includes('invalid JSON-LD'))).toBe(true);
+  });
+
+  it('warns when Article lacks an author', () => {
+    const html = '<script type="application/ld+json">{"@type":"Article","headline":"x","datePublished":"2026-01-01"}</script>';
+    const r = checkStructuredData(makeCtx({ target: makePage('https://example.com/guide', html) }));
+    expect(r.evidence.some((e) => e.status === 'warn' && e.message.includes('author'))).toBe(true);
+  });
+});
+
+describe('checkAnswerReadiness', () => {
+  it('scores the good article at 100 (answer + H1 + question headings + FAQ + lists + table)', () => {
+    const r = checkAnswerReadiness(makeCtx());
+    expect(r.score).toBe(100);
+    expect(r.evidence.some((e) => e.message.includes('Generative Engine Optimization (GEO) is'))).toBe(true);
+  });
+
+  it('penalizes a thin page (multiple H1s, no answer, no FAQ)', () => {
+    const r = checkAnswerReadiness(makeCtx({ target: makePage('https://example.com/guide', fixture('thin-page.html')) }));
+    expect(r.score).toBeLessThanOrEqual(20);
+    expect(r.evidence.some((e) => e.message.includes('2 H1 headings'))).toBe(true);
+    expect(r.recommendations.some((rec) => rec.action.includes('direct answer'))).toBe(true);
+  });
+
+  it('detects question headings partially (1-2 questions)', () => {
+    const html = '<html><body><main><h1>Topic</h1><h2>How does it work?</h2><p>The system is a pipeline that processes text.</p></main></body></html>';
+    const r = checkAnswerReadiness(makeCtx({ target: makePage('https://example.com/guide', html) }));
+    expect(r.evidence.some((e) => e.message.includes('1 question-formatted heading'))).toBe(true);
+  });
+
+  it('could not verify without HTML', () => {
+    expect(checkAnswerReadiness(makeCtx({ target: null })).score).toBeNull();
+  });
+});
+
+describe('checkEvidenceDensity', () => {
+  it('scores stat/quote/citation-rich content highly', () => {
+    const r = checkEvidenceDensity(makeCtx());
+    expect(r.score).toBe(100);
+  });
+
+  it('scores an unevidenced page at 0 and cites the GEO research numbers in recommendations', () => {
+    const r = checkEvidenceDensity(makeCtx({ target: makePage('https://example.com/guide', fixture('thin-page.html')) }));
+    expect(r.score).toBe(0);
+    const whys = r.recommendations.map((rec) => rec.why).join(' ');
+    expect(whys).toContain('+25.9%');
+    expect(whys).toContain('+27.8%');
+    expect(whys).toContain('+24.9%');
+  });
+
+  it('does not count same-domain links as outbound citations', () => {
+    const html = '<html><body><main><p>text</p><a href="https://example.com/other">internal</a><a href="https://www.example.com/other2">internal www</a></main></body></html>';
+    const r = checkEvidenceDensity(makeCtx({ target: makePage('https://example.com/guide', html) }));
+    expect(r.evidence.some((e) => e.message.includes('0 outbound citation link(s)'))).toBe(true);
+  });
+});
+
+describe('checkFreshness', () => {
+  it('scores 100 for content updated within ~3 months (deterministic against fixed now)', () => {
+    const r = checkFreshness(makeCtx(), NOW);
+    expect(r.score).toBe(100);
+    expect(r.evidence.some((e) => e.message.includes('2026-06-20'))).toBe(true);
+  });
+
+  it('scores old content low', () => {
+    const html = '<html><body><main><p>Published on <time datetime="2024-01-05">January 5, 2024</time></p></main></body></html>';
+    const r = checkFreshness(makeCtx({ target: makePage('https://example.com/guide', html) }), NOW);
+    expect(r.score).toBe(20);
+  });
+
+  it('scores 30 with a recommendation when no dates exist anywhere', () => {
+    const r = checkFreshness(makeCtx({ target: makePage('https://example.com/guide', fixture('thin-page.html')) }), NOW);
+    expect(r.score).toBe(30);
+    expect(r.recommendations[0].why).toContain('~3 months');
+  });
+
+  it('caps header-only freshness at 60 (deploy time is weak evidence)', () => {
+    const page = makePage('https://example.com/guide', fixture('thin-page.html'));
+    page.fetch.headers['last-modified'] = 'Mon, 29 Jun 2026 10:00:00 GMT';
+    const r = checkFreshness(makeCtx({ target: page }), NOW);
+    expect(r.score).toBe(60);
+  });
+
+  it('uses sitemap lastmod for the audited URL', () => {
+    const r = checkFreshness(
+      makeCtx({
+        target: makePage('https://example.com/guide', fixture('thin-page.html')),
+        sitemap: {
+          url: 'https://example.com/sitemap.xml',
+          fetch: makeFetch(),
+          entries: [{ loc: 'https://example.com/guide', lastmod: '2026-06-20' }],
+        },
+      }),
+      NOW,
+    );
+    expect(r.score).toBe(100);
+    expect(r.evidence.some((e) => e.message.includes('sitemap <lastmod>'))).toBe(true);
+  });
+
+  it('ignores future dates', () => {
+    const html = '<html><body><main><p><time datetime="2030-01-01">2030</time></p></main></body></html>';
+    const r = checkFreshness(makeCtx({ target: makePage('https://example.com/guide', html) }), NOW);
+    expect(r.score).toBe(30);
+  });
+});
+
+describe('checkEntityEeat', () => {
+  it('scores a fully-attributed page at 100', () => {
+    const r = checkEntityEeat(makeCtx());
+    expect(r.score).toBe(100);
+  });
+
+  it('scores an anonymous page low with recommendations', () => {
+    const r = checkEntityEeat(
+      makeCtx({
+        target: makePage('https://example.com/guide', fixture('thin-page.html')),
+        aboutPage: makePage('https://example.com/about', null, { ok: false, status: 404 }),
+        faviconStatus: 404,
+      }),
+    );
+    expect(r.score).toBeLessThanOrEqual(20);
+    expect(r.recommendations.some((rec) => rec.action.includes('byline'))).toBe(true);
+    expect(r.recommendations.some((rec) => rec.action.includes('/about'))).toBe(true);
+  });
+
+  it('detects org name consistency between title, og:site_name and Organization schema', () => {
+    const r = checkEntityEeat(makeCtx());
+    expect(r.evidence.some((e) => e.message.includes('org name consistent'))).toBe(true);
+  });
+
+  it('warns when org names disagree', () => {
+    const html =
+      '<html><head><title>Page | Alpha Corp</title><meta property="og:site_name" content="Beta Inc"></head><body><main><p>content</p></main></body></html>';
+    const r = checkEntityEeat(makeCtx({ target: makePage('https://example.com/guide', html) }));
+    expect(r.evidence.some((e) => e.status === 'warn' && e.message.includes('disagree'))).toBe(true);
+  });
+});
+
+describe('checkLlmsTxt', () => {
+  it('recommends (low priority, honest framing) when absent', () => {
+    const r = checkLlmsTxt(makeCtx());
+    expect(r.weight).toBe(0);
+    expect(r.recommendations[0].why).toContain('~10%');
+    expect(r.recommendations[0].impact).toBe(1);
+  });
+
+  it('validates a well-formed llms.txt', () => {
+    const r = checkLlmsTxt(makeCtx({ llmsTxt: { url: 'https://example.com/llms.txt', fetch: makeFetch({ body: fixture('llms-good.txt') }) } }));
+    expect(r.evidence.some((e) => e.status === 'pass' && e.message.includes('starts with an H1'))).toBe(true);
+    expect(r.evidence.some((e) => e.message.includes('2 markdown link(s)'))).toBe(true);
+  });
+
+  it('flags contradiction with robots.txt AI-bot blocks', () => {
+    const r = checkLlmsTxt(
+      makeCtx({
+        robots: robotsCtxFrom('robots-blocking.txt'),
+        llmsTxt: { url: 'https://example.com/llms.txt', fetch: makeFetch({ body: fixture('llms-good.txt') }) },
+      }),
+    );
+    expect(r.evidence.some((e) => e.status === 'warn' && e.message.includes('contradiction'))).toBe(true);
+  });
+
+  it('flags an HTML soft-404 response', () => {
+    const r = checkLlmsTxt(makeCtx({ llmsTxt: { url: 'https://example.com/llms.txt', fetch: makeFetch({ body: '<!DOCTYPE html><html></html>' }) } }));
+    expect(r.evidence.some((e) => e.status === 'warn' && e.message.includes('soft-404'))).toBe(true);
+  });
+});
