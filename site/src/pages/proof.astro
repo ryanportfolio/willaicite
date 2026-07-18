@@ -93,9 +93,7 @@ const schema = {
 
       <div class="report-rule"><h2 class="rulelabel">Where did the site start?</h2></div>
       <p class="section-intro">
-        The first audit of the freshly built landing page, scored under the v1.2 model,
-        logged at 15:37 UTC and scored
-        <strong>51/100</strong>. The verdict line read
+        The verdict line read
         &ldquo;Needs work: real gaps are limiting how AI engines retrieve and cite this site.&rdquo;
         The page was technically clean and completely uncitable: readable by every crawler,
         with nothing an answer engine could attribute, date, or quote.
@@ -115,10 +113,6 @@ const schema = {
       </table>
 
       <div class="report-rule"><h2 class="rulelabel">What did the audit flag?</h2></div>
-      <p class="section-intro">
-        The fix-first list named each gap with its evidence. What followed was not a redesign;
-        it was working through that list:
-      </p>
       <ul class="fixes">
         <li><strong>Structured data, 0 to 100.</strong> The report said, verbatim: &ldquo;no JSON-LD blocks found on the audited pages&rdquo;. Fixed with one schema graph: Organization, Person, WebSite, TechArticle with author and dates, FAQPage, BreadcrumbList.</li>
         <li><strong>Answer-readiness, 45 to 100.</strong> No definitional opening, one question-shaped heading, no FAQ. The page now opens with a sentence an engine can lift whole, and the FAQ renders from the same array as its FAQPage markup, so the two cannot disagree.</li>
@@ -129,8 +123,8 @@ const schema = {
 
       <div class="report-rule"><h2 class="rulelabel">What happened when the model got stricter?</h2></div>
       <p class="section-intro">
-        In July 2026 the scoring model was recalibrated to the 2025&ndash;2026 replication
-        research (v1.3): a new eighth dimension, topical focus &amp; metadata, weighs how
+        Then the scoring model was recalibrated to the 2025&ndash;2026 replication
+        research: a new eighth dimension, topical focus &amp; metadata, weighs how
         legibly a page states one topic. Under it, this site re-scored <strong>97/100</strong>:
         the new dimension flagged the slogan-only H1 and a 238-character meta description.
         The findings held, so we fixed them: the homepage now leads with the question it
@@ -160,10 +154,7 @@ const schema = {
           />
         </a>
         <figcaption>
-          PageSpeed Insights, mobile, captured July 17, 2026 at 7:25&nbsp;PM EDT
-          (Lighthouse 13.4.0, emulated Moto&nbsp;G Power).
-          <a class="body-link" href="https://pagespeed.web.dev/analysis/https-willaicite-com/uoe1yosh5o?form_factor=mobile">The live report</a>
-          is one click away, and a fresh run is one paste away.
+          <a class="exhibit-cta" href="https://pagespeed.web.dev/analysis/https-willaicite-com/uoe1yosh5o?form_factor=mobile">See live report</a>
         </figcaption>
       </figure>
 
@@ -233,8 +224,13 @@ const schema = {
   .proof .exhibit-frame:hover { transform: rotate(0deg); }
   .proof .exhibit-frame img { display: block; width: 100%; height: auto; }
   .proof .exhibit figcaption {
-    margin-top: 12px; font-size: 13.5px; color: var(--ink-faint); max-width: 60ch;
+    margin-top: 14px; max-width: 60ch;
   }
+  .proof .exhibit-cta {
+    font-size: 19px; font-weight: 700; color: var(--ink);
+    text-decoration: underline; text-underline-offset: 4px;
+  }
+  .proof .exhibit-cta:hover { color: var(--ink-soft); }
   .proof .faq { margin-top: 10px; }
   .proof .faq-item { border-top: 1px solid var(--rule); margin-top: 24px; padding-top: 20px; }
   .proof .faq-item:first-child { border-top: 0; margin-top: 22px; }
