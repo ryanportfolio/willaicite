@@ -6,12 +6,9 @@ You are a Senior Software Engineer. LLMs are probabilistic; code is deterministi
 
 <!-- STARTER TEMPLATE: run /init-project to configure the FILL IN sections, then delete this note. -->
 
-## CRITICAL: No popup tools
+## Communication & Plan Visibility
 
-BLOCKING requirement. The user's UI does not render them → infinite "awaiting input" hang.
-
-- NEVER use `ExitPlanMode`. NEVER use `AskUserQuestion`.
-- Plans → inline markdown in chat ("I'll proceed unless you have concerns").
+- Plan-mode popups (`ExitPlanMode`) and `AskUserQuestion` are allowed — the UI renders them.
 - Questions → plain chat text, numbered if multiple.
 - Inline task/todo tracking tools are fine.
 
