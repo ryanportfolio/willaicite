@@ -7,6 +7,7 @@ import { checkTopicalFocus } from '../src/checks/topicalFocus.js';
 import { checkEvidenceDensity } from '../src/checks/evidenceDensity.js';
 import { checkFreshness } from '../src/checks/freshness.js';
 import { checkEntityEeat } from '../src/checks/entityEeat.js';
+import { checkSeoFoundation } from '../src/checks/seoFoundation.js';
 import { checkLlmsTxt } from '../src/checks/llmsTxt.js';
 import { makeCtx, makePage, makeFetch, fixture, robotsCtxFrom, NOW } from './helpers.js';
 import { parseRobots } from '../src/robots.js';
@@ -426,5 +427,68 @@ describe('checkLlmsTxt', () => {
   it('flags an HTML soft-404 response', () => {
     const r = checkLlmsTxt(makeCtx({ llmsTxt: { url: 'https://example.com/llms.txt', fetch: makeFetch({ body: '<!DOCTYPE html><html></html>' }) } }));
     expect(r.evidence.some((e) => e.status === 'warn' && e.message.includes('soft-404'))).toBe(true);
+  });
+});
+
+describe('checkSeoFoundation', () => {
+  const page = (url: string, title: string, desc: string | null, canonical: string | null) =>
+    makePage(
+      url,
+      `<html><head><title>${title}</title>${desc ? `<meta name="description" content="${desc}">` : ''}${canonical ? `<link rel="canonical" href="${canonical}">` : ''}</head><body><main><p>Body text long enough to exist.</p></main></body></html>`,
+    );
+
+  it('passes a self-referencing canonical and unique metadata (good article ctx)', () => {
+    const r = checkSeoFoundation(makeCtx());
+    expect(r.weight).toBe(1);
+    expect(r.score).toBe(100);
+    expect(r.evidence.some((e) => e.status === 'pass' && e.message.includes('self-referencing'))).toBe(true);
+  });
+
+  it('tolerates www/trailing-slash/scheme variants in the canonical', () => {
+    const r = checkSeoFoundation(makeCtx({ target: page('https://example.com/guide', 'Guide To Widgets', null, 'http://www.example.com/guide/') }));
+    expect(r.evidence.some((e) => e.status === 'pass' && e.message.includes('self-referencing'))).toBe(true);
+  });
+
+  it('fails a canonical pointing at a different URL with an attribution rec', () => {
+    const r = checkSeoFoundation(makeCtx({ target: page('https://example.com/guide', 'Guide To Widgets', null, 'https://example.com/other-page') }));
+    expect(r.evidence.some((e) => e.status === 'fail' && e.message.includes('points away'))).toBe(true);
+    expect(r.recommendations.some((rec) => rec.action.includes('Fix the canonical'))).toBe(true);
+  });
+
+  it('warns (partial credit) when no canonical exists', () => {
+    const r = checkSeoFoundation(makeCtx({ target: page('https://example.com/guide', 'Guide To Widgets', null, null) }));
+    expect(r.score).toBe(30);
+    expect(r.recommendations.some((rec) => rec.action.includes('self-referencing'))).toBe(true);
+  });
+
+  it('fails duplicated titles/descriptions across audited pages', () => {
+    const r = checkSeoFoundation(
+      makeCtx({
+        target: page('https://example.com/guide', 'Acme Widgets', 'Same blurb everywhere.', 'https://example.com/guide'),
+        homepage: page('https://example.com/', 'Acme Widgets', 'Same blurb everywhere.', 'https://example.com/'),
+      }),
+    );
+    expect(r.evidence.some((e) => e.status === 'fail' && e.message.includes('duplicated title'))).toBe(true);
+    expect(r.evidence.some((e) => e.status === 'fail' && e.message.includes('duplicated meta description'))).toBe(true);
+    expect(r.score).toBe(33); // canonical 100, title 0, description 0
+  });
+
+  it('passes uniqueness when pages differ', () => {
+    const r = checkSeoFoundation(
+      makeCtx({
+        target: page('https://example.com/guide', 'Widget Guide', 'How widgets work.', 'https://example.com/guide'),
+        homepage: page('https://example.com/', 'Acme Widgets Home', 'Widgets for every need.', null),
+      }),
+    );
+    expect(r.score).toBe(100);
+  });
+
+  it('marks uniqueness unassessable with a single audited page', () => {
+    const r = checkSeoFoundation(makeCtx({ aboutPage: null }));
+    expect(r.evidence.some((e) => e.status === 'info' && e.message.includes('title uniqueness not assessable'))).toBe(true);
+  });
+
+  it('could not verify without any HTML', () => {
+    expect(checkSeoFoundation(makeCtx({ target: null, homepage: null, aboutPage: null })).score).toBeNull();
   });
 });

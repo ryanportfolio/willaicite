@@ -12,10 +12,11 @@ import { checkTopicalFocus } from './checks/topicalFocus.js';
 import { checkEvidenceDensity } from './checks/evidenceDensity.js';
 import { checkFreshness } from './checks/freshness.js';
 import { checkEntityEeat } from './checks/entityEeat.js';
+import { checkSeoFoundation } from './checks/seoFoundation.js';
 import { checkLlmsTxt } from './checks/llmsTxt.js';
 import { overallScore, verdictFor, prioritize } from './score.js';
 
-export const VERSION = '1.3.0';
+export const VERSION = '1.4.0';
 const MAX_PAGES = 10;
 const OWN_BOT_TOKEN = 'geo-audit';
 
@@ -188,6 +189,7 @@ export function buildResult(inputUrl: string, ctx: AuditContext, now: Date = new
     ['evidenceDensity', () => checkEvidenceDensity(ctx)],
     ['freshness', () => checkFreshness(ctx, now)],
     ['entityEeat', () => checkEntityEeat(ctx)],
+    ['seoFoundation', () => checkSeoFoundation(ctx)],
   ];
 
   const dimensions: DimensionResult[] = checks.map(([key, run]) => {

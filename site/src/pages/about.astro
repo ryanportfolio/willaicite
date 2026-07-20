@@ -14,6 +14,7 @@ const dims = [
   { name: 'Structured data', weight: 2, asks: 'Does JSON-LD tell engines who wrote what, and when' },
   { name: 'Freshness', weight: 3, asks: 'Is there a machine-readable date signal from the last 90 days' },
   { name: 'Entity & E-E-A-T', weight: 2, asks: 'Can the author and organization behind the page be identified' },
+  { name: 'SEO foundation', weight: 1, asks: 'Does the canonical reference the page it is on, and are titles and descriptions unique across pages' },
 ];
 
 const faqs = [
@@ -23,7 +24,7 @@ const faqs = [
   },
   {
     q: 'Why does the audit stop at ten requests?',
-    a: 'Courtesy to the site being audited. Ten requests are enough to score all eight dimensions (the page twice, robots.txt, the sitemap, an about page, the favicon and llms.txt), and a small fixed cap means an audit can never hammer the site it is inspecting. The audit honors robots.txt while it works.',
+    a: 'Courtesy to the site being audited. Ten requests are enough to score all nine dimensions (the page twice, robots.txt, the sitemap, an about page, the favicon and llms.txt), and a small fixed cap means an audit can never hammer the site it is inspecting. The audit honors robots.txt while it works.',
   },
 ];
 
@@ -118,7 +119,7 @@ const schema = {
         retrieved and cited by AI answer engines&rdquo;.
       </p>
 
-      <div class="report-rule"><h2 class="rulelabel">What do the eight dimensions measure?</h2></div>
+      <div class="report-rule"><h2 class="rulelabel">What do the nine dimensions measure?</h2></div>
       <table class="dims">
         <thead><tr><th>dimension</th><th>weight</th><th>question it answers</th></tr></thead>
         <tbody>

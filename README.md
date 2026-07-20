@@ -21,7 +21,7 @@
 
 Search engines rank you in a list of links. Answer engines quote you inside a synthesized reply. Those are different games, and a page can win the first while losing the second: to be quoted, an answer engine has to fetch your page with its own crawler, read it without executing your JavaScript, and find a passage worth lifting. willaicite scores all three, one verdict per engine, and tells you exactly what to fix.
 
-Point it at a URL and get a 0 to 100 score across eight weighted dimensions, with evidence on every line: the exact robots.txt rule that blocks a bot, the HTTP status a crawler actually receives, the sentence an engine could quote. There are no LLM calls, so the same input always produces the same score.
+Point it at a URL and get a 0 to 100 score across nine weighted dimensions, with evidence on every line: the exact robots.txt rule that blocks a bot, the HTTP status a crawler actually receives, the sentence an engine could quote. There are no LLM calls, so the same input always produces the same score.
 
 Try it now at **[willaicite.com/audit](https://willaicite.com/audit)**, or run it locally.
 
@@ -35,9 +35,9 @@ SEO tooling audits the path to a ranking. willaicite audits the path to a citati
 - **A verdict per engine, weighed by what it costs you.** "Is Googlebot allowed" is one question. willaicite asks it for a roster of AI crawler tokens and separates retrieval crawlers, where a block means that engine can never cite you, from training-only tokens, where blocking is a legitimate policy choice.
 - **Is there a liftable answer.** Engines quote a chunk verbatim. willaicite checks whether one exists: a self-contained answer near the top, headings phrased as the questions people actually ask, an FAQ ready to be lifted whole. You can rank first for a query and still contain nothing an engine can use.
 
-## The eight dimensions
+## The nine dimensions
 
-Every audit scores the same eight dimensions, each weighted by how often it decides whether a citation happens. The overall score is the weighted average of the dimensions that could be verified. The weights follow the 2025&ndash;2026 replication literature, not the 2024 headline numbers: v1.3 added topical focus (high), promoted freshness to high, and demoted evidence density to medium.
+Every audit scores the same nine dimensions, each weighted by how often it decides whether a citation happens. The overall score is the weighted average of the dimensions that could be verified. The weights follow the 2025&ndash;2026 replication literature, not the 2024 headline numbers: v1.3 added topical focus (high), promoted freshness to high, and demoted evidence density to medium. v1.4 added SEO foundation (low): the narrow slice of classic SEO hygiene that also decides which URL an engine attributes, kept at low weight because it is a hygiene multiplier, not a primary citation driver.
 
 | # | Dimension | Weight | What it measures |
 |---|---|---|---|
@@ -49,6 +49,7 @@ Every audit scores the same eight dimensions, each weighted by how often it deci
 | 06 | **Structured data** | medium | JSON-LD (Article, FAQPage, Organization, Person) that helps Google AI Overviews and entity trust |
 | 07 | **Freshness** | high | Visible and machine-readable dates; a recent timestamp is one of the few content factors that consistently lifted citation odds in controlled 2026 testing |
 | 08 | **Entity &amp; E-E-A-T** | medium | A nameable author, organization, and provenance an engine can attribute |
+| 09 | **SEO foundation** | low | Canonical URLs that reference the page they are on, and titles/descriptions unique across pages, so citations and retrieval land on the right URL |
 
 Also checked, informational and unscored: `llms.txt` presence, well-formedness, and consistency with robots.txt.
 
