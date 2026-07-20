@@ -29,6 +29,7 @@ describe('golden scores (scoring-model regression pins)', () => {
       evidenceDensity: 100,
       freshness: 100,
       entityEeat: 100,
+      seoFoundation: 100,
     });
   });
 
@@ -43,6 +44,7 @@ describe('golden scores (scoring-model regression pins)', () => {
       evidenceDensity: 0,
       freshness: 30,
       entityEeat: 50,
+      seoFoundation: 30,
     });
   });
 
@@ -57,6 +59,7 @@ describe('golden scores (scoring-model regression pins)', () => {
       evidenceDensity: 0,
       freshness: 30,
       entityEeat: 50,
+      seoFoundation: 30,
     });
   });
 });

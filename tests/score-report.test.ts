@@ -69,7 +69,7 @@ describe('buildResult + renderMarkdown (integration, no network)', () => {
 
   it('produces a high overall score for the good-article context', () => {
     expect(result.overallScore).toBeGreaterThanOrEqual(85);
-    expect(result.dimensions).toHaveLength(8);
+    expect(result.dimensions).toHaveLength(9);
   });
 
   it('renders markdown with overall score, table, and limitations', () => {
@@ -85,7 +85,7 @@ describe('buildResult + renderMarkdown (integration, no network)', () => {
     const parsed = JSON.parse(renderJson(result));
     expect(parsed.overallScore).toBe(result.overallScore);
     expect(Array.isArray(parsed.fixFirst)).toBe(true);
-    expect(parsed.dimensions).toHaveLength(8);
+    expect(parsed.dimensions).toHaveLength(9);
   });
 
   it('never fabricates: unverifiable context yields could-not-verify, not scores', () => {

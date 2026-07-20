@@ -172,6 +172,19 @@ export function jsonLdTypes(nodes: Record<string, unknown>[]): string[] {
   return types;
 }
 
+/** href of the first `<link rel="canonical">`, or null. */
+export function extractCanonical(html: string): string | null {
+  const tags = html.match(/<link\b[^>]*>/gi) ?? [];
+  for (const tag of tags) {
+    const rel = getAttr(tag, 'rel');
+    if (rel && /(^|\s)canonical(\s|$)/i.test(rel)) {
+      const href = getAttr(tag, 'href');
+      if (href) return href;
+    }
+  }
+  return null;
+}
+
 export interface LinkTag {
   href: string;
   text: string;

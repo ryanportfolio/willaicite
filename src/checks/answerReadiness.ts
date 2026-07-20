@@ -111,6 +111,25 @@ export function checkAnswerReadiness(ctx: AuditContext): DimensionResult {
     evidence.push({ status: 'warn', message: `${h1s.length} H1 headings found; topic signal is diluted` });
   }
 
+  // 2b. Heading hierarchy (advisory, unscored): a skipped level (H2 → H4)
+  // breaks the outline chunkers use to attach body text to its section.
+  const skips: string[] = [];
+  for (let i = 1; i < headings.length; i++) {
+    if (headings[i].level > headings[i - 1].level + 1) {
+      skips.push(`H${headings[i - 1].level} → H${headings[i].level} at "${headings[i].text.slice(0, 50)}"`);
+    }
+  }
+  if (skips.length > 0) {
+    evidence.push({ status: 'warn', message: `heading hierarchy skips levels (${skips.slice(0, 3).join('; ')})` });
+    recommendations.push({
+      dimension: dim,
+      action: 'Fix skipped heading levels so the outline nests without gaps (H2 under H1, H3 under H2)',
+      why: 'Chunkers and outline parsers use heading levels to decide which section a passage belongs to; a skipped level detaches the section from its parent topic and weakens the retrieved chunk\'s context.',
+      impact: 1,
+      effort: 1,
+    });
+  }
+
   // 3. Question-formatted headings (0-25)
   const subHeadings = headings.filter((h) => h.level >= 2);
   const questionHeadings = subHeadings.filter((h) => QUESTION_START.test(h.text) || h.text.trim().endsWith('?'));
