@@ -133,6 +133,12 @@
   .scoremeta { padding-bottom: 10px; max-width: 46ch; }
   .verdict { font-size: 22px; font-style: italic; line-height: 1.3; }
   .scoremeta .audited { margin-top: 12px; font-family: var(--mono); font-size: 12px; color: var(--ink-faint); overflow-wrap: anywhere; }
+  .copy-agent-inline {
+    margin-top: 18px; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase;
+    background: transparent; border: 1.5px solid var(--ink); color: var(--ink);
+    padding: 9px 16px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .copy-agent-inline:hover { background: var(--ink); color: var(--paper); }
 
   /* dimension index */
   table.index { width: 100%; border-collapse: collapse; margin-top: 36px; }
@@ -246,6 +252,7 @@
       <div class="scoremeta">
         <div class="verdict" id="verdict"></div>
         <div class="audited" id="audited"></div>
+        <button id="copy-agent-top" class="copy-agent-inline" type="button">Copy for your agent</button>
       </div>
     </div>
 
@@ -450,7 +457,7 @@
 
   $('dl-md').addEventListener('click', () => payload && download('geo-audit-report.md', payload.markdown, 'text/markdown'));
   $('dl-json').addEventListener('click', () => payload && download('geo-audit-result.json', JSON.stringify({ ...payload.result, fixFirst: payload.fixFirst }, null, 2), 'application/json'));
-  $('copy-agent').addEventListener('click', async () => {
+  async function copyForAgent(btn) {
     if (!payload) return;
     const r = payload.result;
     const url = r.finalUrl || (r.pagesAudited && r.pagesAudited[0]) || r.url || 'the audited site';
@@ -478,7 +485,6 @@
       '',
     ].join('\n');
     const text = preamble + JSON.stringify({ ...payload.result, fixFirst: payload.fixFirst }, null, 2);
-    const btn = $('copy-agent');
     try {
       await navigator.clipboard.writeText(text);
       btn.textContent = 'Copied ✓';
@@ -495,7 +501,10 @@
       btn.textContent = ok ? 'Copied ✓' : 'Copy failed';
     }
     setTimeout(() => { btn.textContent = 'Copy for your agent'; }, 1600);
-  });
+  }
+
+  $('copy-agent').addEventListener('click', (e) => copyForAgent(e.currentTarget));
+  $('copy-agent-top').addEventListener('click', (e) => copyForAgent(e.currentTarget));
 
   function download(name, content, type) {
     const a = document.createElement('a');
