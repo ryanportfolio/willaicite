@@ -6,15 +6,15 @@ const DESCRIPTION =
   'What willaicite is and how the audit works: a free, deterministic, evidence-based score of whether AI answer engines can retrieve, extract and cite a page. No LLM calls, no account, no trackers.';
 
 const dims = [
-  { name: 'AI crawler access', weight: 3, asks: 'Can retrieval crawlers fetch the page, and does a WAF treat them differently' },
-  { name: 'Renderability', weight: 3, asks: 'Is the content readable without executing JavaScript' },
-  { name: 'Answer-readiness', weight: 3, asks: 'Can an engine lift a definition, a heading, an answer block whole' },
-  { name: 'Topical focus & metadata', weight: 3, asks: 'Do title, heading, description and body present one topic a retriever can match' },
+  { name: 'AI crawler access', weight: 3, asks: 'Can AI crawlers fetch the page, and does the firewall treat them differently from a normal browser' },
+  { name: 'Renderability', weight: 3, asks: 'Is the content readable without running JavaScript' },
+  { name: 'Answer-readiness', weight: 3, asks: 'Is there a definition, heading or answer block an engine can quote whole' },
+  { name: 'Topical focus & metadata', weight: 3, asks: 'Do title, headings, description and body present the same one topic' },
   { name: 'Evidence density', weight: 2, asks: 'Does the page carry statistics, quotations and cited sources for engines to quote once it is retrieved' },
   { name: 'Structured data', weight: 2, asks: 'Does JSON-LD tell engines who wrote what, and when' },
-  { name: 'Freshness', weight: 3, asks: 'Is there a machine-readable date signal from the last 90 days' },
+  { name: 'Freshness', weight: 3, asks: 'Is there a machine-readable date from the last 90 days' },
   { name: 'Entity & E-E-A-T', weight: 2, asks: 'Can the author and organization behind the page be identified' },
-  { name: 'SEO foundation', weight: 1, asks: 'Does the canonical reference the page it is on, and are titles and descriptions unique across pages' },
+  { name: 'SEO foundation', weight: 1, asks: 'Does the canonical URL point at the page itself, and are titles and descriptions unique across pages' },
 ];
 
 const faqs = [
@@ -135,24 +135,22 @@ const schema = {
 
       <div class="report-rule"><h2 class="rulelabel">What evidence backs the scoring?</h2></div>
       <p>
-        The dimension weights and recommendations track the empirical GEO literature, weighted
-        toward controlled and replicated results.
+        The weights and recommendations follow the published GEO research, leaning on
+        controlled and replicated results over one-off studies.
         <a class="body-link" href="https://arxiv.org/abs/2311.09735">Aggarwal et&nbsp;al., &ldquo;GEO: Generative Engine Optimization&rdquo;, KDD&nbsp;2024</a>
         measured that citing sources lifted generative visibility by 24.9%, adding statistics
         by 25.9%, and quotations by 27.8%, with the source already placed in the model&rsquo;s
         context.
       </p>
+      <p>The 2025&ndash;2026 replications narrowed that claim:</p>
+      <ul class="fetches">
+        <li><a class="body-link" href="https://arxiv.org/abs/2605.25517">Vishwakarma et&nbsp;al., SIGIR&nbsp;2026</a> ran 252,000 controlled trials across six LLMs and found topical relevance and retrieval position decide most citations.</li>
+        <li><a class="body-link" href="https://arxiv.org/abs/2506.11097">C-SEO&nbsp;Bench, NeurIPS&nbsp;D&amp;B&nbsp;2025</a> found only 3 of 54 content-rewrite combinations made a significant difference.</li>
+        <li>The <a class="body-link" href="https://arxiv.org/abs/2509.10762">GEO-16 field audit (2025)</a> found metadata, freshness and structured data the signals most strongly tied to 1,702 observed citations.</li>
+      </ul>
       <p>
-        The 2025&ndash;2026 replications narrowed that claim:
-        <a class="body-link" href="https://arxiv.org/abs/2605.25517">Vishwakarma et&nbsp;al., SIGIR&nbsp;2026</a>
-        (252,000 controlled trials across six LLMs) found topical relevance and retrieval
-        position dominate citation choice,
-        <a class="body-link" href="https://arxiv.org/abs/2506.11097">C-SEO&nbsp;Bench, NeurIPS&nbsp;D&amp;B&nbsp;2025</a>
-        found only 3 of 54 content-rewrite combinations significantly positive, and the
-        <a class="body-link" href="https://arxiv.org/abs/2509.10762">GEO-16 field audit (2025)</a>
-        found metadata, freshness and structured data the pillars most strongly associated
-        with 1,702 observed citations. That is why topical focus and freshness weigh high while
-        evidence density weighs medium.
+        That is why topical focus and freshness carry a high weight (3) while evidence
+        density carries a medium one (2).
       </p>
       <p>
         The crawler roster tracks the engines&rsquo;
