@@ -10,15 +10,15 @@ const DESCRIPTION =
   'willaicite is a free, deterministic audit: can AI answer engines (ChatGPT, Perplexity, Google AI Overviews, Claude) retrieve, read and cite your page?';
 
 const dimensions = [
-  { name: 'AI crawler access', weight: 'high', note: 'Can the engines that cite pages fetch this one at all: per crawler token, robots.txt and firewall both.' },
-  { name: 'Renderability', weight: 'high', note: 'How much of the content survives in raw HTML, with no JavaScript executed.' },
-  { name: 'Answer-readiness', weight: 'high', note: 'Is there a self-contained, liftable answer near the top, under question-shaped headings.' },
-  { name: 'Topical focus & metadata', weight: 'high', note: 'Does title, heading, description and body legibly present one topic a retriever can match a query against.' },
-  { name: 'Evidence density', weight: 'medium', note: 'The material engines prefer to quote once a page is retrieved: statistics, quotations and cited sources.' },
-  { name: 'Structured data', weight: 'medium', note: 'Schema.org markup that helps Google AI Overviews and entity trust.' },
-  { name: 'Freshness', weight: 'high', note: 'Visible and machine-readable dates; a recent timestamp is one of the few factors that consistently lifted citation odds in controlled 2026 testing.' },
-  { name: 'Entity & E-E-A-T', weight: 'medium', note: 'A nameable author, organization and provenance an engine can attribute.' },
-  { name: 'SEO foundation', weight: 'low', note: 'Self-referencing canonicals and unique titles/descriptions, so citations land on the right URL.' },
+  { name: 'AI crawler access', weight: 'high', note: 'Can AI crawlers fetch the page at all. Checked one crawler at a time, in robots.txt and at the firewall.' },
+  { name: 'Renderability', weight: 'high', note: 'How much of the content is in the raw HTML your server sends, before any JavaScript runs.' },
+  { name: 'Answer-readiness', weight: 'high', note: 'Is there a short, complete answer near the top that an engine can quote whole, under headings phrased as questions.' },
+  { name: 'Topical focus & metadata', weight: 'high', note: 'Do the title, headings, description and body all present the same one topic, so a retriever can match the page to a query.' },
+  { name: 'Evidence density', weight: 'medium', note: 'Statistics, quotations and cited sources: the material engines prefer to quote once a page is retrieved.' },
+  { name: 'Structured data', weight: 'medium', note: 'Schema.org markup that tells engines who wrote the page and when. Matters most for Google AI Overviews.' },
+  { name: 'Freshness', weight: 'high', note: 'A date a reader can see and a date a machine can read. A recent timestamp is one of the few factors that consistently lifted citation odds in controlled 2026 testing.' },
+  { name: 'Entity & E-E-A-T', weight: 'medium', note: 'A named author and organization an engine can credit the page to.' },
+  { name: 'SEO foundation', weight: 'low', note: 'A canonical URL that points at itself, plus unique titles and descriptions, so a citation lands on the right page.' },
 ];
 
 // FAQ is single-sourced: this array renders the visible section AND the
@@ -270,9 +270,9 @@ const schema = {
     <section aria-labelledby="dims-h">
       <div class="report-rule"><h2 class="rulelabel" id="dims-h">The nine dimensions</h2></div>
       <p class="section-intro">
-        Every audit scores the same nine dimensions, weighted by how often each one decides
-        whether a citation happens. The weights follow the 2025&ndash;2026 replication
-        literature, not the 2024 headline numbers.
+        Every audit scores the same nine dimensions. A dimension weighs more when it more
+        often decides whether a citation happens, and the weights follow the 2025&ndash;2026
+        controlled studies rather than the 2024 headline numbers.
       </p>
       <ol class="dims">
         {dimensions.map((d, i) => (
