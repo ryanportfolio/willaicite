@@ -13,7 +13,7 @@
 [![Runtime deps](https://img.shields.io/badge/runtime%20deps-0-2c6e49?style=flat-square)](package.json)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square)](tsconfig.json)
 
-[Run a live audit](https://willaicite.com/audit) &middot; [How it works](https://willaicite.com) &middot; [Crawler registry](https://willaicite.com/crawlers) &middot; [Proof](https://willaicite.com/proof)
+[Run a live audit](https://willaicite.com/audit) &middot; [How it works](https://willaicite.com) &middot; [Crawler registry](https://willaicite.com/crawlers) &middot; [Proof](https://willaicite.com/example)
 
 </div>
 
@@ -143,7 +143,7 @@ The CLI is single-user and trusts you. `geo-audit serve` is safe to expose publi
   bot blocking detected
 ```
 
-The full run, including the baseline-to-100 history (scored under the v1.2 model), is on the [proof page](https://willaicite.com/proof). The v1.3 recalibration is stricter: the same site scores 97, with the new topical-focus dimension flagging the slogan H1 and an overlong meta description &mdash; findings we agree with and will fix.
+The full run, including the baseline-to-100 history (scored under the v1.2 model), is on the [proof page](https://willaicite.com/example). The v1.3 recalibration is stricter: the same site scores 97, with the new topical-focus dimension flagging the slogan H1 and an overlong meta description &mdash; findings we agree with and will fix.
 
 </details>
 
