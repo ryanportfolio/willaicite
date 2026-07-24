@@ -38,14 +38,14 @@ const schema = {
   '@graph': [
     {
       '@type': 'TechArticle',
-      '@id': 'https://willaicite.com/proof#article',
+      '@id': 'https://willaicite.com/example#article',
       headline: 'Proof: willaicite audited with willaicite',
       description: DESCRIPTION,
       author: { '@id': 'https://willaicite.com/#ryan' },
       publisher: { '@id': 'https://willaicite.com/#org' },
       datePublished: '2026-07-17',
       dateModified: '2026-07-17',
-      mainEntityOfPage: 'https://willaicite.com/proof',
+      mainEntityOfPage: 'https://willaicite.com/example',
     },
     {
       '@type': 'Person',
@@ -62,7 +62,7 @@ const schema = {
     },
     {
       '@type': 'FAQPage',
-      '@id': 'https://willaicite.com/proof#faq',
+      '@id': 'https://willaicite.com/example#faq',
       mainEntity: faqs.map((f) => ({
         '@type': 'Question',
         name: f.q,
@@ -71,16 +71,16 @@ const schema = {
     },
     {
       '@type': 'BreadcrumbList',
-      '@id': 'https://willaicite.com/proof#crumbs',
+      '@id': 'https://willaicite.com/example#crumbs',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'willaicite', item: 'https://willaicite.com/' },
-        { '@type': 'ListItem', position: 2, name: 'Proof', item: 'https://willaicite.com/proof' },
+        { '@type': 'ListItem', position: 2, name: 'Proof', item: 'https://willaicite.com/example' },
       ],
     },
   ],
 };
 ---
-<Base title={TITLE} description={DESCRIPTION} canonical="https://willaicite.com/proof" schema={schema}>
+<Base title={TITLE} description={DESCRIPTION} canonical="https://willaicite.com/example" schema={schema}>
 
 <main>
   <div class="sheet">
