@@ -4,7 +4,7 @@
 // Every number on this page comes from logged audit runs on 2026-07-17.
 import Base from '../layouts/Base.astro';
 
-const TITLE = 'Proof · willaicite';
+const TITLE = 'Our own audit · willaicite';
 const DESCRIPTION =
   'willaicite audited its own site: baseline 51/100, then 100/100 after fixing exactly what the report flagged. When the v1.3 scoring model raised the bar, the site got flagged again, and fixed again. Every number is reproducible; the audit is deterministic.';
 
@@ -20,8 +20,8 @@ const dims = [
 
 const faqs = [
   {
-    q: 'Did you game your own tool?',
-    a: 'Gaming it would show. Every point is tied to a page property anyone can inspect: the JSON-LD is in the source, the citations resolve, the dates match the git history, the FAQ you are reading renders from the same data as its schema markup. The audit is deterministic, so re-running it reproduces the same evidence lines, and a faked signal would show up as a contradiction between the report and the page. The dogfood also cut the other way: running the tool on ourselves exposed a scoring bug (percent-sign statistics could never be counted), which we fixed and shipped the same day.',
+    q: 'Where does each point come from?',
+    a: 'Every point is tied to a page property anyone can inspect: the JSON-LD is in the source, the citations resolve, the dates match the git history, and the FAQ you are reading renders from the same data as its schema markup. The audit is deterministic, so re-running it reproduces the same evidence lines. Running the tool on ourselves also caught a scoring bug (percent-sign statistics could never be counted), which we fixed and shipped the same day.',
   },
   {
     q: 'Can I reproduce these numbers?',
@@ -29,7 +29,7 @@ const faqs = [
   },
   {
     q: 'Why does this matter for my site?',
-    a: 'Because the loop that took this site from 51 to 100 is the product: audit, fix what the report flags in priority order, re-run until clean. The fix-first list is sorted by impact per effort, so the expensive-looking score usually falls to a handful of small, concrete changes.',
+    a: 'This site went from 51 to 100 using the same loop the tool gives you: audit, fix what the report flags in priority order, re-run until clean. The fix-first list is sorted by impact per effort, so a score that looks expensive usually comes down to a handful of small, concrete changes.',
   },
 ];
 
@@ -39,7 +39,7 @@ const schema = {
     {
       '@type': 'TechArticle',
       '@id': 'https://willaicite.com/example#article',
-      headline: 'Proof: willaicite audited with willaicite',
+      headline: 'Our own audit: willaicite audited with willaicite',
       description: DESCRIPTION,
       author: { '@id': 'https://willaicite.com/#ryan' },
       publisher: { '@id': 'https://willaicite.com/#org' },
@@ -74,7 +74,7 @@ const schema = {
       '@id': 'https://willaicite.com/example#crumbs',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'willaicite', item: 'https://willaicite.com/' },
-        { '@type': 'ListItem', position: 2, name: 'Proof', item: 'https://willaicite.com/example' },
+        { '@type': 'ListItem', position: 2, name: 'Our own audit', item: 'https://willaicite.com/example' },
       ],
     },
   ],
@@ -85,7 +85,7 @@ const schema = {
 <main>
   <div class="sheet">
     <article class="proof">
-      <h1>Proof</h1>
+      <h1>Our own audit</h1>
       <p class="lede">
         willaicite ran on its own site. Below: the baseline report, the fixes it
         prescribed, and the result. Every number comes from logged runs on July 17, 2026.
@@ -158,7 +158,7 @@ const schema = {
         </figcaption>
       </figure>
 
-      <div class="report-rule"><h2 class="rulelabel">Proof FAQ</h2></div>
+      <div class="report-rule"><h2 class="rulelabel">FAQ</h2></div>
       <div class="faq">
         {faqs.map((f) => (
           <div class="faq-item">
