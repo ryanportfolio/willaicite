@@ -186,8 +186,17 @@
   }
   .tag.hot { border-color: var(--accent); color: var(--accent); }
 
-  /* after the audit: the fullbuild pipeline handoff */
+  /* the fullbuild pipeline handoff: one marker, two states. The pre-audit
+     copy sits under the form and retires the moment a report renders, so
+     "you are here" is never claimed in two places at once. */
   .handoff { padding: 40px 0 8px; }
+  /* the enclosed rule brings its own 64px top margin; drop .handoff's
+     padding so this section keeps the page's section rhythm */
+  .handoff-pre { padding-top: 0; }
+  .handoff-pre.retired { display: none; }
+  /* the rule lives inside this section, so it needs the gap the report's
+     sibling rules get from .handoff's own top padding */
+  .handoff-pre .pipeline { margin-top: 36px; }
   .pipeline {
     display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 13px; row-gap: 6px;
     font-family: var(--mono); font-size: 14px; letter-spacing: 0.02em;
@@ -263,6 +272,27 @@
       <button id="runbtn" type="submit">Audit</button>
     </form>
     <div class="fineprint">Makes at most 10 polite requests to your site as geo-audit/1.3 · respects robots.txt · no LLM calls</div>
+
+    <section class="handoff handoff-pre" id="handoff-pre">
+      <div class="report-rule"><span>Where this sits</span></div>
+      <p class="pipeline" role="img" aria-label="build loop: idea, design, engineering, audit (you are here, audit not run yet), loop, shipped">
+        <span class="pstage">idea</span>
+        <span class="parrow" aria-hidden="true">→</span>
+        <span class="pstage">design</span>
+        <span class="parrow" aria-hidden="true">→</span>
+        <span class="pstage">engineering</span>
+        <span class="parrow" aria-hidden="true">→</span>
+        <span class="pstage here">audit<span class="pmark">you are here · audit not run yet</span></span>
+        <span class="parrow loop" aria-hidden="true">⟳</span>
+        <span class="pstage dest">shipped</span>
+      </p>
+      <p class="handoff-note">
+        Every site is somewhere in this loop. willaicite is the audit stage: run it above
+        and the report comes back with the fix list. fullbuild.ai is the practice that
+        built this auditor, and it works the rest of the loop.
+      </p>
+      <a class="handoff-link" href="https://fullbuild.ai" target="_blank" rel="noopener">Built at fullbuild.ai →</a>
+    </section>
   </section>
 
   <section id="log">
@@ -461,6 +491,7 @@
 
     // fullbuild handoff: the pipeline mark and note adapt to the real fix count
     const n = fixFirst.length;
+    $('handoff-pre').classList.add('retired');
     const markText = n === 0
       ? 'you are here · loop clean'
       : 'you are here · ' + n + (n === 1 ? ' fix' : ' fixes') + ' to ship';
