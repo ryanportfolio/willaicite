@@ -186,6 +186,33 @@
   }
   .tag.hot { border-color: var(--accent); color: var(--accent); }
 
+  /* after the audit: the fullbuild pipeline handoff */
+  .handoff { padding: 40px 0 8px; }
+  .pipeline {
+    display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 13px; row-gap: 6px;
+    font-family: var(--mono); font-size: 14px; letter-spacing: 0.02em;
+  }
+  .pstage, .parrow { position: relative; padding-bottom: 20px; }
+  .pstage { color: var(--ink-faint); }
+  .pstage.here { color: var(--accent); font-weight: 700; }
+  .pstage.dest { color: var(--ink); font-weight: 700; }
+  .parrow { color: var(--ink-faint); }
+  .parrow.loop { color: var(--ink); }
+  .pmark {
+    position: absolute; top: calc(100% - 16px); left: 0; white-space: nowrap;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent);
+  }
+  .pmark::before { content: "▲ "; font-size: 8px; }
+  .handoff-note { margin-top: 16px; max-width: 62ch; color: var(--ink-soft); font-size: 16px; }
+  .handoff-link {
+    display: inline-block; margin-top: 22px;
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+    border: 1.5px solid var(--ink); color: var(--ink); text-decoration: none;
+    padding: 11px 20px; transition: all 0.15s ease;
+  }
+  .handoff-link:hover { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+
   /* footer of report */
   .limits { margin-top: 40px; }
   .limits ul { margin-top: 14px; padding-left: 20px; }
@@ -261,6 +288,23 @@
 
     <div class="report-rule"><span>Fix first, by impact per effort</span></div>
     <ol class="fixes" id="fixes"></ol>
+
+    <div class="report-rule"><span>After the audit</span></div>
+    <section class="handoff">
+      <p class="pipeline" role="img" aria-label="fullbuild pipeline: idea, design, engineering, audit (you are here), loop, shipped">
+        <span class="pstage">idea</span>
+        <span class="parrow" aria-hidden="true">→</span>
+        <span class="pstage">design</span>
+        <span class="parrow" aria-hidden="true">→</span>
+        <span class="pstage">engineering</span>
+        <span class="parrow" aria-hidden="true">→</span>
+        <span class="pstage here">audit<span class="pmark" id="pipe-mark">you are here</span></span>
+        <span class="parrow loop" aria-hidden="true">⟳</span>
+        <span class="pstage dest">shipped</span>
+      </p>
+      <p class="handoff-note" id="handoff-note"></p>
+      <a class="handoff-link" id="handoff-link" href="https://fullbuild.ai" target="_blank" rel="noopener">Hand it to fullbuild.ai →</a>
+    </section>
 
     <div class="report-rule"><span>Limitations</span></div>
     <div class="limits"><ul id="limits"></ul></div>
@@ -414,6 +458,21 @@
     if (fixFirst.length === 0) {
       fixes.innerHTML = '<li><div class="fix-action">Nothing to fix: every verifiable check passed.</div></li>';
     }
+
+    // fullbuild handoff: the pipeline mark and note adapt to the real fix count
+    const n = fixFirst.length;
+    const markText = n === 0
+      ? 'you are here · loop clean'
+      : 'you are here · ' + n + (n === 1 ? ' fix' : ' fixes') + ' to ship';
+    $('pipe-mark').textContent = markText;
+    document.querySelector('.pipeline').setAttribute('aria-label',
+      'fullbuild pipeline: idea, design, engineering, audit (' + markText + '), loop, shipped');
+    $('handoff-note').textContent = n === 0
+      ? 'Nothing left in the loop: every verifiable check passed. fullbuild.ai is the practice that built this auditor; the ledger there ships to the same bar.'
+      : 'The fix list above is a work order. fullbuild.ai is the practice that built this auditor, and this loop is how it ships: build the fixes, re-run the audit, done when the report comes back clean.';
+    $('handoff-link').textContent = n === 0
+      ? 'See the ledger at fullbuild.ai →'
+      : 'Hand it to fullbuild.ai →';
 
     const limits = $('limits');
     limits.innerHTML = result.limitations.map((l) => '<li>' + esc(l) + '</li>').join('');
