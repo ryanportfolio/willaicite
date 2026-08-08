@@ -26,27 +26,27 @@ const dimensions = [
 const faqs = [
   {
     q: 'How is GEO different from SEO?',
-    a: 'SEO answers the question “where do we rank in the list of links?” GEO answers the question “does the synthesized answer quote us?” The two overlap less than you would hope: an answer engine must fetch your page with its own crawler, extract it without running JavaScript, and find a passage worth quoting verbatim. Three steps, and no ranking audit tests them.',
+    a: 'SEO asks where you rank in a list of links. GEO asks whether the answer quotes you. To quote you, an answer engine must fetch your page with its own crawler, read it without running JavaScript, and find a passage worth quoting word-for-word. No ranking audit tests those three steps.',
   },
   {
     q: 'Does blocking GPTBot stop ChatGPT from citing my page?',
-    a: 'No. GPTBot is OpenAI’s training crawler; retrieval for ChatGPT search runs through OAI-SearchBot and ChatGPT-User. Blocking GPTBot is a legitimate policy choice about model training. Blocking OAI-SearchBot removes you from ChatGPT’s citations entirely. willaicite reports each token separately so you can tell the two decisions apart.',
+    a: 'No. GPTBot is OpenAI’s training crawler; ChatGPT search retrieves through OAI-SearchBot and ChatGPT-User. Blocking GPTBot is a legitimate policy choice about model training. Blocking OAI-SearchBot removes you from ChatGPT’s citations entirely. willaicite reports each token separately so you can tell the two decisions apart.',
   },
   {
     q: 'Why does my JavaScript-rendered site score low?',
-    a: 'AI crawlers read the raw HTML your server sends and do not execute JavaScript. If your content only exists after a framework boots in the browser, those crawlers see an empty shell. Server-render or prerender everything you want an engine to be able to quote.',
+    a: 'AI crawlers read the raw HTML your server sends; they do not run JavaScript. If your content only appears after a framework boots in the browser, those crawlers see an empty shell. Server-render or prerender everything you want an engine to quote.',
   },
   {
     q: 'How fresh does my content need to be?',
-    a: 'Answer engines cite pages updated within the last 90 days far more readily, and a 252,000-trial controlled study in 2026 found a recent timestamp is one of the few content factors that consistently lifts citation odds across engines. Keep a visible and machine-readable date, and bump it only with genuine edits; willaicite reads both and flags undatable pages.',
+    a: 'Answer engines cite pages updated within the last 90 days far more readily. A 252,000-trial controlled study in 2026 found a recent timestamp is one of the few content factors that consistently lifts citation odds across engines. Keep a visible date and a machine-readable one, update them only with genuine edits; willaicite reads both and flags undatable pages.',
   },
   {
     q: 'Does willaicite check SEO too?',
-    a: 'No. willaicite audits the citation path, which is GEO. Several of the signals it checks (crawler access, structured data, visible dates, clear headings, authorship) are SEO fundamentals as well, so fixes often help both. But it does not measure rankings, keywords, backlinks or page speed; established SEO tools already cover that ground.',
+    a: 'No. willaicite audits the citation path, which is GEO. Several signals it checks (crawler access, structured data, visible dates, clear headings, authorship) are SEO fundamentals too, so fixes often help both. It does not measure rankings, keywords, backlinks or page speed; SEO tools already cover that ground.',
   },
   {
     q: 'What does an audit cost, and what happens to my data?',
-    a: 'Nothing; willaicite is free. An audit makes at most ten requests to your site and typically finishes in under 30 seconds. It is deterministic: no LLM calls, no sampling.',
+    a: 'Nothing; willaicite is free. An audit makes at most ten requests to your site and typically finishes in under 30 seconds. It is deterministic: no LLM calls, no sampling, and the same page gets the same score.',
   },
 ];
 
@@ -115,8 +115,8 @@ const schema = {
       <p class="slogan">SEO gets you listed. <em>GEO gets you quoted.</em></p>
       <p class="sub">
         willaicite is a free, deterministic audit that scores whether AI answer engines
-        (ChatGPT, Perplexity, Google AI Overviews and Claude) can retrieve your page, extract
-        it without running your JavaScript, and quote it inside a synthesized answer.
+        (ChatGPT, Perplexity, Google AI Overviews and Claude) can retrieve your page, read
+        it without running your JavaScript, and quote it in their answers.
       </p>
       <p class="takeaway">
         <span class="t1">Search engines rank you in a list of links</span>
@@ -145,21 +145,21 @@ const schema = {
 
     <!-- ================= five differentiators ================= -->
     <section aria-labelledby="miss-h">
-      <div class="report-rule"><h2 class="rulelabel" id="miss-h">What your SEO tool doesn&rsquo;t test</h2></div>
+      <div class="report-rule"><h2 class="rulelabel" id="miss-h">Five checks SEO tools skip</h2></div>
       <p class="section-intro">
-        SEO tooling audits the path to a ranking. willaicite audits the path to a citation.
-        Five places the two roads split.
+        SEO tools audit the path to a ranking. willaicite audits the path to a citation.
+        These five checks are where the two paths differ.
       </p>
 
       <ol class="diffs">
         <li>
-          <h3>The block robots.txt won&rsquo;t admit to</h3>
+          <h3>The firewall block robots.txt hides</h3>
           <p>
-            willaicite fetches your page twice, once as an ordinary browser and once wearing an
-            AI crawler&rsquo;s user agent, then compares what comes back. A CDN firewall rule like
+            willaicite fetches your page twice, once as an ordinary browser and once
+            identifying as an AI crawler, then compares what comes back. A firewall rule like
             Cloudflare&rsquo;s <a class="body-link" href="https://blog.cloudflare.com/declaring-your-aindependence-block-ai-bots-scrapers-and-crawlers-with-a-single-click/">one-click &ldquo;block AI bots&rdquo; toggle</a>
-            returns 403 to the actual crawler while robots.txt keeps saying <em>allowed</em>.
-            SEO crawlers never walk the AI-bot path, so they report clean while the engine
+            returns 403 to the crawler while robots.txt keeps saying <em>allowed</em>.
+            SEO crawlers never make that second fetch, so they report clean while the engine
             silently drops your page.
           </p>
           <figure class="minifig">
@@ -167,22 +167,22 @@ const schema = {
               <thead class="visually-hidden"><tr><th>check</th><th>result</th><th>meaning</th></tr></thead>
               <tbody>
                 <tr><td class="k">robots.txt, GPTBot</td><td class="ok">allowed</td><td class="c">what every SEO tool reads</td></tr>
-                <tr><td class="k">fetch, browser UA</td><td class="ok">200 OK</td><td class="c">what your monitoring sees</td></tr>
-                <tr><td class="k">fetch, GPTBot UA</td><td class="bad">403 Forbidden</td><td class="c">what the engine actually gets</td></tr>
+                <tr><td class="k">fetch as browser</td><td class="ok">200 OK</td><td class="c">what your monitoring sees</td></tr>
+                <tr><td class="k">fetch as GPTBot</td><td class="bad">403 Forbidden</td><td class="c">what the engine actually gets</td></tr>
               </tbody>
             </table>
           </figure>
         </li>
 
         <li>
-          <h3>The single-page app nobody&rsquo;s reading</h3>
+          <h3>Pages that need JavaScript arrive empty</h3>
           <p>
             <a class="body-link" href="https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics">Googlebot renders JavaScript</a>;
             so does Lighthouse. GPTBot, ClaudeBot and PerplexityBot do not; they see whatever
-            the server sends and nothing more. A client-rendered page audits perfectly and
-            arrives at the answer engine as an empty shell. willaicite scores how much of your
-            content survives in the raw HTML, from the exact no-JavaScript vantage those
-            crawlers have.
+            the server sends and nothing more. A page built in the browser can audit perfectly
+            in SEO tools and still reach the answer engine as an empty shell. willaicite scores
+            how much of your content survives in the raw HTML, reading the page exactly as
+            those crawlers do.
           </p>
           <figure class="minifig split">
             <div class="pane">
@@ -201,17 +201,16 @@ const schema = {
         </li>
 
         <li>
-          <h3>The outbound-citation inversion</h3>
+          <h3>Citing sources lifts AI visibility</h3>
           <p>
-            Classic SEO folklore says external links leak PageRank, so pages hoard authority and
+            Old SEO advice says external links leak PageRank, so pages hoard authority and
             cite no one. The <a class="body-link" href="https://arxiv.org/abs/2311.09735">GEO study</a>
             (Aggarwal et&nbsp;al., KDD&nbsp;2024) measured the opposite effect on AI visibility:
             citing sources lifted it 24.9 percent, statistics 25.9 percent, and quotations
-            27.8 percent. Independent replications in 2025 and 2026 shrank those effects to a
-            tie-break among already-retrieved pages, with
-            <a class="body-link" href="https://arxiv.org/abs/2605.25517">a 252,000-trial controlled study</a>
-            finding topical relevance and retrieval position matter more. But the direction held,
-            and it still means optimizing for the ranking can quietly cost you the quote.
+            27.8 percent. Replications in 2025 and 2026, including
+            <a class="body-link" href="https://arxiv.org/abs/2605.25517">a 252,000-trial controlled study</a>,
+            shrank those effects to a tie-break among already-retrieved pages. The direction
+            held, and it still means optimizing for the ranking can cost you the quote.
           </p>
           <figure class="minifig">
             <div class="stats">
@@ -224,13 +223,13 @@ const schema = {
         </li>
 
         <li>
-          <h3>A verdict per engine, weighed by what it costs you</h3>
+          <h3>Which blocks cost you citations</h3>
           <p>
             &ldquo;Is Googlebot allowed&rdquo; is one question. willaicite asks it for a roster of AI crawler
             tokens and separates <em>retrieval</em> crawlers, where a block means that engine can never
-            cite you, from <em>training-only</em> tokens, where blocking is a legitimate policy choice
-            rather than a citation problem. The <a class="body-link" href="/crawlers">full registry</a>
-            documents every token willaicite checks.
+            cite you, from <em>training-only</em> tokens, where blocking is a legitimate policy choice.
+            The <a class="body-link" href="/crawlers">full registry</a> documents every token
+            willaicite checks.
           </p>
           <figure class="minifig">
             <table class="ledger roster">
@@ -246,11 +245,11 @@ const schema = {
         </li>
 
         <li>
-          <h3>Is there a liftable answer?</h3>
+          <h3>Is there an answer to quote?</h3>
           <p>
-            Engines quote a chunk, verbatim. willaicite checks whether one exists: a self-contained
-            answer near the top of the page, headings phrased as the questions people actually ask,
-            an FAQ ready to be lifted whole. A page that opens with a sentence like
+            Engines quote a chunk word-for-word, so willaicite checks whether your page contains
+            one: a self-contained answer near the top, headings phrased as the questions people
+            actually ask, an FAQ an engine can lift whole. A page that opens with a sentence like
             <q>willaicite is a free audit that scores citation readiness</q> hands the engine its
             quote; a page that opens with a hero animation hands it nothing. You can rank first
             for a query and still contain nothing an engine can use.
@@ -307,9 +306,9 @@ const schema = {
       <p class="band-head">How the score is made</p>
       <p>
         willaicite is deterministic: no LLM calls, no sampling, and every point is tied to
-        evidence you can check in the report. An audit makes at most ten polite requests to
-        your site (your page twice, robots.txt, the sitemap and a few supporting files) and
-        honors robots.txt, while telling you what robots.txt won&rsquo;t.
+        evidence you can check in the report. An audit makes at most ten polite requests
+        (your page twice, robots.txt, the sitemap and a few supporting files) and honors
+        robots.txt, while telling you what robots.txt won&rsquo;t.
       </p>
       <a class="cta inverted" href="/audit">Audit your site</a>
     </div>
