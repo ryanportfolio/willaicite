@@ -102,7 +102,7 @@ const schema = {
         throughout:
       </p>
       <ul class="fetches">
-        <li>the page itself, fetched twice: once with a normal browser user agent, once with an AI crawler&rsquo;s, to expose WAF-level bot blocking</li>
+        <li>the page itself, fetched twice: once as a normal browser, once as an AI crawler, to catch firewall rules that block bots</li>
         <li>robots.txt, checked against the full roster of AI retrieval and training crawlers</li>
         <li>the sitemap, an about page, the favicon and llms.txt</li>
       </ul>
@@ -139,8 +139,7 @@ const schema = {
         controlled and replicated results over one-off studies.
         <a class="body-link" href="https://arxiv.org/abs/2311.09735">Aggarwal et&nbsp;al., &ldquo;GEO: Generative Engine Optimization&rdquo;, KDD&nbsp;2024</a>
         measured that citing sources lifted generative visibility by 24.9%, adding statistics
-        by 25.9%, and quotations by 27.8%, with the source already placed in the model&rsquo;s
-        context.
+        by 25.9%, and quotations by 27.8%, with the page already retrieved.
       </p>
       <p>The 2025&ndash;2026 replications narrowed that claim:</p>
       <ul class="fetches">
@@ -153,12 +152,11 @@ const schema = {
         density carries a medium one (2).
       </p>
       <p>
-        The crawler roster tracks the engines&rsquo;
-        own documentation
+        The crawler roster tracks the engines&rsquo; own documentation
         (<a class="body-link" href="https://developers.openai.com/api/docs/bots">OpenAI</a>,
         <a class="body-link" href="https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler">Anthropic</a>,
-        <a class="body-link" href="https://docs.perplexity.ai/guides/bots">Perplexity</a>),
-        and how often sites actually block these crawlers is measured, not assumed:
+        <a class="body-link" href="https://docs.perplexity.ai/guides/bots">Perplexity</a>).
+        Blocking rates come from measurement:
         <a class="body-link" href="https://reutersinstitute.politics.ox.ac.uk/how-many-news-websites-block-ai-crawlers">Fletcher, Reuters Institute, 2024</a>
         found &ldquo;48% of the most widely used news websites &hellip; were blocking
         OpenAI&rsquo;s crawlers&rdquo; by the end of 2023, while 24% blocked Google&rsquo;s AI
