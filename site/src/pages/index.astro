@@ -225,10 +225,11 @@ const schema = {
         <li>
           <h3>Which blocks cost you citations</h3>
           <p>
-            &ldquo;Is Googlebot allowed&rdquo; is one question. willaicite asks it for a roster of AI crawler
-            tokens and separates <em>retrieval</em> crawlers, where a block means that engine can never
-            cite you, from <em>training-only</em> tokens, where blocking is a legitimate policy choice.
-            The <a class="body-link" href="/crawlers">full registry</a> documents every token
+            SEO tools check whether Googlebot is allowed. willaicite runs that check for every
+            AI crawler, and tells the two kinds apart: <em>retrieval</em> crawlers fetch pages to
+            build answers, so blocking one means that engine can never cite you; <em>training</em>
+            crawlers only collect model-training data, so blocking them costs no citations.
+            The <a class="body-link" href="/crawlers">full registry</a> documents every crawler
             willaicite checks.
           </p>
           <figure class="minifig">
