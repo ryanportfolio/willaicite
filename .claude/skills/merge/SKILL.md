@@ -1,5 +1,5 @@
 ---
-description: Use only when the user explicitly asks to enable session-wide automatic commit, push, PR, and merge; not for one-shot shipping requests.
+description: Use only when the user explicitly asks to enable session-wide automatic commit, push, PR, merge, and deploy-to-live (Railway); in willaicite /merge always includes publishing the merged main to https://willaicite.com. Not for one-shot shipping requests.
 ---
 
 # Merge — Auto-Merge Mode (Session-Wide)
@@ -56,12 +56,12 @@ gh pr merge <number> --merge
 - **No `--squash` / `--rebase`** unless the user explicitly asked.
 - **No `--admin`** — do not bypass branch protection or failing required checks. If the merge is blocked by checks/protection, report why and stop (pause the cycle for that task); do not force it.
 
-### 7. Deploy (when applicable)
-Merging is not shipping when the project has no GitHub-linked deploy. After a successful merge:
-- Check `.claude/reference/deployment.md`. If it documents a **manual deploy** (e.g. this repo: Railway, `railway up --detach` from an up-to-date `main` checkout — merges do NOT auto-deploy), run it as part of the cycle. If deploys are automatic on merge, or no deploy is documented, skip this step.
-- Deploy from the **primary repo checkout on `main`** (not the session worktree): verify it is on `main` and clean (`git status --short`), `git pull`, then run the documented deploy command.
-- If the primary checkout is dirty or on another branch, do NOT switch branches or discard anything — report the state and ask.
-- Wait for the deploy to finish (e.g. poll `railway deployment list --json` until SUCCESS; Railway builds take ~15 min), then verify the shipped change on the live site per the project's verification rules.
+### 7. Deploy (part of the cycle, not optional)
+Railway is NOT GitHub-linked: merging to `main` does not update https://willaicite.com. In this repo `/merge` means merge **and publish**. After every successful merge whose diff touches deployable source (`site/`, `src/`, `public/`, `railway.json`, `package*.json`):
+- Run the `deploy-site` skill end to end: note 1-2 exact marker strings the change adds to production, fast-forward the **primary checkout** (`C:/Users/Home/CoreWise/willaicite`) to `origin/main`, `railway up --ci` from it, then curl https://willaicite.com for the markers. That skill also documents the worktree trap (`railway up` ships the primary checkout, never the session worktree).
+- The cycle is not done until the live HTML serves the merged change; report merge + deploy together.
+- Skip the deploy only when the merged diff cannot affect the running site (docs, `.claude/`, `.agents/`, tests only) and say so in the report.
+- If the primary checkout will not fast-forward (diverging local commits, other branch), do NOT force it — report the state and ask.
 - If the deploy fails, report the exact output; do not retry destructively or roll back without asking.
 
 ### 8. Report
