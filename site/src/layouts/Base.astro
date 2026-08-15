@@ -375,10 +375,12 @@ export const UPDATED_HUMAN = 'August 7, 2026';
       thumb.classList.toggle('up', tpx + hpx + readout.offsetHeight + 18 > g);
     };
 
-    // Mirror loop. Scroll events proved lossy for programmatic scrolls in
-    // some engines, so the gauge polls its three inputs once per frame and
-    // early-outs when nothing moved; a document height change re-runs the
-    // full layout (late images, font swaps).
+    // Two delivery paths, either alone has failed somewhere: scroll events
+    // are lossy for programmatic scrolls in some engines, and rAF is
+    // throttled in occluded or headless contexts. The scroll listener gives
+    // immediacy; the mirror loop polls the same three inputs once per frame,
+    // early-outs when nothing moved, and re-runs layout when the document
+    // height changes (late images, font swaps).
     let lastSt = -1;
     let lastH = -1;
     let lastVh = -1;
@@ -460,6 +462,12 @@ export const UPDATED_HUMAN = 'August 7, 2026';
       window.scrollTo({ top });
     });
 
+    window.addEventListener('scroll', () => {
+      if (!enabled) return;
+      lastSt = docEl.scrollTop;
+      lastVh = docEl.clientHeight;
+      paint();
+    }, { passive: true });
     window.addEventListener('resize', evaluate);
     window.addEventListener('load', evaluate);
     mqWide.addEventListener('change', evaluate);

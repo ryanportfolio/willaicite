@@ -62,10 +62,10 @@ describe('retrieval gauge contract', () => {
     expect(railCss).toContain('.rail-thumb.up .rail-readout { top: auto; bottom: calc(100% + 14px); }');
   });
 
-  it('scroll metrics are self-calibrated and mirrored via a per-frame loop, not lossy scroll events', () => {
+  it('scroll metrics are self-calibrated and delivered twice: scroll listener plus per-frame mirror loop', () => {
     expect(base).toContain('docEl.scrollHeight / Math.max(1, docEl.offsetHeight)');
     expect(base).toContain('requestAnimationFrame(mirror)');
-    expect(base).not.toContain("addEventListener('scroll'");
+    expect(base).toContain("window.addEventListener('scroll'");
   });
 
   it('tick and bracket positions snap to the device pixel grid under zoom', () => {
