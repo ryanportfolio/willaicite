@@ -345,7 +345,14 @@ export const UPDATED_HUMAN = 'August 7, 2026';
         const vh = docEl.clientHeight;
         if (sheet && H - vh > vh * 0.5) {
           docEl.classList.add('railed');
-          const margin = (docEl.clientWidth - sheet.offsetWidth) / 2;
+          // Measure the free margin beside the sheet in ONE coordinate space.
+          // Under the html zoom, root clientWidth/innerWidth stay in visual
+          // pixels while offsetWidth is in zoomed layout pixels; mixing them
+          // overstates the margin and stands the rail up over the content.
+          // innerWidth and getBoundingClientRect are both visual, so divide
+          // by the computed zoom to compare against layout-space thresholds.
+          const zoom = parseFloat(getComputedStyle(docEl).zoom) || 1;
+          const margin = (window.innerWidth - sheet.getBoundingClientRect().width) / 2 / zoom;
           on = margin >= (enabled ? 34 : 40);
         }
       }
