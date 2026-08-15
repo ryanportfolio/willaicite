@@ -219,21 +219,22 @@ export const UPDATED_HUMAN = 'August 7, 2026';
   .rail-ticks { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
   .tick { position: absolute; right: 8px; width: 12px; height: 14px; cursor: pointer; pointer-events: auto; }
   .tick::before {
-    content: ''; position: absolute; right: 0; top: 6px; width: 12px; height: 2px; background: var(--ink-soft);
+    content: ''; position: absolute; right: -1px; top: 6px; width: 12px; height: 2px; background: var(--ink-soft);
     box-shadow: 0 0 0 2px var(--paper);
     transition: background 0.15s var(--ease), width 0.15s var(--ease);
   }
   .tick:hover::before { width: 16px; }
   .tick.active::before { background: var(--accent); width: 16px; }
   .tick i {
-    position: absolute; top: -1px; right: 16px; writing-mode: vertical-rl;
+    position: absolute; top: -1px; right: 34px; writing-mode: vertical-rl;
     font-style: normal; white-space: nowrap; color: var(--ink-soft);
     background: var(--paper); padding: 3px 1px;
     opacity: 0; transition: opacity 0.15s var(--ease); pointer-events: none;
-    transform: translateZ(0); /* composited layer forces grayscale AA on rotated glyphs */
+    /* fractional opacity + own layer force grayscale AA on rotated glyphs */
+    transform: translateZ(0);
   }
   .tick.up i { top: auto; bottom: -1px; }
-  .tick:hover i { opacity: 1; }
+  .tick:hover i { opacity: 0.999; }
   .rail-thumb {
     position: absolute; right: 8px; width: 12px; min-height: 26px; cursor: grab; z-index: 1;
     border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
@@ -249,15 +250,16 @@ export const UPDATED_HUMAN = 'August 7, 2026';
   .scrollrail.dragging .rail-thumb { cursor: grabbing; }
   /* The read head: the fixed reading line inside the bracket that decides
      the active section. Long and faint where ticks are short and dark. */
-  .rail-head { position: absolute; right: 2px; width: 20px; height: 1px; background: var(--rule); pointer-events: none; z-index: 1; }
+  .rail-head { position: absolute; right: 0; width: 22px; height: 1px; background: var(--rule); pointer-events: none; z-index: 1; }
   /* The readout captions the bracket it measures: hangs just below it,
-     flips above when the bracket nears the bottom cap. */
+     flips above when the bracket nears the bottom cap. Fractional opacity
+     plus its own layer force grayscale AA on the rotated glyphs. */
   .rail-readout {
-    position: absolute; top: calc(100% + 10px); right: 18px; writing-mode: vertical-rl;
+    position: absolute; top: calc(100% + 14px); right: 18px; writing-mode: vertical-rl;
     white-space: nowrap; pointer-events: none; background: var(--paper); padding: 3px 1px;
-    transform: translateZ(0);
+    opacity: 0.999; transform: translateZ(0);
   }
-  .rail-thumb.up .rail-readout { top: auto; bottom: calc(100% + 10px); }
+  .rail-thumb.up .rail-readout { top: auto; bottom: calc(100% + 14px); }
   @media (max-width: 1063px) { .scrollrail { display: none; } }
   @media (prefers-reduced-motion: reduce) {
     .tick::before, .tick i, .rail-readout, .rail-thumb { transition: none; }
@@ -281,10 +283,9 @@ export const UPDATED_HUMAN = 'August 7, 2026';
     const mqWide = window.matchMedia('(min-width: 1064px)');
     const mqFine = window.matchMedia('(pointer: fine)');
 
-    type Tick = { el: HTMLElement; lab: HTMLElement; anchor: HTMLElement; label: string; y: number };
+    type Tick = { el: HTMLElement; lab: HTMLElement; anchor: HTMLElement; label: string; y: number; yA: number };
     let ticks: Tick[] = [];
     let enabled = false;
-    let raf = 0;
     let zoomF = 1;
 
     const offsetY = (el: HTMLElement): number => {
@@ -310,7 +311,7 @@ export const UPDATED_HUMAN = 'August 7, 2026';
         el.appendChild(i);
         el.addEventListener('click', (e) => {
           e.stopPropagation();
-          const top = Math.max(0, offsetY(anchor) - docEl.clientHeight * 0.18);
+          const top = Math.max(0, offsetY(anchor) * scrollSpace() - docEl.clientHeight * 0.18);
           window.scrollTo({ top });
         });
         ticksLayer.appendChild(el);
@@ -318,21 +319,31 @@ export const UPDATED_HUMAN = 'August 7, 2026';
       }
     };
 
+    // Engines disagree on which coordinate space the root's scroll metrics
+    // use under the html zoom (visual in some Chromium builds, layout in
+    // others), while offsetTop chains are always layout. Calibrate the
+    // conversion from the document itself: scrollHeight and offsetHeight
+    // describe the same content, so their ratio IS the space factor.
+    const scrollSpace = (): number => docEl.scrollHeight / Math.max(1, docEl.offsetHeight);
+
     const layout = () => {
       const H = docEl.scrollHeight;
       const vh = docEl.clientHeight;
       const max = H - vh;
+      const hL = docEl.offsetHeight;
       const g = gauge.offsetHeight;
-      if (H <= 0 || g <= 0) return;
+      if (H <= 0 || hL <= 0 || g <= 0) return;
+      const kk = scrollSpace();
       for (const t of ticks) {
         t.y = offsetY(t.anchor);
-        const frac = t.y / H;
+        t.yA = t.y * kk;
+        const frac = t.y / hL;
         // Snap the 2px bar itself (it sits 6px into the 14px hit box).
         t.el.style.top = `${snap(frac * g - 1) - 6}px`;
         t.el.classList.toggle('up', frac > 0.7);
         // The tick's graduation value: the scroll progress at which this
         // section's rule reaches the reading line. Same scale as the readout.
-        const p = max > 0 ? Math.min(100, Math.max(0, Math.round(((t.y - vh * 0.3) / max) * 100))) : 0;
+        const p = max > 0 ? Math.min(100, Math.max(0, Math.round(((t.yA - vh * 0.3) / max) * 100))) : 0;
         t.lab.textContent = `${t.label} · ${pad(p)}%`;
       }
     };
@@ -355,18 +366,31 @@ export const UPDATED_HUMAN = 'August 7, 2026';
       let label = 'top';
       let active: Tick | null = null;
       for (const t of ticks) {
-        if (t.y <= line) { label = t.label; active = t; }
+        if (t.yA <= line) { label = t.label; active = t; }
         t.el.classList.remove('active');
       }
       if (active) active.el.classList.add('active');
       readout.textContent = pct >= 100 ? 'eof · 100% · retrieved in full' : `${label} · ${pad(pct)}%`;
       // Caption stays attached to the bracket: below it, or above near the end.
-      thumb.classList.toggle('up', tpx + hpx + readout.offsetHeight + 14 > g);
+      thumb.classList.toggle('up', tpx + hpx + readout.offsetHeight + 18 > g);
     };
 
-    const schedule = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => { raf = 0; paint(); });
+    // Mirror loop. Scroll events proved lossy for programmatic scrolls in
+    // some engines, so the gauge polls its three inputs once per frame and
+    // early-outs when nothing moved; a document height change re-runs the
+    // full layout (late images, font swaps).
+    let lastSt = -1;
+    let lastH = -1;
+    let lastVh = -1;
+    const mirror = () => {
+      if (enabled) {
+        const st = docEl.scrollTop;
+        const H = docEl.scrollHeight;
+        const vh = docEl.clientHeight;
+        if (H !== lastH) { lastH = H; layout(); }
+        if (st !== lastSt || vh !== lastVh) { lastSt = st; lastVh = vh; paint(); }
+      }
+      requestAnimationFrame(mirror);
     };
 
     // Stand up only when the viewport leaves real margin beside the sheet
@@ -399,7 +423,7 @@ export const UPDATED_HUMAN = 'August 7, 2026';
       docEl.classList.toggle('railed', on);
       rail.hidden = !on;
       enabled = on;
-      if (on) { layout(); paint(); }
+      if (on) { lastH = -1; lastSt = -1; layout(); paint(); }
     };
 
     let dragId = -1;
@@ -436,15 +460,14 @@ export const UPDATED_HUMAN = 'August 7, 2026';
       window.scrollTo({ top });
     });
 
-    window.addEventListener('scroll', schedule, { passive: true });
     window.addEventListener('resize', evaluate);
     window.addEventListener('load', evaluate);
-    window.addEventListener('pageshow', () => { if (enabled) paint(); });
     mqWide.addEventListener('change', evaluate);
     mqFine.addEventListener('change', evaluate);
     if (document.fonts?.ready) document.fonts.ready.then(evaluate);
     build();
     evaluate();
+    mirror();
   }
 </script>
 </body>

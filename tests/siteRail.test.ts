@@ -58,8 +58,14 @@ describe('retrieval gauge contract', () => {
   it('marks stay distinct and attributable: halo punch-through, ticks above bracket, readout rides the bracket', () => {
     expect(railCss).toContain('box-shadow: 0 0 0 2px var(--paper)');
     expect(railCss).toContain('.rail-ticks { position: absolute; inset: 0; pointer-events: none; z-index: 2; }');
-    expect(railCss).toContain('top: calc(100% + 10px)');
-    expect(railCss).toContain('.rail-thumb.up .rail-readout { top: auto; bottom: calc(100% + 10px); }');
+    expect(railCss).toContain('top: calc(100% + 14px)');
+    expect(railCss).toContain('.rail-thumb.up .rail-readout { top: auto; bottom: calc(100% + 14px); }');
+  });
+
+  it('scroll metrics are self-calibrated and mirrored via a per-frame loop, not lossy scroll events', () => {
+    expect(base).toContain('docEl.scrollHeight / Math.max(1, docEl.offsetHeight)');
+    expect(base).toContain('requestAnimationFrame(mirror)');
+    expect(base).not.toContain("addEventListener('scroll'");
   });
 
   it('tick and bracket positions snap to the device pixel grid under zoom', () => {
