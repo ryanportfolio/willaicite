@@ -439,7 +439,26 @@ export const UPDATED_HUMAN = 'August 7, 2026';
       docEl.classList.toggle('railed', on);
       rail.hidden = !on;
       enabled = on;
-      if (on) { lastH = -1; lastSt = -1; layout(); paint(); }
+      if (on) {
+        // Engines disagree on how a fixed top:0/bottom:0 element is sized
+        // inside the html zoom: some render it exactly one viewport tall,
+        // real Chrome renders it zoom times taller, pushing the gauge below
+        // the fold and clipping captions at the viewport edge. Measure the
+        // rendered height against the viewport and correct; a no-op where
+        // the engine already agrees.
+        rail.style.height = '';
+        rail.style.bottom = '';
+        const rb = rail.getBoundingClientRect();
+        const lay = rail.offsetHeight;
+        if (lay > 0 && rb.height > 0 && Math.abs(rb.height - window.innerHeight) > 1) {
+          rail.style.bottom = 'auto';
+          rail.style.height = `${(window.innerHeight * lay) / rb.height}px`;
+        }
+        lastH = -1;
+        lastSt = -1;
+        layout();
+        paint();
+      }
     };
 
     let dragId = -1;

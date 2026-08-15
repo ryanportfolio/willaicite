@@ -73,6 +73,10 @@ describe('retrieval gauge contract', () => {
     expect(base).toContain('Math.round(v * zoomF) / zoomF');
   });
 
+  it('rail height self-corrects where fixed elements are mis-sized under zoom', () => {
+    expect(base).toContain('(window.innerHeight * lay) / rb.height');
+  });
+
   it('margin guard measures in one coordinate space (visual px divided by zoom)', () => {
     expect(base).toContain('(window.innerWidth - sheet.getBoundingClientRect().width) / 2 / zoom');
   });
