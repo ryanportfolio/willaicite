@@ -53,6 +53,10 @@ describe('retrieval gauge contract', () => {
     expect(base).toContain("label = 'eof'");
   });
 
+  it('margin guard measures in one coordinate space (visual px divided by zoom)', () => {
+    expect(base).toContain('(window.innerWidth - sheet.getBoundingClientRect().width) / 2 / zoom');
+  });
+
   it('native scrolling is mirrored, never intercepted', () => {
     expect(base).not.toContain("addEventListener('wheel'");
     expect(base).not.toContain("addEventListener('keydown'");
