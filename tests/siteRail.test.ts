@@ -48,9 +48,22 @@ describe('retrieval gauge contract', () => {
     }
   });
 
-  it('only the literals "top" and "eof" are invented; everything else is measured', () => {
+  it('only the literals "top", "eof" and the eof verdict are invented; everything else is measured', () => {
     expect(base).toContain("let label = 'top'");
-    expect(base).toContain("label = 'eof'");
+    expect(base).toContain("'eof · 100% · retrieved in full'");
+    // Percent readouts are zero-padded to echo the page's numbered rules.
+    expect(base).toContain("padStart(2, '0')");
+  });
+
+  it('marks stay distinct and attributable: halo punch-through, ticks above bracket, readout rides the bracket', () => {
+    expect(railCss).toContain('box-shadow: 0 0 0 2px var(--paper)');
+    expect(railCss).toContain('.rail-ticks { position: absolute; inset: 0; pointer-events: none; z-index: 2; }');
+    expect(railCss).toContain('top: calc(100% + 10px)');
+    expect(railCss).toContain('.rail-thumb.up .rail-readout { top: auto; bottom: calc(100% + 10px); }');
+  });
+
+  it('tick and bracket positions snap to the device pixel grid under zoom', () => {
+    expect(base).toContain('Math.round(v * zoomF) / zoomF');
   });
 
   it('margin guard measures in one coordinate space (visual px divided by zoom)', () => {
