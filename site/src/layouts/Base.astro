@@ -236,7 +236,7 @@ export const UPDATED_HUMAN = 'August 7, 2026';
   .tick.up i { top: auto; bottom: -1px; }
   .tick:hover i { opacity: 0.999; }
   .rail-thumb {
-    position: absolute; right: 8px; width: 12px; min-height: 26px; cursor: grab; z-index: 1;
+    position: absolute; right: 7px; width: 12px; min-height: 26px; cursor: grab; z-index: 1;
     border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
     transition: background 0.15s var(--ease);
   }
@@ -339,12 +339,15 @@ export const UPDATED_HUMAN = 'August 7, 2026';
         t.yA = t.y * kk;
         const frac = t.y / hL;
         // Snap the 2px bar itself (it sits 6px into the 14px hit box).
-        t.el.style.top = `${snap(frac * g - 1) - 6}px`;
-        t.el.classList.toggle('up', frac > 0.7);
+        const top = snap(frac * g - 1) - 6;
+        t.el.style.top = `${top}px`;
         // The tick's graduation value: the scroll progress at which this
         // section's rule reaches the reading line. Same scale as the readout.
         const p = max > 0 ? Math.min(100, Math.max(0, Math.round(((t.yA - vh * 0.3) / max) * 100))) : 0;
         t.lab.textContent = `${t.label} · ${pad(p)}%`;
+        // Flip the label above its tick when its measured length would run
+        // past the rail end (vertical-rl: offsetHeight IS the text length).
+        t.el.classList.toggle('up', top + t.lab.offsetHeight + 10 > g);
       }
     };
 
