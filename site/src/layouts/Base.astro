@@ -61,9 +61,9 @@ export const UPDATED_HUMAN = 'August 7, 2026';
 <div class="scrollrail" id="scrollrail" aria-hidden="true" hidden>
   <div class="rail-gauge">
     <div class="rail-line"></div>
+    <div class="rail-thumb"><span class="rail-readout"></span></div>
+    <div class="rail-head"></div>
     <div class="rail-ticks"></div>
-    <div class="rail-thumb"></div>
-    <div class="rail-readout"></div>
   </div>
 </div>
 
@@ -189,11 +189,15 @@ export const UPDATED_HUMAN = 'August 7, 2026';
   /* ---------- retrieval gauge ---------- */
   /* Contract: every mark is a measured fact of the document (ticks = real
      h2.rulelabel rules, bracket = viewport/document ratio with a 26px grab
-     clamp, caps = start and eof); accent marks only the active section tick;
-     rail text is mono, lowercase, and limited to the literals "top" and
-     "eof" plus the page's own headings; colors come only from the existing
+     clamp, caps = start and eof, head = the 30%-of-viewport reading line
+     that decides the active section); accent marks only the active section
+     tick; rail text is mono, lowercase, and limited to the literals "top",
+     "eof" and the eof verdict "retrieved in full" plus the page's own
+     headings and measured percents; colors come only from the existing
      custom properties. The band carries the page's paper ground so the
-     instrument stays legible over the full-bleed ink band. */
+     instrument stays legible over the full-bleed ink band, and spans the
+     sheet's whole outer margin so the gauge sits at the margin's inner
+     edge instead of floating at the viewport edge on wide screens. */
   html.railed { scrollbar-width: none; }
   html.railed::-webkit-scrollbar { width: 0; height: 0; }
   .scrollrail {
@@ -203,30 +207,37 @@ export const UPDATED_HUMAN = 'August 7, 2026';
     font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: lowercase;
     color: var(--ink-faint); user-select: none; -webkit-user-select: none;
   }
-  .rail-gauge { position: absolute; top: 12px; bottom: 12px; left: 0; right: 0; }
+  .rail-gauge { position: absolute; top: 12px; bottom: 12px; left: 0; width: 54px; }
   .rail-line { position: absolute; top: 0; bottom: 0; right: 12px; width: 2px; background: var(--rule); }
   .rail-line::before, .rail-line::after {
-    content: ''; position: absolute; right: 0; width: 8px; height: 2px; background: var(--ink-soft);
+    content: ''; position: absolute; right: -5px; width: 12px; height: 2px; background: var(--ink-soft);
   }
   .rail-line::before { top: 0; }
   .rail-line::after { bottom: 0; }
-  .rail-ticks { position: absolute; inset: 0; pointer-events: none; }
-  .tick { position: absolute; right: 8px; width: 12px; height: 14px; margin-top: -7px; cursor: pointer; pointer-events: auto; }
+  /* Ticks paint above the bracket; the paper halo punches each tick through
+     the bracket arms so two measurements never fuse into one mark. */
+  .rail-ticks { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+  .tick { position: absolute; right: 8px; width: 12px; height: 14px; cursor: pointer; pointer-events: auto; }
   .tick::before {
     content: ''; position: absolute; right: 0; top: 6px; width: 12px; height: 2px; background: var(--ink-soft);
+    box-shadow: 0 0 0 2px var(--paper);
     transition: background 0.15s var(--ease), width 0.15s var(--ease);
   }
+  .tick:hover::before { width: 16px; }
   .tick.active::before { background: var(--accent); width: 16px; }
   .tick i {
     position: absolute; top: -1px; right: 16px; writing-mode: vertical-rl;
     font-style: normal; white-space: nowrap; color: var(--ink-soft);
+    background: var(--paper); padding: 3px 1px;
     opacity: 0; transition: opacity 0.15s var(--ease); pointer-events: none;
+    transform: translateZ(0); /* composited layer forces grayscale AA on rotated glyphs */
   }
   .tick.up i { top: auto; bottom: -1px; }
   .tick:hover i { opacity: 1; }
   .rail-thumb {
-    position: absolute; right: 8px; width: 12px; min-height: 26px; cursor: grab;
+    position: absolute; right: 8px; width: 12px; min-height: 26px; cursor: grab; z-index: 1;
     border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
+    transition: background 0.15s var(--ease);
   }
   .rail-thumb::before, .rail-thumb::after {
     content: ''; position: absolute; top: 0; bottom: 0; width: 2px;
@@ -234,15 +245,22 @@ export const UPDATED_HUMAN = 'August 7, 2026';
   }
   .rail-thumb::before { left: 0; }
   .rail-thumb::after { right: 0; }
+  .scrollrail:hover .rail-thumb, .scrollrail.dragging .rail-thumb { background: var(--paper-raised); }
   .scrollrail.dragging .rail-thumb { cursor: grabbing; }
+  /* The read head: the fixed reading line inside the bracket that decides
+     the active section. Long and faint where ticks are short and dark. */
+  .rail-head { position: absolute; right: 2px; width: 20px; height: 1px; background: var(--rule); pointer-events: none; z-index: 1; }
+  /* The readout captions the bracket it measures: hangs just below it,
+     flips above when the bracket nears the bottom cap. */
   .rail-readout {
-    position: absolute; right: 26px; bottom: 0; writing-mode: vertical-rl;
-    white-space: nowrap; transition: opacity 0.15s var(--ease);
+    position: absolute; top: calc(100% + 10px); right: 18px; writing-mode: vertical-rl;
+    white-space: nowrap; pointer-events: none; background: var(--paper); padding: 3px 1px;
+    transform: translateZ(0);
   }
-  .rail-ticks:hover ~ .rail-readout { opacity: 0; }
+  .rail-thumb.up .rail-readout { top: auto; bottom: calc(100% + 10px); }
   @media (max-width: 1063px) { .scrollrail { display: none; } }
   @media (prefers-reduced-motion: reduce) {
-    .tick::before, .tick i, .rail-readout { transition: none; }
+    .tick::before, .tick i, .rail-readout, .rail-thumb { transition: none; }
   }
   @media print { .scrollrail { display: none; } }
 </style>
@@ -258,20 +276,26 @@ export const UPDATED_HUMAN = 'August 7, 2026';
     const gauge = rail.querySelector<HTMLElement>('.rail-gauge')!;
     const ticksLayer = rail.querySelector<HTMLElement>('.rail-ticks')!;
     const thumb = rail.querySelector<HTMLElement>('.rail-thumb')!;
+    const head = rail.querySelector<HTMLElement>('.rail-head')!;
     const readout = rail.querySelector<HTMLElement>('.rail-readout')!;
     const mqWide = window.matchMedia('(min-width: 1064px)');
     const mqFine = window.matchMedia('(pointer: fine)');
 
-    type Tick = { el: HTMLElement; anchor: HTMLElement; label: string; y: number };
+    type Tick = { el: HTMLElement; lab: HTMLElement; anchor: HTMLElement; label: string; y: number };
     let ticks: Tick[] = [];
     let enabled = false;
     let raf = 0;
+    let zoomF = 1;
 
     const offsetY = (el: HTMLElement): number => {
       let y = 0;
       for (let n: HTMLElement | null = el; n; n = n.offsetParent as HTMLElement | null) y += n.offsetTop;
       return y;
     };
+    // Snap a layout-space position to the device pixel grid so nominally
+    // identical marks render at identical stroke weight under the html zoom.
+    const snap = (v: number): number => Math.round(v * zoomF) / zoomF;
+    const pad = (n: number): string => String(n).padStart(2, '0');
 
     const build = () => {
       ticksLayer.textContent = '';
@@ -290,18 +314,26 @@ export const UPDATED_HUMAN = 'August 7, 2026';
           window.scrollTo({ top });
         });
         ticksLayer.appendChild(el);
-        ticks.push({ el, anchor, label: label.toLowerCase(), y: 0 });
+        ticks.push({ el, lab: i, anchor, label: label.toLowerCase(), y: 0 });
       }
     };
 
     const layout = () => {
       const H = docEl.scrollHeight;
-      if (H <= 0) return;
+      const vh = docEl.clientHeight;
+      const max = H - vh;
+      const g = gauge.offsetHeight;
+      if (H <= 0 || g <= 0) return;
       for (const t of ticks) {
         t.y = offsetY(t.anchor);
         const frac = t.y / H;
-        t.el.style.top = `${frac * 100}%`;
+        // Snap the 2px bar itself (it sits 6px into the 14px hit box).
+        t.el.style.top = `${snap(frac * g - 1) - 6}px`;
         t.el.classList.toggle('up', frac > 0.7);
+        // The tick's graduation value: the scroll progress at which this
+        // section's rule reaches the reading line. Same scale as the readout.
+        const p = max > 0 ? Math.min(100, Math.max(0, Math.round(((t.y - vh * 0.3) / max) * 100))) : 0;
+        t.lab.textContent = `${t.label} · ${pad(p)}%`;
       }
     };
 
@@ -312,10 +344,12 @@ export const UPDATED_HUMAN = 'August 7, 2026';
       const st = docEl.scrollTop;
       const g = gauge.offsetHeight;
       if (H <= 0 || g <= 0) return;
-      const hpx = Math.max((vh / H) * g, 26);
-      const tpx = Math.min((st / H) * g, g - hpx);
-      thumb.style.top = `${Math.max(0, tpx)}px`;
+      const hpx = snap(Math.max((vh / H) * g, 26));
+      const tpx = snap(Math.max(0, Math.min((st / H) * g, g - hpx)));
+      thumb.style.top = `${tpx}px`;
       thumb.style.height = `${hpx}px`;
+      const headY = snap(Math.min(tpx + hpx - 2, tpx + (vh / H) * g * 0.3));
+      head.style.top = `${headY}px`;
       const pct = max > 0 ? Math.min(100, Math.max(0, Math.round((st / max) * 100))) : 0;
       const line = st + vh * 0.3;
       let label = 'top';
@@ -325,8 +359,9 @@ export const UPDATED_HUMAN = 'August 7, 2026';
         t.el.classList.remove('active');
       }
       if (active) active.el.classList.add('active');
-      if (pct >= 100) label = 'eof';
-      readout.textContent = `${label} · ${pct}%`;
+      readout.textContent = pct >= 100 ? 'eof · 100% · retrieved in full' : `${label} · ${pad(pct)}%`;
+      // Caption stays attached to the bracket: below it, or above near the end.
+      thumb.classList.toggle('up', tpx + hpx + readout.offsetHeight + 14 > g);
     };
 
     const schedule = () => {
@@ -352,8 +387,13 @@ export const UPDATED_HUMAN = 'August 7, 2026';
           // innerWidth and getBoundingClientRect are both visual, so divide
           // by the computed zoom to compare against layout-space thresholds.
           const zoom = parseFloat(getComputedStyle(docEl).zoom) || 1;
+          zoomF = zoom;
           const margin = (window.innerWidth - sheet.getBoundingClientRect().width) / 2 / zoom;
           on = margin >= (enabled ? 34 : 40);
+          // The strip spans the sheet's whole outer margin; the gauge sits
+          // left-anchored at its inner edge, so on wide screens the
+          // instrument stays beside the sheet, not at the viewport edge.
+          if (on) rail.style.width = `${Math.max(54, Math.floor(margin) - 16)}px`;
         }
       }
       docEl.classList.toggle('railed', on);
