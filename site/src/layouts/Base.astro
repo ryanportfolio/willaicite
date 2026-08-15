@@ -52,6 +52,21 @@ export const UPDATED_HUMAN = 'August 7, 2026';
 
 <slot />
 
+<!-- The retrieval gauge: the scrollbar rebuilt as the instrument this site is
+     about. A crawler reads the raw document top to eof; the rail maps that
+     depth. Ticks are the page's real section rules, the bracket is the
+     viewport's measured extent, the readout reports the section under the
+     reading line. Purely a mirror of native scrolling; JS stands it up only
+     when a wide fine-pointer viewport leaves margin for it. -->
+<div class="scrollrail" id="scrollrail" aria-hidden="true" hidden>
+  <div class="rail-gauge">
+    <div class="rail-line"></div>
+    <div class="rail-ticks"></div>
+    <div class="rail-thumb"></div>
+    <div class="rail-readout"></div>
+  </div>
+</div>
+
 <div class="sheet">
   <footer class="colophon">
     <span>willaicite &middot; generative engine optimization &middot; <a href="https://github.com/ryanportfolio/willaicite">made by Ryan</a></span>
@@ -170,6 +185,220 @@ export const UPDATED_HUMAN = 'August 7, 2026';
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
   }
+
+  /* ---------- retrieval gauge ---------- */
+  /* Contract: every mark is a measured fact of the document (ticks = real
+     h2.rulelabel rules, bracket = viewport/document ratio with a 26px grab
+     clamp, caps = start and eof); accent marks only the active section tick;
+     rail text is mono, lowercase, and limited to the literals "top" and
+     "eof" plus the page's own headings; colors come only from the existing
+     custom properties. The band carries the page's paper ground so the
+     instrument stays legible over the full-bleed ink band. */
+  html.railed { scrollbar-width: none; }
+  html.railed::-webkit-scrollbar { width: 0; height: 0; }
+  .scrollrail {
+    position: fixed; top: 0; bottom: 0; right: 0; width: 54px; z-index: 60;
+    background: var(--paper);
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(128,116,90,0.025) 3px, rgba(128,116,90,0.025) 4px);
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: lowercase;
+    color: var(--ink-faint); user-select: none; -webkit-user-select: none;
+  }
+  .rail-gauge { position: absolute; top: 12px; bottom: 12px; left: 0; right: 0; }
+  .rail-line { position: absolute; top: 0; bottom: 0; right: 12px; width: 2px; background: var(--rule); }
+  .rail-line::before, .rail-line::after {
+    content: ''; position: absolute; right: 0; width: 8px; height: 2px; background: var(--ink-soft);
+  }
+  .rail-line::before { top: 0; }
+  .rail-line::after { bottom: 0; }
+  .rail-ticks { position: absolute; inset: 0; pointer-events: none; }
+  .tick { position: absolute; right: 8px; width: 12px; height: 14px; margin-top: -7px; cursor: pointer; pointer-events: auto; }
+  .tick::before {
+    content: ''; position: absolute; right: 0; top: 6px; width: 12px; height: 2px; background: var(--ink-soft);
+    transition: background 0.15s var(--ease), width 0.15s var(--ease);
+  }
+  .tick.active::before { background: var(--accent); width: 16px; }
+  .tick i {
+    position: absolute; top: -1px; right: 16px; writing-mode: vertical-rl;
+    font-style: normal; white-space: nowrap; color: var(--ink-soft);
+    opacity: 0; transition: opacity 0.15s var(--ease); pointer-events: none;
+  }
+  .tick.up i { top: auto; bottom: -1px; }
+  .tick:hover i { opacity: 1; }
+  .rail-thumb {
+    position: absolute; right: 8px; width: 12px; min-height: 26px; cursor: grab;
+    border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
+  }
+  .rail-thumb::before, .rail-thumb::after {
+    content: ''; position: absolute; top: 0; bottom: 0; width: 2px;
+    background: linear-gradient(var(--ink) 5px, transparent 5px calc(100% - 5px), var(--ink) calc(100% - 5px));
+  }
+  .rail-thumb::before { left: 0; }
+  .rail-thumb::after { right: 0; }
+  .scrollrail.dragging .rail-thumb { cursor: grabbing; }
+  .rail-readout {
+    position: absolute; right: 26px; bottom: 0; writing-mode: vertical-rl;
+    white-space: nowrap; transition: opacity 0.15s var(--ease);
+  }
+  .rail-ticks:hover ~ .rail-readout { opacity: 0; }
+  @media (max-width: 1063px) { .scrollrail { display: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .tick::before, .tick i, .rail-readout { transition: none; }
+  }
+  @media print { .scrollrail { display: none; } }
 </style>
+
+<script>
+  // Retrieval gauge. Mirrors native scrolling; never intercepts wheel or
+  // keyboard input. All geometry is derived as ratios from the layout-space
+  // metrics (offsetTop / scrollHeight / clientHeight), which stay mutually
+  // consistent under the html zoom applied on large screens.
+  const rail = document.getElementById('scrollrail');
+  const docEl = document.documentElement;
+  if (rail) {
+    const gauge = rail.querySelector<HTMLElement>('.rail-gauge')!;
+    const ticksLayer = rail.querySelector<HTMLElement>('.rail-ticks')!;
+    const thumb = rail.querySelector<HTMLElement>('.rail-thumb')!;
+    const readout = rail.querySelector<HTMLElement>('.rail-readout')!;
+    const mqWide = window.matchMedia('(min-width: 1064px)');
+    const mqFine = window.matchMedia('(pointer: fine)');
+
+    type Tick = { el: HTMLElement; anchor: HTMLElement; label: string; y: number };
+    let ticks: Tick[] = [];
+    let enabled = false;
+    let raf = 0;
+
+    const offsetY = (el: HTMLElement): number => {
+      let y = 0;
+      for (let n: HTMLElement | null = el; n; n = n.offsetParent as HTMLElement | null) y += n.offsetTop;
+      return y;
+    };
+
+    const build = () => {
+      ticksLayer.textContent = '';
+      ticks = [];
+      for (const h of document.querySelectorAll<HTMLElement>('h2.rulelabel')) {
+        const anchor = (h.closest('.report-rule, .band-rule') as HTMLElement) ?? h;
+        const el = document.createElement('span');
+        el.className = 'tick';
+        const label = (h.textContent ?? '').trim();
+        const i = document.createElement('i');
+        i.textContent = label;
+        el.appendChild(i);
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const top = Math.max(0, offsetY(anchor) - docEl.clientHeight * 0.18);
+          window.scrollTo({ top });
+        });
+        ticksLayer.appendChild(el);
+        ticks.push({ el, anchor, label: label.toLowerCase(), y: 0 });
+      }
+    };
+
+    const layout = () => {
+      const H = docEl.scrollHeight;
+      if (H <= 0) return;
+      for (const t of ticks) {
+        t.y = offsetY(t.anchor);
+        const frac = t.y / H;
+        t.el.style.top = `${frac * 100}%`;
+        t.el.classList.toggle('up', frac > 0.7);
+      }
+    };
+
+    const paint = () => {
+      const H = docEl.scrollHeight;
+      const vh = docEl.clientHeight;
+      const max = H - vh;
+      const st = docEl.scrollTop;
+      const g = gauge.offsetHeight;
+      if (H <= 0 || g <= 0) return;
+      const hpx = Math.max((vh / H) * g, 26);
+      const tpx = Math.min((st / H) * g, g - hpx);
+      thumb.style.top = `${Math.max(0, tpx)}px`;
+      thumb.style.height = `${hpx}px`;
+      const pct = max > 0 ? Math.min(100, Math.max(0, Math.round((st / max) * 100))) : 0;
+      const line = st + vh * 0.3;
+      let label = 'top';
+      let active: Tick | null = null;
+      for (const t of ticks) {
+        if (t.y <= line) { label = t.label; active = t; }
+        t.el.classList.remove('active');
+      }
+      if (active) active.el.classList.add('active');
+      if (pct >= 100) label = 'eof';
+      readout.textContent = `${label} · ${pct}%`;
+    };
+
+    const schedule = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => { raf = 0; paint(); });
+    };
+
+    // Stand up only when the viewport leaves real margin beside the sheet
+    // (measured with the native scrollbar hidden, with hysteresis so the
+    // gauge does not flap at the threshold) and the page actually scrolls.
+    const evaluate = () => {
+      let on = false;
+      if (mqWide.matches && mqFine.matches) {
+        const sheet = document.querySelector<HTMLElement>('.sheet');
+        const H = docEl.scrollHeight;
+        const vh = docEl.clientHeight;
+        if (sheet && H - vh > vh * 0.5) {
+          docEl.classList.add('railed');
+          const margin = (docEl.clientWidth - sheet.offsetWidth) / 2;
+          on = margin >= (enabled ? 34 : 40);
+        }
+      }
+      docEl.classList.toggle('railed', on);
+      rail.hidden = !on;
+      enabled = on;
+      if (on) { layout(); paint(); }
+    };
+
+    let dragId = -1;
+    let grab = 0;
+    thumb.addEventListener('pointerdown', (e) => {
+      dragId = e.pointerId;
+      thumb.setPointerCapture(dragId);
+      grab = e.clientY - thumb.getBoundingClientRect().top;
+      rail.classList.add('dragging');
+      e.preventDefault();
+    });
+    thumb.addEventListener('pointermove', (e) => {
+      if (e.pointerId !== dragId) return;
+      const gr = gauge.getBoundingClientRect();
+      const tr = thumb.getBoundingClientRect();
+      const span = gr.height - tr.height;
+      if (span <= 0) return;
+      const frac = Math.min(1, Math.max(0, (e.clientY - gr.top - grab) / span));
+      window.scrollTo({ top: frac * (docEl.scrollHeight - docEl.clientHeight), behavior: 'instant' });
+    });
+    const endDrag = (e: PointerEvent) => {
+      if (e.pointerId !== dragId) return;
+      dragId = -1;
+      rail.classList.remove('dragging');
+    };
+    thumb.addEventListener('pointerup', endDrag);
+    thumb.addEventListener('pointercancel', endDrag);
+    rail.addEventListener('click', (e) => {
+      if (thumb.contains(e.target as Node)) return;
+      const gr = gauge.getBoundingClientRect();
+      if (gr.height <= 0) return;
+      const frac = Math.min(1, Math.max(0, (e.clientY - gr.top) / gr.height));
+      const top = Math.max(0, frac * docEl.scrollHeight - docEl.clientHeight / 2);
+      window.scrollTo({ top });
+    });
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', evaluate);
+    window.addEventListener('load', evaluate);
+    window.addEventListener('pageshow', () => { if (enabled) paint(); });
+    mqWide.addEventListener('change', evaluate);
+    mqFine.addEventListener('change', evaluate);
+    if (document.fonts?.ready) document.fonts.ready.then(evaluate);
+    build();
+    evaluate();
+  }
+</script>
 </body>
 </html>
