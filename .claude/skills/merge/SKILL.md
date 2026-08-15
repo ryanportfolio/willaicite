@@ -1,5 +1,5 @@
 ---
-description: Use only when the user explicitly asks to enable session-wide automatic commit, push, PR, merge, and deploy-to-live (Railway); in willaicite /merge always includes publishing the merged main to https://willaicite.com. Not for one-shot shipping requests.
+description: Use only when the user explicitly asks to enable session-wide automatic commit, push, PR, merge, and deploy-to-live; in willaicite /merge always includes publishing merged main to https://willaicite.com. Not for one-shot shipping requests.
 ---
 
 # Merge — Auto-Merge Mode (Session-Wide)
