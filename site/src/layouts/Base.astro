@@ -190,8 +190,10 @@ export const UPDATED_HUMAN = 'August 7, 2026';
   /* Contract: every mark is a measured fact of the document (ticks = real
      h2.rulelabel rules, bracket = viewport/document ratio with a 26px grab
      clamp, caps = start and eof, head = the 30%-of-viewport reading line
-     that decides the active section); accent marks only the active section
-     tick; rail text is mono, lowercase, and limited to the literals "top",
+     that decides the active section); tick ink encodes cumulative
+     retrieval (passed sections full ink, sections ahead soft, the current
+     one the accent); accent marks only the active section tick; rail text
+     is mono, lowercase, and limited to the literals "top",
      "eof" and the eof verdict "retrieved in full" plus the page's own
      headings and measured percents; colors come only from the existing
      custom properties. The band carries the page's paper ground so the
@@ -224,6 +226,7 @@ export const UPDATED_HUMAN = 'August 7, 2026';
     transition: background 0.15s var(--ease), width 0.15s var(--ease);
   }
   .tick:hover::before { width: 16px; }
+  .tick.read::before { background: var(--ink); }
   .tick.active::before { background: var(--accent); width: 16px; }
   .tick i {
     position: absolute; top: -1px; right: 34px; writing-mode: vertical-rl;
@@ -250,16 +253,16 @@ export const UPDATED_HUMAN = 'August 7, 2026';
   .scrollrail.dragging .rail-thumb { cursor: grabbing; }
   /* The read head: the fixed reading line inside the bracket that decides
      the active section. Long and faint where ticks are short and dark. */
-  .rail-head { position: absolute; right: 0; width: 22px; height: 1px; background: var(--rule); pointer-events: none; z-index: 1; }
-  /* The readout captions the bracket it measures: hangs just below it,
-     flips above when the bracket nears the bottom cap. Fractional opacity
-     plus its own layer force grayscale AA on the rotated glyphs. */
+  .rail-head { position: absolute; right: 0; width: 22px; height: 1px; background: var(--ink-faint); pointer-events: none; z-index: 1; }
+  /* The readout captions the bracket it measures: below it when its length
+     fits, else above, position set by JS so it never overruns the rail.
+     Fractional opacity plus its own layer force grayscale AA on the
+     rotated glyphs. */
   .rail-readout {
     position: absolute; top: calc(100% + 14px); right: 18px; writing-mode: vertical-rl;
     white-space: nowrap; pointer-events: none; background: var(--paper); padding: 3px 1px;
     opacity: 0.999; transform: translateZ(0);
   }
-  .rail-thumb.up .rail-readout { top: auto; bottom: calc(100% + 14px); }
   @media (max-width: 1063px) { .scrollrail { display: none; } }
   @media (prefers-reduced-motion: reduce) {
     .tick::before, .tick i, .rail-readout, .rail-thumb { transition: none; }
@@ -373,9 +376,17 @@ export const UPDATED_HUMAN = 'August 7, 2026';
         t.el.classList.remove('active');
       }
       if (active) active.el.classList.add('active');
+      // Cumulative retrieval, drawn on the rail: sections the reading line
+      // has passed take full ink, sections ahead stay soft, the current one
+      // takes the accent.
+      for (const t of ticks) t.el.classList.toggle('read', t.yA <= line);
       readout.textContent = pct >= 100 ? 'eof · 100% · retrieved in full' : `${label} · ${pad(pct)}%`;
-      // Caption stays attached to the bracket: below it, or above near the end.
-      thumb.classList.toggle('up', tpx + hpx + readout.offsetHeight + 18 > g);
+      // Caption stays attached to the bracket: below it when its measured
+      // length fits, else above, clamped so it never overruns the rail.
+      const capLen = readout.offsetHeight;
+      const below = tpx + hpx + 14;
+      const pos = below + capLen <= g ? below : Math.max(0, tpx - 14 - capLen);
+      readout.style.top = `${pos - tpx}px`;
     };
 
     // Two delivery paths, either alone has failed somewhere: scroll events

@@ -59,7 +59,8 @@ describe('retrieval gauge contract', () => {
     expect(railCss).toContain('box-shadow: 0 0 0 2px var(--paper)');
     expect(railCss).toContain('.rail-ticks { position: absolute; inset: 0; pointer-events: none; z-index: 2; }');
     expect(railCss).toContain('top: calc(100% + 14px)');
-    expect(railCss).toContain('.rail-thumb.up .rail-readout { top: auto; bottom: calc(100% + 14px); }');
+    // Caption placement is measured, never overrunning the rail.
+    expect(base).toContain('below + capLen <= g ? below : Math.max(0, tpx - 14 - capLen)');
   });
 
   it('scroll metrics are self-calibrated and delivered twice: scroll listener plus per-frame mirror loop', () => {
