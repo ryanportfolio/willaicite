@@ -66,6 +66,16 @@ The scoring model tracks the empirical GEO literature, weighted toward controlle
 
 Requires Node 20 or newer. There are zero runtime dependencies.
 
+Run it straight from GitHub. The first run builds the CLI, which takes a minute; later runs reuse npm's cache:
+
+```bash
+npx -y github:ryanportfolio/willaicite https://example.com --json
+```
+
+Do not run `npx geo-audit`: the `geo-audit` name on the npm registry belongs to an unrelated package.
+
+Or clone it:
+
 ```bash
 git clone https://github.com/ryanportfolio/willaicite.git
 cd willaicite
@@ -105,7 +115,7 @@ The CLI is single-user and trusts you. `geo-audit serve` is safe to expose publi
 | `WILLAICITE_TRUST_PROXY` | Set `1` behind a proxy you control, to read `X-Forwarded-For` | off |
 | `WILLAICITE_MAX_CONCURRENT` | Max simultaneous audits | 4 |
 
-`--local` disables the SSRF guard so you can audit `localhost` and private targets from the CLI. **Never pass `--local` on a public server.** See [SECURITY.md](SECURITY.md).
+The audit CLI (`geo-audit <url>`) never applies the guard, so it can audit `localhost` and private targets as is. `geo-audit serve --local` turns the guard off for the web UI so it can do the same. **Never pass `--local` on a public server.** See [SECURITY.md](SECURITY.md).
 
 ## Sample report
 
