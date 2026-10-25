@@ -73,7 +73,10 @@ async function main(): Promise<number> {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '--json') json = true;
-    else if (arg === '--out') {
+    else if (arg === '--local') {
+      // The audit CLI already fetches without the SSRF guard; accepted so the
+      // flag works the same way in both modes.
+    } else if (arg === '--out') {
       out = args[++i] ?? null;
       if (!out) {
         process.stderr.write('error: --out requires a file path\n');
