@@ -25,7 +25,7 @@ export interface AuditContext {
   target: PageData | null;
   /** Why the target was not fetched, when target is null. */
   targetSkippedReason: string | null;
-  /** The same URL fetched with GPTBot's UA string (WAF differential check). */
+  /** The same URL fetched with OAI-SearchBot's UA string (WAF differential check). */
   targetBotFetch: FetchResult | null;
   /** Homepage, when distinct from the target. */
   homepage: PageData | null;

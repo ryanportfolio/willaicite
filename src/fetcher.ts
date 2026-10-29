@@ -1,8 +1,16 @@
 export const TOOL_UA = 'Mozilla/5.0 (compatible; geo-audit/1.3; +https://github.com/ryanportfolio/willaicite)';
 
-/** Real GPTBot UA string, used only for the WAF/CDN differential check. */
+/** Real GPTBot UA string. Kept as a public export; the audit no longer sends it. */
 export const GPTBOT_UA =
   'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.2; +https://openai.com/gptbot';
+
+/**
+ * OAI-SearchBot's published UA string (OpenAI bots docs, 2026-10), used only
+ * for the WAF/CDN differential check. A retrieval crawler, so a block on it is
+ * a citation loss; GPTBot only feeds training.
+ */
+export const OAI_SEARCHBOT_UA =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36; compatible; OAI-SearchBot/1.4; +https://openai.com/searchbot';
 
 export interface FetchResult {
   ok: boolean;

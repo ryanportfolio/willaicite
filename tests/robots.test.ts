@@ -21,6 +21,36 @@ describe('parseRobots', () => {
     const robots = parseRobots('# hello\n\nUser-agent: * # inline\nDisallow: /x # comment\n');
     expect(robots.groups[0].rules[0].path).toBe('/x');
   });
+
+  it('keeps a group open across Sitemap and unknown records between User-agent lines', () => {
+    for (const between of ['Sitemap: https://x.test/s.xml', 'Crawl-delay: 5', 'Content-Signal: ai-train=no']) {
+      const robots = parseRobots(`User-agent: GPTBot\n${between}\nUser-agent: ClaudeBot\nDisallow: /\n`);
+      expect(robots.groups).toHaveLength(1);
+      expect(isAllowed(robots, 'GPTBot', '/a').allowed).toBe(false);
+    }
+  });
+
+  it('starts a new group at a User-agent line after rules, even past an unknown record', () => {
+    const robots = parseRobots('User-agent: GPTBot\nDisallow: /\nCrawl-delay: 5\nUser-agent: ClaudeBot\nAllow: /\n');
+    expect(robots.groups).toHaveLength(2);
+    expect(isAllowed(robots, 'ClaudeBot', '/a').allowed).toBe(true);
+  });
+
+  it('accepts bare CR line endings', () => {
+    const robots = parseRobots('User-agent: GPTBot\rDisallow: /\r');
+    expect(isAllowed(robots, 'GPTBot', '/a').allowed).toBe(false);
+  });
+
+  it('reduces a User-agent value to its product token', () => {
+    const robots = parseRobots('User-agent: GPTBot/1.1\nDisallow: /\n');
+    expect(robots.groups[0].agents).toEqual(['gptbot']);
+    expect(isAllowed(robots, 'GPTBot', '/a').allowed).toBe(false);
+  });
+
+  it('treats only a bare `*` as the wildcard agent', () => {
+    expect(isAllowed(parseRobots('User-agent: *foo\nDisallow: /\n'), 'ClaudeBot', '/a').allowed).toBe(true);
+    expect(isAllowed(parseRobots('User-agent: * # all\nDisallow: /\n'), 'ClaudeBot', '/a').allowed).toBe(false);
+  });
 });
 
 describe('isAllowed', () => {
@@ -63,6 +93,20 @@ describe('isAllowed', () => {
     const robots2 = parseRobots('User-agent: *\nDisallow: /page\nAllow: /page\n');
     expect(isAllowed(robots2, 'GPTBot', '/page').allowed).toBe(true);
   });
+
+  it('matches tokens exactly: an Applebot group does not govern Applebot-Extended', () => {
+    const robots2 = parseRobots('User-agent: Applebot\nDisallow: /\n\nUser-agent: *\nAllow: /\n');
+    expect(isAllowed(robots2, 'Applebot', '/a').allowed).toBe(false);
+    const ext = isAllowed(robots2, 'Applebot-Extended', '/a');
+    expect(ext.allowed).toBe(true);
+    expect(ext.viaGroup).toBe('*');
+  });
+
+  it('treats /robots.txt itself as allowed', () => {
+    const robots2 = parseRobots('User-agent: *\nDisallow: /\n');
+    expect(isAllowed(robots2, 'GPTBot', '/robots.txt').allowed).toBe(true);
+    expect(isAllowed(robots2, 'GPTBot', '/robots.txt.bak').allowed).toBe(false);
+  });
 });
 
 describe('pathMatches wildcards', () => {
@@ -85,10 +129,16 @@ describe('pathMatches wildcards', () => {
     expect(pathMatches('/caf%c3%a9', '/caf%C3%A9')).toBe(true); // hex case-insensitive
     expect(pathMatches('/café', '/cafe')).toBe(false);
   });
+
+  it('decodes escapes of unreserved characters only', () => {
+    expect(pathMatches('/%7Euser', '/~user')).toBe(true);
+    expect(pathMatches('/~user', '/%7euser')).toBe(true);
+    expect(pathMatches('/a%2Fb', '/a/b')).toBe(false); // %2F is reserved; stays encoded
+  });
 });
 
 describe('rulesFor group selection', () => {
-  it('prefers the most specific agent token over wildcard', () => {
+  it('prefers an exact agent token match over wildcard', () => {
     const robots = parseRobots('User-agent: *\nDisallow: /\nUser-agent: GPTBot\nAllow: /\n');
     const rules = rulesFor(robots, 'GPTBot');
     expect(rules).toHaveLength(1);

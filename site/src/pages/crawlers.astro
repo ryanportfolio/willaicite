@@ -21,7 +21,7 @@ const schema = {
       author: { '@id': 'https://willaicite.com/#ryan' },
       publisher: { '@id': 'https://willaicite.com/#org' },
       datePublished: '2026-07-17',
-      dateModified: '2026-08-07',
+      dateModified: '2026-10-29',
       mainEntityOfPage: 'https://willaicite.com/crawlers',
     },
     {
@@ -88,7 +88,7 @@ const schema = {
             <tr>
               <td class="tok">{b.token}</td>
               <td class="eng">{b.engine}</td>
-              <td class="note">{b.robotsIgnored ? 'generally ignores robots.txt (user-initiated); a Disallow records intent but does not stop the fetch' : b.caveat ?? ''}</td>
+              <td class="note">{b.caveat ?? (b.robotsIgnored ? 'user-initiated; may not follow robots.txt, so a Disallow records intent but may not stop the fetch' : b.followsWhenUnnamed ? `when robots.txt has no group for it, follows the rules given to other search bots (${b.followsWhenUnnamed.join(', ')})` : '')}</td>
             </tr>
           ))}
         </tbody>
@@ -149,7 +149,7 @@ Disallow: /</code></pre>
           overrides everything robots.txt promises, and no SEO tool walks that path.
           willaicite fetches your page with an AI crawler&rsquo;s user agent and reports the
           difference; a clean result reads
-          &ldquo;UA differential: normal UA and GPTBot UA both got HTTP 200&rdquo;.
+          &ldquo;UA differential: normal UA and OAI-SearchBot UA both got HTTP 200&rdquo;.
         </li>
       </ol>
 

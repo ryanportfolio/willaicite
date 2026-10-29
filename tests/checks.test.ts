@@ -39,6 +39,40 @@ describe('checkCrawlerAccess', () => {
     expect(r.evidence.some((e) => e.status === 'pass' && e.message.includes('training crawler(s)/opt-out token(s) allowed'))).toBe(true);
   });
 
+  it('scores Amazonbot as training and Amzn-SearchBot as retrieval', () => {
+    const robotsFor = (body: string) => ({ url: 'https://example.com/robots.txt', fetch: makeFetch({ body }), parsed: parseRobots(body) });
+    const amazonbot = checkCrawlerAccess(makeCtx({ robots: robotsFor('User-agent: Amazonbot\nDisallow: /\n') }));
+    expect(amazonbot.score).toBe(100 - 4);
+    expect(amazonbot.evidence.find((e) => e.message.startsWith('Amazonbot BLOCKED'))?.status).toBe('warn');
+    const searchbot = checkCrawlerAccess(makeCtx({ robots: robotsFor('User-agent: Amzn-SearchBot\nDisallow: /\n') }));
+    expect(searchbot.score).toBe(100 - 14);
+    expect(searchbot.evidence.find((e) => e.message.startsWith('Amzn-SearchBot BLOCKED'))?.status).toBe('fail');
+  });
+
+  it('scores an unnamed Amzn-SearchBot by the Googlebot/Bingbot groups, not the wildcard', () => {
+    const robotsFor = (body: string) => ({ url: 'https://example.com/robots.txt', fetch: makeFetch({ body }), parsed: parseRobots(body) });
+    const ev = (body: string) => checkCrawlerAccess(makeCtx({ robots: robotsFor(body) })).evidence;
+    // Search bots allowed, everyone else blocked: Amazon says it crawls.
+    const allowlist = ev('User-agent: Googlebot\nUser-agent: Bingbot\nAllow: /\n\nUser-agent: *\nDisallow: /\n');
+    expect(allowlist.some((e) => e.message.startsWith('Amzn-SearchBot BLOCKED'))).toBe(false);
+    // Search bots blocked, wildcard allowed: it follows the search-bot block.
+    const blocked = ev('User-agent: Googlebot\nUser-agent: Bingbot\nDisallow: /\n\nUser-agent: *\nAllow: /\n');
+    const e = blocked.find((x) => x.message.startsWith('Amzn-SearchBot BLOCKED'));
+    expect(e?.status).toBe('fail');
+    expect(e?.message).toContain('has no group of its own');
+    // The two search-bot groups disagree: unverified, no penalty.
+    const split = checkCrawlerAccess(makeCtx({ robots: robotsFor('User-agent: Googlebot\nAllow: /\n\nUser-agent: Bingbot\nDisallow: /\n') }));
+    expect(split.evidence.find((x) => x.message.startsWith('Amzn-SearchBot'))?.status).toBe('unverified');
+    expect(split.score).toBe(100 - 14); // Bingbot's own block only
+  });
+
+  it('scores an Amzn-User disallow as a light advisory', () => {
+    const body = 'User-agent: Amzn-User\nDisallow: /\n';
+    const r = checkCrawlerAccess(makeCtx({ robots: { url: 'https://example.com/robots.txt', fetch: makeFetch({ body }), parsed: parseRobots(body) } }));
+    expect(r.score).toBe(100 - 2);
+    expect(r.evidence.find((e) => e.message.startsWith('Amzn-User disallowed'))?.message).toContain('may not follow all robots.txt directives');
+  });
+
   it('scores a Perplexity-User disallow as a light advisory, not a hard retrieval block', () => {
     const body = 'User-agent: Perplexity-User\nDisallow: /\n';
     const r = checkCrawlerAccess(
@@ -96,7 +130,30 @@ describe('checkCrawlerAccess', () => {
     const ctx = makeCtx({ targetBotFetch: makeFetch({ ok: false, status: 403 }) });
     const r = checkCrawlerAccess(ctx);
     expect(r.score).toBe(70);
-    expect(r.evidence.some((e) => e.message.includes('normal UA got HTTP 200, GPTBot UA got HTTP 403'))).toBe(true);
+    expect(r.evidence.some((e) => e.message.includes('normal UA got HTTP 200, OAI-SearchBot UA got HTTP 403'))).toBe(true);
+  });
+
+  it('does not score the UA differential when our own fetch was refused', () => {
+    for (const botStatus of [200, 403]) {
+      const ctx = makeCtx({ targetBotFetch: makeFetch({ status: botStatus }) });
+      ctx.target!.fetch = makeFetch({ ok: false, status: 403 });
+      const r = checkCrawlerAccess(ctx);
+      expect(r.score).toBe(100);
+      expect(r.evidence.find((e) => e.message.includes('UA differential'))?.status).toBe('unverified');
+    }
+  });
+
+  it('treats a no-content probe response (204/304) as unverified, not a pass', () => {
+    for (const status of [204, 304]) {
+      const r = checkCrawlerAccess(makeCtx({ targetBotFetch: makeFetch({ status }) }));
+      expect(r.evidence.find((e) => e.message.includes('UA differential'))?.status).toBe('unverified');
+    }
+  });
+
+  it('treats a 429/503 on the probe as unverified, not a WAF block', () => {
+    const r = checkCrawlerAccess(makeCtx({ targetBotFetch: makeFetch({ ok: false, status: 429 }) }));
+    expect(r.score).toBe(100);
+    expect(r.evidence.find((e) => e.message.includes('UA differential'))?.status).toBe('unverified');
   });
 
   it('reports could-not-verify when nothing is checkable', () => {
@@ -422,6 +479,19 @@ describe('checkLlmsTxt', () => {
       }),
     );
     expect(r.evidence.some((e) => e.status === 'warn' && e.message.includes('contradiction'))).toBe(true);
+  });
+
+  it('applies the Amzn-SearchBot search-bot fallback like crawler access does', () => {
+    const body = 'User-agent: Googlebot\nUser-agent: Bingbot\nAllow: /\n\nUser-agent: Amzn-User\nUser-agent: GPTBot\nAllow: /\n\nUser-agent: *\nDisallow: /\n';
+    const r = checkLlmsTxt(
+      makeCtx({
+        robots: { url: 'https://example.com/robots.txt', fetch: makeFetch({ body }), parsed: parseRobots(body) },
+        llmsTxt: { url: 'https://example.com/llms.txt', fetch: makeFetch({ body: fixture('llms-good.txt') }) },
+      }),
+    );
+    const contradiction = r.evidence.find((e) => e.message.includes('contradiction'));
+    expect(contradiction?.message).not.toContain('Amzn-SearchBot');
+    expect(contradiction?.message).toContain('ClaudeBot'); // the wildcard still blocks unnamed bots
   });
 
   it('flags an HTML soft-404 response', () => {

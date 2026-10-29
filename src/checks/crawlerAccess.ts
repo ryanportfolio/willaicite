@@ -1,10 +1,31 @@
 import type { AuditContext } from '../context.js';
 import type { DimensionResult, Evidence, Recommendation } from '../types.js';
-import { isAllowed } from '../robots.js';
+import { isAllowed, type RobotsData, type AccessDecision } from '../robots.js';
 import { findMeta } from '../html.js';
 
 export { AI_BOTS, type AiBot } from '../aiBots.js';
-import { AI_BOTS } from '../aiBots.js';
+import { AI_BOTS, type AiBot } from '../aiBots.js';
+
+/**
+ * robots.txt access for one roster bot. A token with `followsWhenUnnamed`
+ * and no group of its own obeys those search bots' named groups instead of
+ * `User-agent: *`, as its operator documents; when they disagree the result
+ * is unresolved.
+ */
+export function botAccess(
+  robots: RobotsData,
+  bot: AiBot,
+  path: string,
+): { decision: AccessDecision; viaFallback: boolean } | { disagree: string[] } {
+  const own = isAllowed(robots, bot.token, path);
+  if (own.viaGroup !== '*' || !bot.followsWhenUnnamed) return { decision: own, viaFallback: false };
+  const named = bot.followsWhenUnnamed
+    .map((token) => ({ token, d: isAllowed(robots, token, path) }))
+    .filter((n) => n.d.viaGroup !== '*');
+  if (named.length === 0) return { decision: own, viaFallback: false };
+  if (named.some((n) => n.d.allowed !== named[0].d.allowed)) return { disagree: named.map((n) => n.token) };
+  return { decision: named[0].d, viaFallback: true };
+}
 
 const RETRIEVAL_PENALTY = 14;
 const TRAINING_PENALTY = 4;
@@ -38,13 +59,24 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
     const blockedAdvisory: string[] = [];
     const allowed: Record<'retrieval' | 'training', string[]> = { retrieval: [], training: [] };
     for (const bot of AI_BOTS) {
-      const decision = isAllowed(ctx.robots.parsed, bot.token, path);
+      const access = botAccess(ctx.robots.parsed, bot, path);
+      if ('disagree' in access) {
+        evidence.push({
+          status: 'unverified',
+          message: `${bot.token} has no robots.txt group of its own; its operator documents that it then follows the rules given to other search bots, and the ${access.disagree.join(' and ')} groups disagree for ${path}`,
+        });
+        continue;
+      }
+      const { decision } = access;
+      const fallbackNote = access.viaFallback
+        ? `; ${bot.token} has no group of its own and its operator documents that it then follows other search bots' rules`
+        : '';
       if (decision.allowed) {
         allowed[bot.role].push(bot.token);
         continue;
       }
       const ruleText = decision.rule ? `robots.txt line ${decision.rule.line}: \`${decision.rule.raw}\`` : 'robots.txt rule';
-      const via = decision.viaGroup === '*' ? 'via wildcard `User-agent: *` group' : `via \`User-agent: ${decision.viaGroup}\` group`;
+      const via = (decision.viaGroup === '*' ? 'via wildcard `User-agent: *` group' : `via \`User-agent: ${decision.viaGroup}\` group`) + fallbackNote;
       const caveat = bot.caveat ? `. Note: ${bot.caveat}` : '';
       if (bot.robotsIgnored) {
         blockedAdvisory.push(bot.token);
@@ -94,7 +126,7 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
       recommendations.push({
         dimension: dim,
         action: `If blocking ${blockedAdvisory.join(', ')} is intended, enforce it at the WAF/CDN; robots.txt alone does not stop user-initiated fetchers`,
-        why: 'The operator documents that this fetcher generally ignores robots.txt because a human initiated the request. The Disallow line records intent without changing behavior; if you did not mean to block it, remove the rule to keep the declared policy accurate.',
+        why: 'The operator documents that this fetcher may not follow robots.txt because a human initiated the request. The Disallow line records intent but does not reliably prevent the fetch; if you did not mean to block it, remove the rule to keep the declared policy accurate.',
         impact: 1,
         effort: 2,
       });
@@ -146,29 +178,42 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
     }
   }
 
-  // WAF / CDN differential: same URL, GPTBot UA vs normal UA
+  // WAF / CDN differential: same URL, OAI-SearchBot UA vs normal UA. The
+  // request comes from our server, not OpenAI's published IP ranges, so a
+  // different status shows the CDN/WAF reacts to the AI-crawler UA; it cannot
+  // tell a block on real OAI-SearchBot from a rejection of an unverified one.
   const normal = ctx.target?.fetch ?? null;
   const bot = ctx.targetBotFetch;
-  if (normal && normal.status !== null && bot && bot.status !== null) {
-    verifiable = true;
-    if (normal.status !== bot.status) {
+  if (normal && normal.status !== null && normal.status >= 400) {
+    // Our own fetch was refused, so a matching or better probe status says
+    // nothing about AI-crawler handling.
+    evidence.push({ status: 'unverified', message: `could not verify UA differential (willaicite's own fetch got HTTP ${normal.status}, so AI-crawler blocking cannot be isolated)` });
+  } else if (normal && normal.status !== null && bot && (bot.status === 429 || bot.status === 503)) {
+    evidence.push({ status: 'unverified', message: `could not verify UA differential (OAI-SearchBot UA got HTTP ${bot.status}, a rate-limit or availability status, right after the normal fetch)` });
+  } else if (normal && normal.status !== null && bot && bot.status !== null) {
+    if (bot.status >= 400) {
+      verifiable = true;
       score -= 30;
       evidence.push({
         status: 'fail',
-        message: `UA differential: normal UA got HTTP ${normal.status}, GPTBot UA got HTTP ${bot.status}; a CDN/WAF is treating AI crawlers differently`,
+        message: `UA differential: normal UA got HTTP ${normal.status}, OAI-SearchBot UA got HTTP ${bot.status} (sent from willaicite's server, not OpenAI's IP ranges); a CDN/WAF treats AI-crawler user agents differently`,
       });
       recommendations.push({
         dimension: dim,
-        action: 'Check CDN/WAF bot-management rules (Cloudflare "Block AI bots", Akamai bot manager, etc.) and allow AI crawler user agents',
-        why: `robots.txt may say "allowed" while the WAF returns ${bot.status} to the actual crawler; the engine sees the error, not the content, and silently drops the page from its index.`,
+        action: 'Check CDN/WAF bot-management rules (Cloudflare "Block AI bots", Akamai bot manager, etc.) and confirm verified AI retrieval crawlers are allowed',
+        why: `The firewall answered ${bot.status} to a request carrying OAI-SearchBot's user agent while robots.txt may still say "allowed". If the rule also applies to the real crawler, ChatGPT Search sees the error instead of the content and cannot cite the page. Some bot managers only reject requests that claim a crawler UA from an unverified IP; the firewall's own logs or bot settings show which applies.`,
         impact: 3,
         effort: 2,
       });
+    } else if (normal.status === bot.status) {
+      verifiable = true;
+      evidence.push({ status: 'pass', message: `UA differential: normal UA and OAI-SearchBot UA both got HTTP ${normal.status}; no WAF-level bot blocking detected` });
     } else {
-      evidence.push({ status: 'pass', message: `UA differential: normal UA and GPTBot UA both got HTTP ${normal.status}; no WAF-level bot blocking detected` });
+      // e.g. 200 vs 204/304: no error, but no page content either.
+      evidence.push({ status: 'unverified', message: `could not verify UA differential (normal UA got HTTP ${normal.status}, OAI-SearchBot UA got HTTP ${bot.status}; neither an error nor the same response)` });
     }
   } else if (bot?.error) {
-    evidence.push({ status: 'unverified', message: `could not verify UA differential (GPTBot-UA fetch failed: ${bot.error})` });
+    evidence.push({ status: 'unverified', message: `could not verify UA differential (OAI-SearchBot-UA fetch failed: ${bot.error})` });
   } else {
     evidence.push({ status: 'unverified', message: 'could not verify UA differential (fetch unavailable)' });
   }

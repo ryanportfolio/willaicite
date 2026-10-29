@@ -1,7 +1,6 @@
 import type { AuditContext } from '../context.js';
 import type { DimensionResult, Evidence, Recommendation } from '../types.js';
-import { isAllowed } from '../robots.js';
-import { AI_BOTS } from './crawlerAccess.js';
+import { AI_BOTS, botAccess } from './crawlerAccess.js';
 
 /**
  * llms.txt — informational only, deliberately outside the seven scored
@@ -58,7 +57,11 @@ export function checkLlmsTxt(ctx: AuditContext): DimensionResult {
   // Consistency with robots.txt: inviting LLMs via llms.txt while blocking their crawlers is contradictory.
   if (ctx.robots.parsed) {
     // Fetchers that document ignoring robots.txt can still read the invitation, so they are not a contradiction.
-    const blocked = AI_BOTS.filter((b) => !b.robotsIgnored && !isAllowed(ctx.robots.parsed!, b.token, '/').allowed).map((b) => b.token);
+    const blocked = AI_BOTS.filter((b) => {
+      if (b.robotsIgnored) return false;
+      const access = botAccess(ctx.robots.parsed!, b, '/');
+      return 'decision' in access && !access.decision.allowed;
+    }).map((b) => b.token);
     if (blocked.length > 0) {
       evidence.push({
         status: 'warn',
