@@ -64,10 +64,11 @@ export function parseRobots(text: string): RobotsData {
 
 /**
  * The product token of a User-agent value, lowercased: the leading run of
- * letters, `_` and `-`, so `GPTBot/1.1` names `gptbot`. `*` stays `*`.
+ * letters, `_` and `-`, so `GPTBot/1.1` names `gptbot`. `*` alone (or
+ * followed by whitespace) is the wildcard; `*foo` names no crawler.
  */
 function productToken(value: string): string {
-  if (value.startsWith('*')) return '*';
+  if (value === '*' || /^\*\s/.test(value)) return '*';
   const m = value.match(/^[A-Za-z_-]+/);
   return (m ? m[0] : value).toLowerCase();
 }

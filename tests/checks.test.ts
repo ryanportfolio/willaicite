@@ -49,6 +49,23 @@ describe('checkCrawlerAccess', () => {
     expect(searchbot.evidence.find((e) => e.message.startsWith('Amzn-SearchBot BLOCKED'))?.status).toBe('fail');
   });
 
+  it('scores an unnamed Amzn-SearchBot by the Googlebot/Bingbot groups, not the wildcard', () => {
+    const robotsFor = (body: string) => ({ url: 'https://example.com/robots.txt', fetch: makeFetch({ body }), parsed: parseRobots(body) });
+    const ev = (body: string) => checkCrawlerAccess(makeCtx({ robots: robotsFor(body) })).evidence;
+    // Search bots allowed, everyone else blocked: Amazon says it crawls.
+    const allowlist = ev('User-agent: Googlebot\nUser-agent: Bingbot\nAllow: /\n\nUser-agent: *\nDisallow: /\n');
+    expect(allowlist.some((e) => e.message.startsWith('Amzn-SearchBot BLOCKED'))).toBe(false);
+    // Search bots blocked, wildcard allowed: it follows the search-bot block.
+    const blocked = ev('User-agent: Googlebot\nUser-agent: Bingbot\nDisallow: /\n\nUser-agent: *\nAllow: /\n');
+    const e = blocked.find((x) => x.message.startsWith('Amzn-SearchBot BLOCKED'));
+    expect(e?.status).toBe('fail');
+    expect(e?.message).toContain('has no group of its own');
+    // The two search-bot groups disagree: unverified, no penalty.
+    const split = checkCrawlerAccess(makeCtx({ robots: robotsFor('User-agent: Googlebot\nAllow: /\n\nUser-agent: Bingbot\nDisallow: /\n') }));
+    expect(split.evidence.find((x) => x.message.startsWith('Amzn-SearchBot'))?.status).toBe('unverified');
+    expect(split.score).toBe(100 - 14); // Bingbot's own block only
+  });
+
   it('scores an Amzn-User disallow as a light advisory', () => {
     const body = 'User-agent: Amzn-User\nDisallow: /\n';
     const r = checkCrawlerAccess(makeCtx({ robots: { url: 'https://example.com/robots.txt', fetch: makeFetch({ body }), parsed: parseRobots(body) } }));
@@ -114,6 +131,22 @@ describe('checkCrawlerAccess', () => {
     const r = checkCrawlerAccess(ctx);
     expect(r.score).toBe(70);
     expect(r.evidence.some((e) => e.message.includes('normal UA got HTTP 200, OAI-SearchBot UA got HTTP 403'))).toBe(true);
+  });
+
+  it('does not score the UA differential when our own fetch was refused', () => {
+    for (const botStatus of [200, 403]) {
+      const ctx = makeCtx({ targetBotFetch: makeFetch({ status: botStatus }) });
+      ctx.target!.fetch = makeFetch({ ok: false, status: 403 });
+      const r = checkCrawlerAccess(ctx);
+      expect(r.score).toBe(100);
+      expect(r.evidence.find((e) => e.message.includes('UA differential'))?.status).toBe('unverified');
+    }
+  });
+
+  it('treats a 429/503 on the probe as unverified, not a WAF block', () => {
+    const r = checkCrawlerAccess(makeCtx({ targetBotFetch: makeFetch({ ok: false, status: 429 }) }));
+    expect(r.score).toBe(100);
+    expect(r.evidence.find((e) => e.message.includes('UA differential'))?.status).toBe('unverified');
   });
 
   it('reports could-not-verify when nothing is checkable', () => {

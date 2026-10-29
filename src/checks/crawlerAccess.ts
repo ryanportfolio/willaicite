@@ -38,13 +38,33 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
     const blockedAdvisory: string[] = [];
     const allowed: Record<'retrieval' | 'training', string[]> = { retrieval: [], training: [] };
     for (const bot of AI_BOTS) {
-      const decision = isAllowed(ctx.robots.parsed, bot.token, path);
+      const robots = ctx.robots.parsed;
+      let decision = isAllowed(robots, bot.token, path);
+      let fallbackNote = '';
+      if (decision.viaGroup === '*' && bot.followsWhenUnnamed) {
+        // The operator documents that an unnamed token obeys the groups of
+        // other search bots, so `User-agent: *` is not what it follows here.
+        const named = bot.followsWhenUnnamed
+          .map((token) => ({ token, d: isAllowed(robots, token, path) }))
+          .filter((n) => n.d.viaGroup !== '*');
+        if (named.length > 0 && named.some((n) => n.d.allowed !== named[0].d.allowed)) {
+          evidence.push({
+            status: 'unverified',
+            message: `${bot.token} has no robots.txt group of its own; its operator documents that it then follows the rules given to other search bots, and the ${named.map((n) => n.token).join(' and ')} groups disagree for ${path}`,
+          });
+          continue;
+        }
+        if (named.length > 0) {
+          decision = named[0].d;
+          fallbackNote = `; ${bot.token} has no group of its own and its operator documents that it then follows other search bots' rules`;
+        }
+      }
       if (decision.allowed) {
         allowed[bot.role].push(bot.token);
         continue;
       }
       const ruleText = decision.rule ? `robots.txt line ${decision.rule.line}: \`${decision.rule.raw}\`` : 'robots.txt rule';
-      const via = decision.viaGroup === '*' ? 'via wildcard `User-agent: *` group' : `via \`User-agent: ${decision.viaGroup}\` group`;
+      const via = (decision.viaGroup === '*' ? 'via wildcard `User-agent: *` group' : `via \`User-agent: ${decision.viaGroup}\` group`) + fallbackNote;
       const caveat = bot.caveat ? `. Note: ${bot.caveat}` : '';
       if (bot.robotsIgnored) {
         blockedAdvisory.push(bot.token);
@@ -94,7 +114,7 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
       recommendations.push({
         dimension: dim,
         action: `If blocking ${blockedAdvisory.join(', ')} is intended, enforce it at the WAF/CDN; robots.txt alone does not stop user-initiated fetchers`,
-        why: 'The operator documents that this fetcher generally ignores robots.txt because a human initiated the request. The Disallow line records intent without changing behavior; if you did not mean to block it, remove the rule to keep the declared policy accurate.',
+        why: 'The operator documents that this fetcher may not follow robots.txt because a human initiated the request. The Disallow line records intent without changing behavior; if you did not mean to block it, remove the rule to keep the declared policy accurate.',
         impact: 1,
         effort: 2,
       });
@@ -152,9 +172,15 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
   // tell a block on real OAI-SearchBot from a rejection of an unverified one.
   const normal = ctx.target?.fetch ?? null;
   const bot = ctx.targetBotFetch;
-  if (normal && normal.status !== null && bot && bot.status !== null) {
+  if (normal && normal.status !== null && normal.status >= 400) {
+    // Our own fetch was refused, so a matching or better probe status says
+    // nothing about AI-crawler handling.
+    evidence.push({ status: 'unverified', message: `could not verify UA differential (willaicite's own fetch got HTTP ${normal.status}, so AI-crawler blocking cannot be isolated)` });
+  } else if (normal && normal.status !== null && bot && (bot.status === 429 || bot.status === 503)) {
+    evidence.push({ status: 'unverified', message: `could not verify UA differential (OAI-SearchBot UA got HTTP ${bot.status}, a rate-limit or availability status, right after the normal fetch)` });
+  } else if (normal && normal.status !== null && bot && bot.status !== null) {
     verifiable = true;
-    if (normal.status !== bot.status) {
+    if (bot.status >= 400) {
       score -= 30;
       evidence.push({
         status: 'fail',
@@ -168,7 +194,12 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
         effort: 2,
       });
     } else {
-      evidence.push({ status: 'pass', message: `UA differential: normal UA and OAI-SearchBot UA both got HTTP ${normal.status}; no WAF-level bot blocking detected` });
+      evidence.push({
+        status: 'pass',
+        message: normal.status === bot.status
+          ? `UA differential: normal UA and OAI-SearchBot UA both got HTTP ${normal.status}; no WAF-level bot blocking detected`
+          : `UA differential: normal UA got HTTP ${normal.status}, OAI-SearchBot UA got HTTP ${bot.status}; no WAF-level bot blocking detected`,
+      });
     }
   } else if (bot?.error) {
     evidence.push({ status: 'unverified', message: `could not verify UA differential (OAI-SearchBot-UA fetch failed: ${bot.error})` });

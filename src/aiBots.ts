@@ -10,9 +10,12 @@
  * crawler behind them); blocking those is a mainstream content policy with a
  * much smaller citation cost, so it is penalized far more lightly.
  *
- * `robotsIgnored`: the operator documents that this fetcher generally ignores
- * robots.txt (user-initiated), so a Disallow records intent without stopping
- * retrieval; it is scored as a light advisory, never as a hard block.
+ * `robotsIgnored`: the operator documents that this user-initiated fetcher may
+ * not follow robots.txt, so a Disallow records intent without reliably
+ * stopping retrieval; it is scored as a light advisory, never as a hard block.
+ * `followsWhenUnnamed`: the operator documents that, when robots.txt has no
+ * group for this token, it obeys the groups given to these other search bots
+ * instead of `User-agent: *`.
  * `caveat`: appended to blocked-evidence so the stake line stays factual.
  */
 export interface AiBot {
@@ -20,6 +23,7 @@ export interface AiBot {
   engine: string;
   role: 'retrieval' | 'training';
   robotsIgnored?: boolean;
+  followsWhenUnnamed?: string[];
   caveat?: string;
 }
 
@@ -41,7 +45,7 @@ export const AI_BOTS: AiBot[] = [
     token: 'Amzn-SearchBot',
     engine: 'Amazon search experiences such as Alexa',
     role: 'retrieval',
-    caveat: 'Amazon documents that when robots.txt does not name Amzn-SearchBot, it follows the rules given to other search bots, so its real behavior can differ from the wildcard group',
+    followsWhenUnnamed: ['Googlebot', 'Bingbot'],
   },
   {
     token: 'Amzn-User',
@@ -56,6 +60,7 @@ export const AI_BOTS: AiBot[] = [
   { token: 'MistralAI-User', engine: 'Le Chat live fetch', role: 'retrieval' },
   { token: 'GPTBot', engine: 'OpenAI model training', role: 'training' },
   { token: 'Amazonbot', engine: 'Amazon product improvement and AI model training', role: 'training' },
+  { token: 'MistralAI-Training', engine: 'Mistral model training', role: 'training' },
   { token: 'ClaudeBot', engine: 'Anthropic model training', role: 'training' },
   { token: 'CCBot', engine: 'Common Crawl (feeds many training sets)', role: 'training' },
   { token: 'meta-externalagent', engine: 'Meta AI training', role: 'training' },

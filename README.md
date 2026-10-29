@@ -9,7 +9,7 @@
 [![Live site](https://img.shields.io/badge/live-willaicite.com-cf3b1a?style=flat-square)](https://willaicite.com)
 [![License](https://img.shields.io/badge/license-MIT-2c6e49?style=flat-square)](LICENSE)
 [![Node](https://img.shields.io/badge/node-20%2B-informational?style=flat-square)](package.json)
-[![Tests](https://img.shields.io/badge/tests-184%20passing-2c6e49?style=flat-square)](tests)
+[![Tests](https://img.shields.io/badge/tests-188%20passing-2c6e49?style=flat-square)](tests)
 [![Runtime deps](https://img.shields.io/badge/runtime%20deps-0-2c6e49?style=flat-square)](package.json)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square)](tsconfig.json)
 
@@ -148,8 +148,9 @@ The audit CLI (`geo-audit <url>`) never applies the guard, so it can audit `loca
   Claude-SearchBot, Claude-User, PerplexityBot, Perplexity-User, Bingbot,
   Amzn-SearchBot, Amzn-User, DuckAssistBot, Applebot, MistralAI-Index,
   MistralAI-User
-- 7 training crawler(s)/opt-out token(s) allowed: GPTBot, Amazonbot, ClaudeBot,
-  CCBot, meta-externalagent, Google-Extended, Applebot-Extended
+- 8 training crawler(s)/opt-out token(s) allowed: GPTBot, Amazonbot,
+  MistralAI-Training, ClaudeBot, CCBot, meta-externalagent, Google-Extended,
+  Applebot-Extended
 - UA differential: normal UA and OAI-SearchBot UA both got HTTP 200; no
   WAF-level bot blocking detected
 ```

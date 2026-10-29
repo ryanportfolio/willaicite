@@ -46,6 +46,11 @@ describe('parseRobots', () => {
     expect(robots.groups[0].agents).toEqual(['gptbot']);
     expect(isAllowed(robots, 'GPTBot', '/a').allowed).toBe(false);
   });
+
+  it('treats only a bare `*` as the wildcard agent', () => {
+    expect(isAllowed(parseRobots('User-agent: *foo\nDisallow: /\n'), 'ClaudeBot', '/a').allowed).toBe(true);
+    expect(isAllowed(parseRobots('User-agent: * # all\nDisallow: /\n'), 'ClaudeBot', '/a').allowed).toBe(false);
+  });
 });
 
 describe('isAllowed', () => {
@@ -133,7 +138,7 @@ describe('pathMatches wildcards', () => {
 });
 
 describe('rulesFor group selection', () => {
-  it('prefers the most specific agent token over wildcard', () => {
+  it('prefers an exact agent token match over wildcard', () => {
     const robots = parseRobots('User-agent: *\nDisallow: /\nUser-agent: GPTBot\nAllow: /\n');
     const rules = rulesFor(robots, 'GPTBot');
     expect(rules).toHaveLength(1);

@@ -47,7 +47,7 @@ describe('runAudit orchestration', () => {
     expect(log.length).toBeLessThanOrEqual(10);
   });
 
-  it('skips the target and the GPTBot differential when robots.txt disallows geo-audit', async () => {
+  it('skips the target and the OAI-SearchBot differential when robots.txt disallows geo-audit', async () => {
     const log: Recorded[] = [];
     const fetcher = scriptedFetcher(
       {
@@ -81,7 +81,7 @@ describe('runAudit orchestration', () => {
     expect(llms.evidence[0].message).toContain('robots.txt disallows geo-audit');
   });
 
-  it('fetches the GPTBot differential exactly once, with the GPTBot UA, body discarded', async () => {
+  it('fetches the OAI-SearchBot differential exactly once, with the OAI-SearchBot UA, body discarded', async () => {
     const log: (Recorded & { discard: boolean | undefined })[] = [];
     const fetcher: Fetcher = async (url, opts) => {
       log.push({ url, ua: opts?.ua, discard: opts?.discardBody });
