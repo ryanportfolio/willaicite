@@ -26,9 +26,13 @@ export function parseRobots(text: string): RobotsData {
   const groups: RobotsGroup[] = [];
   const sitemaps: string[] = [];
   let current: RobotsGroup | null = null;
-  let lastWasAgent = false;
+  // Only Allow/Disallow records close a run of User-agent lines. Sitemap and
+  // unknown records (Crawl-delay, Content-Signal, ...) never end a group, per
+  // RFC 9309 and Google's reference parser.
+  let sawRule = false;
 
-  const lines = text.split(/\r?\n/);
+  // RFC 9309 accepts CR, LF and CRLF as line endings.
+  const lines = text.split(/\r\n|\r|\n/);
   for (let i = 0; i < lines.length; i++) {
     const rawLine = lines[i];
     const noComment = rawLine.replace(/#.*$/, '');
@@ -40,44 +44,47 @@ export function parseRobots(text: string): RobotsData {
     const value = m[2];
 
     if (field === 'user-agent') {
-      if (!lastWasAgent || current === null) {
+      if (current === null || sawRule) {
         current = { agents: [], rules: [] };
         groups.push(current);
+        sawRule = false;
       }
-      current.agents.push(value.toLowerCase());
-      lastWasAgent = true;
+      current.agents.push(productToken(value));
     } else if (field === 'allow' || field === 'disallow') {
-      lastWasAgent = false;
+      sawRule = true;
       if (current) {
         current.rules.push({ type: field, path: value, line: i + 1, raw: rawLine.trim() });
       }
     } else if (field === 'sitemap') {
-      lastWasAgent = false;
       if (value) sitemaps.push(value);
-    } else {
-      lastWasAgent = false;
     }
   }
   return { groups, sitemaps, raw: text };
 }
 
 /**
- * Rules that apply to a crawler product token. The most specific matching
- * user-agent value wins (longest agent string that is a prefix of the token);
- * all groups naming that same value are merged. Falls back to `*` groups.
+ * The product token of a User-agent value, lowercased: the leading run of
+ * letters, `_` and `-`, so `GPTBot/1.1` names `gptbot`. `*` stays `*`.
+ */
+function productToken(value: string): string {
+  if (value.startsWith('*')) return '*';
+  const m = value.match(/^[A-Za-z_-]+/);
+  return (m ? m[0] : value).toLowerCase();
+}
+
+/** The user-agent value whose groups apply to a token: exact match, else `*`. */
+function groupAgentFor(robots: RobotsData, botToken: string): string {
+  const token = botToken.toLowerCase();
+  return robots.groups.some((g) => g.agents.includes(token)) ? token : '*';
+}
+
+/**
+ * Rules that apply to a crawler product token. RFC 9309 matches the token
+ * exactly and case-insensitively (so `User-agent: Applebot` does not govern
+ * Applebot-Extended); all groups naming it are merged. Falls back to `*` groups.
  */
 export function rulesFor(robots: RobotsData, botToken: string): RobotsRule[] {
-  const token = botToken.toLowerCase();
-  let bestAgent: string | null = null;
-  for (const group of robots.groups) {
-    for (const agent of group.agents) {
-      if (agent === '*') continue;
-      if (token === agent || token.startsWith(agent)) {
-        if (bestAgent === null || agent.length > bestAgent.length) bestAgent = agent;
-      }
-    }
-  }
-  const target = bestAgent ?? '*';
+  const target = groupAgentFor(robots, botToken);
   const rules: RobotsRule[] = [];
   for (const group of robots.groups) {
     if (group.agents.includes(target)) rules.push(...group.rules);
@@ -100,7 +107,9 @@ function patternToRegex(pattern: string): RegExp {
  * RFC 9309 compares percent-decoded octets. Normalize both sides to one
  * canonical form instead: percent-encode non-ASCII (UTF-8) and uppercase
  * existing %XX escapes, so `Disallow: /café` matches a request for
- * `/caf%C3%A9` and vice versa. `*` and `$` survive encodeURI untouched.
+ * `/caf%C3%A9` and vice versa. Escapes of unreserved characters
+ * (`A-Z a-z 0-9 - . _ ~`) decode, so `/%7Euser` and `/~user` are the same
+ * path. `*` and `$` survive encodeURI untouched.
  */
 export function normalizeRobotsPath(s: string): string {
   let out = '';
@@ -115,7 +124,10 @@ export function normalizeRobotsPath(s: string): string {
       out += ch;
     }
   }
-  return out.replace(/%[0-9a-f]{2}/gi, (m) => m.toUpperCase());
+  return out.replace(/%[0-9a-f]{2}/gi, (m) => {
+    const ch = String.fromCharCode(parseInt(m.slice(1), 16));
+    return /^[A-Za-z0-9._~-]$/.test(ch) ? ch : m.toUpperCase();
+  });
 }
 
 export function pathMatches(pattern: string, path: string): boolean {
@@ -132,17 +144,9 @@ export interface AccessDecision {
 }
 
 export function isAllowed(robots: RobotsData, botToken: string, path: string): AccessDecision {
-  const token = botToken.toLowerCase();
-  let bestAgent: string | null = null;
-  for (const group of robots.groups) {
-    for (const agent of group.agents) {
-      if (agent === '*') continue;
-      if (token === agent || token.startsWith(agent)) {
-        if (bestAgent === null || agent.length > bestAgent.length) bestAgent = agent;
-      }
-    }
-  }
-  const viaGroup = bestAgent ?? '*';
+  const viaGroup = groupAgentFor(robots, botToken);
+  // RFC 9309: /robots.txt itself is implicitly allowed.
+  if (path === '/robots.txt') return { allowed: true, rule: null, viaGroup };
   const rules = rulesFor(robots, botToken);
 
   // Longest-match precedence measured on the normalized (percent-encoded)

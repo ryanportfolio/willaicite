@@ -1,4 +1,4 @@
-import { politeFetch, delay, GPTBOT_UA, type Fetcher, type FetchResult } from './fetcher.js';
+import { politeFetch, delay, OAI_SEARCHBOT_UA, type Fetcher, type FetchResult } from './fetcher.js';
 import { parseRobots, isAllowed } from './robots.js';
 import { parseSitemap, pickExtraPages } from './sitemap.js';
 import { extractLinks } from './html.js';
@@ -42,7 +42,7 @@ export async function runAudit(inputUrl: string, opts: AuditOptions = {}): Promi
   const politeGet = async (url: string, ua?: string, discardBody = false): Promise<FetchResult> => {
     if (pagesFetched > 0 && delayMs > 0) await delay(delayMs);
     pagesFetched++;
-    opts.onProgress?.(`fetching ${url}${ua === GPTBOT_UA ? ' (as GPTBot)' : ''}`);
+    opts.onProgress?.(`fetching ${url}${ua === OAI_SEARCHBOT_UA ? ' (as OAI-SearchBot)' : ''}`);
     return fetcher(url, ua ? { ua, discardBody } : { discardBody });
   };
 
@@ -78,7 +78,7 @@ export async function runAudit(inputUrl: string, opts: AuditOptions = {}): Promi
     return { url, fetch: res, html: res.ok && isHtml ? res.body : null };
   };
 
-  // 2. Target page (tool UA), then same URL with GPTBot UA for the WAF differential
+  // 2. Target page (tool UA), then same URL with OAI-SearchBot UA for the WAF differential
   let targetPage: PageData | null = null;
   let targetSkippedReason: string | null = null;
   if (allowedForSelf(target.href)) {
@@ -89,7 +89,7 @@ export async function runAudit(inputUrl: string, opts: AuditOptions = {}): Promi
 
   let targetBotFetch: FetchResult | null = null;
   if (targetPage && allowedForSelf(target.href)) {
-    targetBotFetch = await politeGet(target.href, GPTBOT_UA, true);
+    targetBotFetch = await politeGet(target.href, OAI_SEARCHBOT_UA, true);
   }
 
   // 3. Homepage (when distinct)

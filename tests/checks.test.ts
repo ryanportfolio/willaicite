@@ -39,6 +39,23 @@ describe('checkCrawlerAccess', () => {
     expect(r.evidence.some((e) => e.status === 'pass' && e.message.includes('training crawler(s)/opt-out token(s) allowed'))).toBe(true);
   });
 
+  it('scores Amazonbot as training and Amzn-SearchBot as retrieval', () => {
+    const robotsFor = (body: string) => ({ url: 'https://example.com/robots.txt', fetch: makeFetch({ body }), parsed: parseRobots(body) });
+    const amazonbot = checkCrawlerAccess(makeCtx({ robots: robotsFor('User-agent: Amazonbot\nDisallow: /\n') }));
+    expect(amazonbot.score).toBe(100 - 4);
+    expect(amazonbot.evidence.find((e) => e.message.startsWith('Amazonbot BLOCKED'))?.status).toBe('warn');
+    const searchbot = checkCrawlerAccess(makeCtx({ robots: robotsFor('User-agent: Amzn-SearchBot\nDisallow: /\n') }));
+    expect(searchbot.score).toBe(100 - 14);
+    expect(searchbot.evidence.find((e) => e.message.startsWith('Amzn-SearchBot BLOCKED'))?.status).toBe('fail');
+  });
+
+  it('scores an Amzn-User disallow as a light advisory', () => {
+    const body = 'User-agent: Amzn-User\nDisallow: /\n';
+    const r = checkCrawlerAccess(makeCtx({ robots: { url: 'https://example.com/robots.txt', fetch: makeFetch({ body }), parsed: parseRobots(body) } }));
+    expect(r.score).toBe(100 - 2);
+    expect(r.evidence.find((e) => e.message.startsWith('Amzn-User disallowed'))?.message).toContain('may not follow all robots.txt directives');
+  });
+
   it('scores a Perplexity-User disallow as a light advisory, not a hard retrieval block', () => {
     const body = 'User-agent: Perplexity-User\nDisallow: /\n';
     const r = checkCrawlerAccess(
@@ -96,7 +113,7 @@ describe('checkCrawlerAccess', () => {
     const ctx = makeCtx({ targetBotFetch: makeFetch({ ok: false, status: 403 }) });
     const r = checkCrawlerAccess(ctx);
     expect(r.score).toBe(70);
-    expect(r.evidence.some((e) => e.message.includes('normal UA got HTTP 200, GPTBot UA got HTTP 403'))).toBe(true);
+    expect(r.evidence.some((e) => e.message.includes('normal UA got HTTP 200, OAI-SearchBot UA got HTTP 403'))).toBe(true);
   });
 
   it('reports could-not-verify when nothing is checkable', () => {

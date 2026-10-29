@@ -105,7 +105,7 @@ describe('audit server', () => {
     const progress = events.filter((e) => e.event === 'progress');
     expect(progress.length).toBeGreaterThanOrEqual(3);
     expect(progress[0].data.message).toContain('robots.txt');
-    expect(progress.some((e) => e.data.message.includes('(as GPTBot)'))).toBe(true);
+    expect(progress.some((e) => e.data.message.includes('(as OAI-SearchBot)'))).toBe(true);
 
     const result = events.find((e) => e.event === 'result');
     expect(result).toBeDefined();

@@ -9,7 +9,7 @@
 [![Live site](https://img.shields.io/badge/live-willaicite.com-cf3b1a?style=flat-square)](https://willaicite.com)
 [![License](https://img.shields.io/badge/license-MIT-2c6e49?style=flat-square)](LICENSE)
 [![Node](https://img.shields.io/badge/node-20%2B-informational?style=flat-square)](package.json)
-[![Tests](https://img.shields.io/badge/tests-161%20passing-2c6e49?style=flat-square)](tests)
+[![Tests](https://img.shields.io/badge/tests-184%20passing-2c6e49?style=flat-square)](tests)
 [![Runtime deps](https://img.shields.io/badge/runtime%20deps-0-2c6e49?style=flat-square)](package.json)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square)](tsconfig.json)
 
@@ -144,13 +144,14 @@ The audit CLI (`geo-audit <url>`) never applies the guard, so it can audit `loca
 
 ### AI crawler access: 100/100 (weight: high)
 
-- 11 retrieval/citation crawler(s) allowed: OAI-SearchBot, ChatGPT-User,
+- 13 retrieval/citation crawler(s) allowed: OAI-SearchBot, ChatGPT-User,
   Claude-SearchBot, Claude-User, PerplexityBot, Perplexity-User, Bingbot,
-  Amazonbot, DuckAssistBot, Applebot, MistralAI-User
-- 6 training crawler(s)/opt-out token(s) allowed: GPTBot, ClaudeBot, CCBot,
-  meta-externalagent, Google-Extended, Applebot-Extended
-- UA differential: normal UA and GPTBot UA both got HTTP 200; no WAF-level
-  bot blocking detected
+  Amzn-SearchBot, Amzn-User, DuckAssistBot, Applebot, MistralAI-Index,
+  MistralAI-User
+- 7 training crawler(s)/opt-out token(s) allowed: GPTBot, Amazonbot, ClaudeBot,
+  CCBot, meta-externalagent, Google-Extended, Applebot-Extended
+- UA differential: normal UA and OAI-SearchBot UA both got HTTP 200; no
+  WAF-level bot blocking detected
 ```
 
 The full run, including the baseline-to-100 history (scored under the v1.2 model), is on the [proof page](https://willaicite.com/example). The v1.3 recalibration is stricter: the same site scores 97, with the new topical-focus dimension flagging the slogan H1 and an overlong meta description &mdash; findings we agree with and will fix.

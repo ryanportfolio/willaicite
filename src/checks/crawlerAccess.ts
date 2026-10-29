@@ -146,7 +146,10 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
     }
   }
 
-  // WAF / CDN differential: same URL, GPTBot UA vs normal UA
+  // WAF / CDN differential: same URL, OAI-SearchBot UA vs normal UA. The
+  // request comes from our server, not OpenAI's published IP ranges, so a
+  // different status shows the CDN/WAF reacts to the AI-crawler UA; it cannot
+  // tell a block on real OAI-SearchBot from a rejection of an unverified one.
   const normal = ctx.target?.fetch ?? null;
   const bot = ctx.targetBotFetch;
   if (normal && normal.status !== null && bot && bot.status !== null) {
@@ -155,20 +158,20 @@ export function checkCrawlerAccess(ctx: AuditContext): DimensionResult {
       score -= 30;
       evidence.push({
         status: 'fail',
-        message: `UA differential: normal UA got HTTP ${normal.status}, GPTBot UA got HTTP ${bot.status}; a CDN/WAF is treating AI crawlers differently`,
+        message: `UA differential: normal UA got HTTP ${normal.status}, OAI-SearchBot UA got HTTP ${bot.status} (sent from willaicite's server, not OpenAI's IP ranges); a CDN/WAF treats AI-crawler user agents differently`,
       });
       recommendations.push({
         dimension: dim,
-        action: 'Check CDN/WAF bot-management rules (Cloudflare "Block AI bots", Akamai bot manager, etc.) and allow AI crawler user agents',
-        why: `robots.txt may say "allowed" while the WAF returns ${bot.status} to the actual crawler; the engine sees the error, not the content, and silently drops the page from its index.`,
+        action: 'Check CDN/WAF bot-management rules (Cloudflare "Block AI bots", Akamai bot manager, etc.) and confirm verified AI retrieval crawlers are allowed',
+        why: `The firewall answered ${bot.status} to a request carrying OAI-SearchBot's user agent while robots.txt may still say "allowed". If the rule also applies to the real crawler, ChatGPT Search sees the error instead of the content and cannot cite the page. Some bot managers only reject requests that claim a crawler UA from an unverified IP; the firewall's own logs or bot settings show which applies.`,
         impact: 3,
         effort: 2,
       });
     } else {
-      evidence.push({ status: 'pass', message: `UA differential: normal UA and GPTBot UA both got HTTP ${normal.status}; no WAF-level bot blocking detected` });
+      evidence.push({ status: 'pass', message: `UA differential: normal UA and OAI-SearchBot UA both got HTTP ${normal.status}; no WAF-level bot blocking detected` });
     }
   } else if (bot?.error) {
-    evidence.push({ status: 'unverified', message: `could not verify UA differential (GPTBot-UA fetch failed: ${bot.error})` });
+    evidence.push({ status: 'unverified', message: `could not verify UA differential (OAI-SearchBot-UA fetch failed: ${bot.error})` });
   } else {
     evidence.push({ status: 'unverified', message: 'could not verify UA differential (fetch unavailable)' });
   }
