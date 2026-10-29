@@ -9,7 +9,7 @@
 [![Live site](https://img.shields.io/badge/live-willaicite.com-cf3b1a?style=flat-square)](https://willaicite.com)
 [![License](https://img.shields.io/badge/license-MIT-2c6e49?style=flat-square)](LICENSE)
 [![Node](https://img.shields.io/badge/node-20%2B-informational?style=flat-square)](package.json)
-[![Tests](https://img.shields.io/badge/tests-188%20passing-2c6e49?style=flat-square)](tests)
+[![Tests](https://img.shields.io/badge/tests-190%20passing-2c6e49?style=flat-square)](tests)
 [![Runtime deps](https://img.shields.io/badge/runtime%20deps-0-2c6e49?style=flat-square)](package.json)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square)](tsconfig.json)
 

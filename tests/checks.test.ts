@@ -143,6 +143,13 @@ describe('checkCrawlerAccess', () => {
     }
   });
 
+  it('treats a no-content probe response (204/304) as unverified, not a pass', () => {
+    for (const status of [204, 304]) {
+      const r = checkCrawlerAccess(makeCtx({ targetBotFetch: makeFetch({ status }) }));
+      expect(r.evidence.find((e) => e.message.includes('UA differential'))?.status).toBe('unverified');
+    }
+  });
+
   it('treats a 429/503 on the probe as unverified, not a WAF block', () => {
     const r = checkCrawlerAccess(makeCtx({ targetBotFetch: makeFetch({ ok: false, status: 429 }) }));
     expect(r.score).toBe(100);
@@ -472,6 +479,19 @@ describe('checkLlmsTxt', () => {
       }),
     );
     expect(r.evidence.some((e) => e.status === 'warn' && e.message.includes('contradiction'))).toBe(true);
+  });
+
+  it('applies the Amzn-SearchBot search-bot fallback like crawler access does', () => {
+    const body = 'User-agent: Googlebot\nUser-agent: Bingbot\nAllow: /\n\nUser-agent: Amzn-User\nUser-agent: GPTBot\nAllow: /\n\nUser-agent: *\nDisallow: /\n';
+    const r = checkLlmsTxt(
+      makeCtx({
+        robots: { url: 'https://example.com/robots.txt', fetch: makeFetch({ body }), parsed: parseRobots(body) },
+        llmsTxt: { url: 'https://example.com/llms.txt', fetch: makeFetch({ body: fixture('llms-good.txt') }) },
+      }),
+    );
+    const contradiction = r.evidence.find((e) => e.message.includes('contradiction'));
+    expect(contradiction?.message).not.toContain('Amzn-SearchBot');
+    expect(contradiction?.message).toContain('ClaudeBot'); // the wildcard still blocks unnamed bots
   });
 
   it('flags an HTML soft-404 response', () => {
