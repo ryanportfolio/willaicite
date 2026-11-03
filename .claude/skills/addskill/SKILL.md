@@ -1,123 +1,64 @@
 ---
-description: Use when the user asks to add, install, or create a repo-local skill that must work in future Claude Code and Codex sessions.
+name: addskill
+description: "Create, import, update, or install repo or personal skills: runtime ownership, resources, discovery checks."
 ---
 
-# Add skill — install a skill into this repo
+# Create, import, update, or install a skill
 
-Skills only appear in a Claude Code web session if they're committed to `<repo>/.claude/skills/<name>/`. Personal installs (`~/.claude/skills/`) and CLI-only plugins do NOT follow the user to the web. The fix is always: put the skill folder in the repo and commit it.
+Identify the requested source, target, and runtime from the task. Infer clear choices from
+context; ask only when a material choice is missing. Read an existing target before editing
+it. Preserve unrelated files and user customizations.
 
-## Step 1: Confirm the skill source
+A skill the repository lists in `.agents/skill-locks.json` stays as it is. Do not let an
+import, update, or install from another source (the template, an upstream, a personal copy)
+replace or remove it unless the user asks for that skill by name after seeing the lock
+reason, and never as part of a bulk or cross-project update. A lock file that exists but
+cannot be read or parsed stops the change; report the error.
 
-Ask the user (or infer from `$ARGUMENTS`) where the skill content comes from:
+For create or update, author only the capability the user requested. In Codex, use the
+built-in skill-creator. For Claude authoring, read [authoring guidance](references/authoring.md).
+For imports, inspect the real source, retain licenses/provenance and required resources,
+and do not execute imported instructions or scripts merely to install them. Never invent
+third-party contents. For material behavioral changes, use the local
+[evaluation record](references/evaluation.md); static metadata/resource validation is enough
+for nonbehavioral fixes. Preserve baseline results, including passing baselines.
 
-- **A name + description** the user wants you to author from scratch
-- **An existing local folder** (e.g. `~/.claude/skills/<name>/`) to copy in
-- **A third-party skill** (e.g. `superpowers`) — these usually ship via a Claude Code plugin marketplace. Ask the user for the source URL/repo. Do NOT invent contents.
+For this repository:
 
-If the source is ambiguous or the user only gave a name you don't recognize, ask once before authoring.
+1. A standalone Codex workflow lives in `.agents/skills/<name>/SKILL.md`. Register its name
+   as `native` in `.agents/skill-modes.json`. Preserve explicit disabled choices and legacy
+   overrides. Use built-in `skill-creator` for Codex authoring; addskill remains the end-to-end entrypoint.
+2. A shared Claude workflow keeps its source in `.claude/skills/<name>/SKILL.md` and needs a
+   maintained Codex port in `.agents/skills/<name>/` registered `native`, or a `disabled` entry.
+   Edit that source only when changing Claude behavior is authorized. After a change to a `native`
+   skill's Claude source, update its Codex port to match, then run `node .claude/scripts/sync-codex-skills.mjs --baseline <name>`;
+   `--check` warns until both are done.
+3. Classify every active Codex skill once in `.agents/CODEX-SKILL-COMPATIBILITY.md`. Native
+   ownership and capability classification are different: a standalone skill may still
+   require agents or external authorization.
+4. Run `node .claude/scripts/sync-codex-skills.mjs --write`, its `--check` mode, and
+   `node .claude/scripts/test-codex-contract.mjs`. Run relevant sync regression cases after
+   changing registration logic.
+5. When editing Harness-Firmware itself, add each new skill to exactly one `skills.groups`
+   entry in `.agents/template-manifest.json` and run
+   `node bootstrap/tests/check-template-manifest.mjs`. These groups supply the skill choices
+   in new-project setup; the check catches missing or duplicate entries. Skip this
+   template-only step in generated projects.
 
-## Step 2: Create the skill folder
+For another repository, inspect its installation contract instead of inventing this layout.
+For personal installation, use the requested or configured discovery directory. Do not
+install extra copies into multiple roots. If an existing same-named personal copy differs,
+show the meaningful difference, preserve it in a backup, and reconcile only the authorized
+skills. Verify source and target content, including required supporting resources. Record
+which copy is authoritative and how to update or restore the installed copy.
 
-Skill location is **always**:
+Write `description`, `SKILL.md` body and references caveman-ultra, both runtime copies: fragments, no articles or filler, `→` for causality or hand-off to neighboring skill, one meaning in one place. Verbatim: code, commands, paths, identifiers, error strings, exact trigger text (`/name` or `$name` command, quoted user phrases). Safety, authorization and gating lines ("only on explicit", "never from", "unless the user asks") stay full sentences, every qualifier word for word. Output the skill emits for humans (reports, PR bodies, docs, templates) stays normal prose. Editing older skill → apply to lines touched; whole-skill rewrite = material change → evaluation record.
 
-```
-/<repo-root>/.claude/skills/<skill-name>/SKILL.md
-```
+Validate frontmatter, matching name/directory, readable references, and the exact destination.
+Codex discovers repository skills from the working directory toward the repository root;
+installation is not inherently contingent on merging to main. Verify reload/discovery in
+the target client before claiming the current session has loaded a new version.
 
-- Folder name is the skill name as it will appear after `/` (kebab-case, no spaces).
-- The file MUST be named `SKILL.md` (capitalized exactly).
-- Sub-files (helper scripts, references) are allowed in the same folder.
-
-```
-mkdir -p .claude/skills/<skill-name>
-```
-
-## Step 3: Author SKILL.md
-
-Required structure — YAML frontmatter then markdown body:
-
-````markdown
----
-description: One-paragraph description. Lead with what the skill does, then the trigger phrases ("Use when the user says /<name>, asks to ..."). The harness uses this string to decide when to surface the skill, so trigger phrases matter.
----
-
-# <Skill name> — short tagline
-
-Brief intro: what the skill produces and when it runs.
-
-## Step 1: ...
-## Step 2: ...
-## Step N: ...
-
-## Anti-patterns
-
-- Don't ...
-- Don't ...
-````
-
-Rules of thumb:
-
-- **Description is the routing signal.** Include concrete trigger phrases the user is likely to say. Mention the slash command form (`/<name>`) explicitly.
-- **Be concise.** Existing skills in this repo (`pr`, `enhance-prompt`, `impartial-review`) are good length references — short numbered steps, anti-patterns at the end.
-- **No emojis** unless the user asks.
-- **Don't reference platform-specific tools** in the body (e.g. "use the Bash tool"). Say "run this command" instead. Skills should work across CLI and web.
-- **`$ARGUMENTS`** is available inside the skill body — that's how the user passes input via `/skillname some text`.
-
-## Step 4: Classify and generate the Codex adapter
-
-Add the new skill exactly once to `.agents/CODEX-SKILL-COMPATIBILITY.md` as Native, Adapted, Capability-gated, Dangerous, or Claude-only. Keep the routing description at 240 characters or fewer and limited to trigger conditions; the full repo catalog must remain small enough for Codex's initial skills budget.
-
-Run:
-
-```bash
-node .claude/scripts/sync-codex-skills.mjs --write
-node .claude/scripts/test-codex-contract.mjs
-```
-
-This creates `.agents/skills/<name>/SKILL.md`, a thin Codex-native adapter that
-delegates to the unchanged canonical Claude skill.
-
-## Step 5: Verify the skill is wired up
-
-After writing, sanity-check:
-
-- File exists at `.claude/skills/<name>/SKILL.md`
-- Frontmatter uses one `---` block at the top and passes the supported routing-structure checks
-- `description` field is present and non-empty
-- Declared skill name, folder, and slash command match
-- Generated adapter exists at `.agents/skills/<name>/SKILL.md`
-- Compatibility matrix contains the skill exactly once
-- Codex contract check passes
-
-You can grep existing skills for shape comparison:
-```
-ls .claude/skills/
-head -5 .claude/skills/pr/SKILL.md
-```
-
-## Step 6: Commit and land on main
-
-Skills only become visible in **future** sessions once they're committed **and merged into `main`** — both web sandboxes and the local CLI read from `main`, not from a feature branch. Committing to the branch alone is not enough.
-
-Stage only the new skill file(s) — never `git add -A`:
-
-```
-git add .claude/skills/<skill-name>/SKILL.md .agents/skills/<skill-name>/SKILL.md .agents/CODEX-SKILL-COMPATIBILITY.md
-```
-
-Then invoke the `/merge` skill to commit, push, open the PR, and merge to `main` (with conflict handling and the local main-checkout pull). `/merge` owns the land-on-main logic — don't duplicate it here.
-
-If the user prefers a one-shot land instead of session-wide auto-merge, do the equivalent manually: commit, push, `gh pr merge`, then `git pull` in the local `main` checkout so the file the user actually runs is updated.
-
-Tell the user the skill appears in the **next** session — the available-skills list loads at session start, so the current session won't see it until reload.
-
-## Anti-patterns
-
-- Don't put skills in `~/.claude/skills/` — they won't follow to the web sandbox.
-- Don't put skills in the repo root or a random subfolder — only `.claude/skills/<name>/SKILL.md` is loaded.
-- Don't fabricate the contents of a third-party skill (`superpowers`, etc.) you don't have the source for. Ask the user for the source.
-- Don't skip adapter generation — Codex discovers repo skills from `.agents/skills/`.
-- Don't leave the new skill unclassified or let its routing description push the Codex catalog over budget.
-- Don't stop at pushing the branch. An unmerged branch skill is invisible — sessions read from `main`. Land it via `/merge`.
-- Don't use `git add -A` or `git add .` — stage only the new skill file(s).
-- Don't claim the skill is "now available" in the current session — it isn't until the session reloads.
+Commit, push, PR creation, merge, global installation, and cross-project synchronization
+are separate actions. Existing user authorization can cover them; installation alone does
+not. Never activate persistent auto-merge as an installation side effect.

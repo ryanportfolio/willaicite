@@ -1,0 +1,137 @@
+---
+name: writing
+description: "Write or edit audience-facing prose: docs, UI copy, emails, release notes, application answers; voice matching, clarity review, AI-tell cleanup. Session replies follow session conventions."
+---
+
+# Writing
+
+For prose that lives outside this session, read by someone who was not here. Write for the reader's next decision: find the job the text has to do, do it early, cut everything that does not help. Nothing that ships reads as machine-made, and nothing distinctive gets sanded off to get there.
+
+Ordinary chat follows session conventions, including Caveman when configured. Deliverables, including commit and PR prose, use normal audience-appropriate language and repository conventions. Code, identifiers, error strings, and quotations remain exact. Use specialized artifact workflows where applicable.
+
+## Precedence
+
+1. The writer's own sample voice: mirror sentence length, register, punctuation, recurring phrases. Never upgrade casual to corporate.
+2. A voice reference named by user or repository instructions, such as the global or project CLAUDE.md or AGENTS.md. Follow it wherever the rules below leave a choice open; where they conflict, the rules win. A project's reference takes priority over a user-wide one for that project's work. No voice file is required.
+3. The rules below.
+
+Explicit user choices override all style defaults, including punctuation. Preserve facts, uncertainty, quotations, identifiers, and technical meaning.
+
+## Building a voice reference
+
+When the user wants deliverables in their own voice and no voice reference exists, offer to build one. Ask for complete pieces they wrote without AI help, ideally three or more of the kind being drafted. Whole pieces show how the writer opens, moves between points, and ends; excerpts do not. From the samples, record:
+
+- **Traits**, each with a short exact quote from a sample: sentence length, register, openings and endings, humor, how they hedge, recurring phrases.
+- **Words and moves they avoid**, from the samples and from the user's own list. The tells below already cover generic AI phrasing; list only what belongs to this writer.
+- **Anti-examples**: a few passages that miss the voice, such as a draft the user rejected or one sample paragraph rewritten in generic style, each with one line on what is wrong with it.
+
+Record only traits the samples show. Save the reference where user or repository instructions point; if they name no location, ask the user where it goes. When drafting in that voice, load the whole reference, anti-examples included, and keep the samples available.
+
+## Before drafting
+
+Settle silently: who reads this; what they should understand, decide, or do; what the prompt really asks (a challenge question may want judgment, not chronology); hard constraints; which facts carry the answer. Lead with those facts.
+
+Form follows the job. Application answer: answer, one example, what it reveals. Email: purpose, context, next step. Explanation: answer, then how. Proposal: problem, recommendation, why. Memo: decision, then implications. Bio: most relevant work first. Essay: a claim, then earn it. Product copy: the user's outcome, never the product describing itself. Pull request: the title names the effect or a measured result, not the mechanism ("cut websocket frames by 70% with compression", not "negotiate permessage-deflate"), since a squash merge turns it into the commit subject; the body opens with the problem as the user met it, then the fix in a sentence or two, then how it was checked. Never lead with an inventory of changed files or functions.
+
+If the piece depends on the author's experience or judgment, use supplied notes first. Ask only for missing material that could change the answer: a relevant event, observation, decision, or result. Never invent personal material. Routine or reference copy needs no interview.
+
+For substantive claims and recommendations, check the main claim, its support, and any exception that changes the advice. Reuse supplied evidence and source logs; verify material factual claims against those sources or other reliable evidence within scope. Model agreement is not verification. Narrow unsupported claims, preserve consequential uncertainty, and identify evidence still needed. A sound recommendation needs no contrarian angle.
+
+Keep these checks proportional and silent for routine drafting. A style-only request stays style-only: add no research or substantive rewrite, and imply no factual verification.
+
+## Style defaults
+
+Avoid the following patterns unless an explicit style choice overrides them. Style choices never permit invented facts or altered technical meaning.
+
+- **Em dashes (U+2014), anywhere.** No en-dash or double-hyphen stand-ins. Period, comma, colon, semicolon, parentheses; middle dot (U+00B7) for label separators.
+- **Trailing periods on headings** and display text.
+- **Negation pivots, every disguise.** "Not just X, it's Y", "The point isn't X. It's Y", "Not a X. Not a Y. A Z." Splitting across sentences does not cure it. Delete the denial half, open with the point. A negation survives only when it corrects a misconception the reader holds, after the positive claim.
+- **Negative-definition headings** ("Synthesis, not summary"). Say what it is.
+- **Death metaphors** for removal. Words are cut, a model is retired, a file is gone.
+- **Coinages and insider jargon.** Would a smart reader outside the domain have to ask? Use the plain phrase. A term the reader owns is fine, glossed once.
+- **"Why this matters" labels.** Stakes live inside the prose.
+- **Invented specificity.** No claims, numbers, quotes, or sources the material lacks. Mark `[needs source]` or ask.
+
+## Tells
+
+Mannered prose substitutes metaphor and flourish for direct statement: "a dial worth turning" for "a parameter worth varying". The phrases display the writer instead of conveying the idea, and readers can tell. Say what you mean; when a literal phrase exists, use it. The lists below name the recurring forms. Catalog with before/after examples in [patterns.md](patterns.md); open it when a tell is ambiguous.
+
+- **Puffery and AI vocabulary.** pivotal, testament, landscape, groundbreaking, delve, crucial, showcase, robust, seamless, transformative, empower, streamline; leverage and utilize (use), facilitate (help). Full list: patterns 1, 4, 7.
+- **Superficial -ing tails** ("highlighting the team's commitment"), **vague attribution** (experts agree), **copula dodges and inanimate actors** (serves as, "the decision emerged"), **fake structure** (rule of three, false ranges, synonym cycling).
+- **Filler and empty adverbs.** in order to, it is important to note, at the end of the day, when it comes to, going forward; just, literally, honestly, actually, fundamentally. Hedging stacks collapse to one word. Pattern 25.
+- **Rhetorical setups.** Throat-clearing ("Here's the thing", "Let me be clear"); faux-insight ("what nobody tells you"); colon reveals ("The best part: it learns."); dramatic fragmentation ("That's it. That's the whole thing."); self-answered questions, "Plot twist:"; metadiscourse ("this distinction matters", "as you can see"). State the point. Patterns 35-42.
+- **Kicker endings and recaps.** A final aphorism or mic-drop line, "In conclusion". Delete; never rewrite into a better metaphor. End on the last concrete sentence or a plain next action.
+- **Style tics.** Colon as mid-sentence hinge; bold on every noun; inline-header bullets that restate their label; Title Case headings; decorative emojis; curly quotes; uniform hyphenated compounds; bullets where prose reads better; a header over two sentences.
+- **Marketing shapes.** "whether you're X or Y", "that's where X comes in", "say goodbye to", "imagine a", hedged benefits ("helps you to"), boilerplate CTAs, process bleed. Patterns 46-54.
+- **Chatbot artifacts** (Great question, I hope this helps) and **abstract metaphor nouns** (substrate, wedge, paradigm, north star, flywheel). Pick the concrete word.
+
+Words naming a real thing in the repo ("harness") are terms, not tells.
+
+## Rules
+
+- **Lead with the point.** If a paragraph's payoff could open it, move it up and cut the wind-up.
+- **Say what it does, not how it feels.** Mechanism or number. A sentence that could move unchanged to another product or person is filler.
+- **Protect the specific fact.** "Significantly faster" becomes the measured delta.
+- **Show, do not label.** Cut commentary calling a point important, surprising, or subtle.
+- **Earn every claim.** Never say passionate, innovative, hard-working, strategic, collaborative unless the sentence shows it.
+- **Plain words, active voice, direct verbs.** "The compiler validates queries"; "decided", not "made a decision". Latinate dress-ups (prohibition, subsequent, corroborated, verbatim, ancillary, myriad) lose to the everyday phrase; pattern 31 lists the swaps. Never swap an accurate technical name for a vaguer one: precision wins only when the two truly conflict.
+- **Keep sentences and paragraphs focused.** Length follows the form and the reader's needs. Split when ideas become hard to follow, not to meet a fixed sentence count.
+- **State the rule, skip the flourish.** No aphorism capstones, no justifying self-evident rules.
+- **Explain what the reader needs.** Include mechanisms when they help readers understand, act, troubleshoot, or assess a claim. Use enough examples to establish understanding; cut examples that add nothing.
+- **Stranger test.** A word with a domain and an everyday meaning ("fine", "weight") reads as the everyday one. Describe the observable thing, then what it means.
+- **Name the thing before framing it.** "We use a skill called caveman", then the concept, if at all.
+- **Self-contained passages.** If a paragraph only lands for someone who saw the artifact, show it or cut the passage.
+- **Never talk down.** No framing that explains the reader to themselves.
+- **Word-tic sweep.** A word repeated across a draft means the prose orbits an abstraction; rewrite those sentences concretely.
+- **Titles are plain and specific.** Say what the reader gets, unopened.
+- **Keep a voice.** Have a view. Vary sentence and paragraph shape; identical shapes in a row read as generated. First person where genuine. Sterile clean prose is still a tell.
+- **Tell the making as it happened.** How something was built is a fact; verify it like one.
+- **Cut without losing understanding.** Prefer the shortest version that preserves meaning, necessary context, and ease of reading. Site and UI copy defaults to fewer words and fewer elements.
+
+## Editing someone else's draft
+
+- Read the whole draft first. Note the core point and the voice: vocabulary, cadence, bluntness, humor, uncertainty, digressions. Unclear point: ask one question.
+- Minimum effective edit. Fix tells, errors, repetition, tangles. Leave strong human sentences alone; cut in proportion to the slop present.
+- Keep real hedges ("I think", "maybe") when they express actual uncertainty or spoken rhythm.
+- Keep edge: opinions, blunt language, profanity, self-interruptions, asides that create context or tension.
+- Keep structure unless it hurts the piece; if you reorganize, say why.
+- Keep meaning. No new claims; unsourced ones get removed or flagged, never given an invented source.
+- Asked only whether it reads as AI: per finding, the quoted line, the pattern name, a fix in a few words. Use a Style-only verdict, with no rewrite, numeric score, or guess at authorship; named patterns are evidence, detectors guess.
+
+## Reader-understanding review
+
+For a requested substantive or clarity review, first restate what the intended reader can recover from the draft alone: its main point, any next action, and essential conditions or caveats. Mark unclear or missing meaning without supplying the author's intention. Compare with any supplied intended message only after recording the reader's interpretation. A clear draft may remain unchanged.
+
+Unless the user specifies another format, begin the returned review with the review type and this restatement, before edited text or proposed replacements. Use a fresh reader only when available and authorized; give that reader the draft and audience before the intended interpretation. Call a review independent only when a fresh reader actually performed it. Reviewing your own draft or using prior author context is self-review. No separate skill is required.
+
+For substantive review, check support, recoverable meaning, essential caveats, and whether each section adds useful information or helps the reader act before polishing style. Reuse evidence already checked. Style-only reviews stay within their requested scope and need no reader restatement. Routine drafting returns the deliverable without a review preamble.
+
+## Critic pass
+
+Run one when the user asks for a critique, or offer one for a substantial draft in a set voice. A fresh reader gets the draft, the audience, the brief, any voice reference, and these rules, and returns specific notes, each quoting the line it concerns. Revise from the notes. Stop after three rounds at most, sooner when the notes turn minor or repeat. Each further round pulls the draft toward generic phrasing. Then return the draft for the user's own review; a critic pass does not replace it.
+
+Prefer a critic from a different model family than the writer, such as a Codex critic for a Claude draft or the reverse, because models tend to favor writing from their own family. Ask the critic for notes against the brief, voice reference, and rules, not for a pick between two drafts, since a preference verdict carries its family's taste. When no other family is available, say the critic was from the same family. The independence rule above still applies.
+
+## Review sweep, in order
+
+Apply only unoverridden defaults; preserve requested voice and quoted or technical material.
+
+1. Em dashes and stand-ins: replace every one.
+2. Trailing periods off headings.
+3. Negation pivots, including split-sentence forms.
+4. Jargon and fancy words: glossed, owned by the reader, or replaced.
+5. Paragraph focus and readability: split or cut where doing so improves understanding.
+6. Per paragraph: which sentence performs instead of informs? Delete it.
+7. Last line a kicker or recap? Delete; end on the last concrete point.
+8. Stranger-test captions, labels, double-reading words.
+9. Repeated abstract nouns: rewrite the leaning sentences.
+10. Title says what the reader gets?
+11. Read it as the author speaking it aloud. Rewrite any sentence they would not say or would trip over; with a voice reference, check the draft against it.
+
+For an explicitly requested prose review, give **PASS** when no applicable, unoverridden requirement remains, otherwise **FAIL** with concrete violations or missing evidence. Overall PASS covers substance and style; missing required evidence prevents it. For a review limited to clarity or style, label the verdict **Clarity-only PASS/FAIL** or **Style-only PASS/FAIL** as appropriate; assess only that scope and do not imply factual verification. A clarity-only request needs no added research. Label notes **Requirement** or **Suggestion**. Ordinary drafting needs no verdict; a requested style is not a violation.
+
+## Anti-patterns
+
+- Trading one tell for another: em dashes into semicolon storms, a fancy word into a sidegrade synonym.
+- Dropping a fact, caveat, or qualifier to remove a tell. Accuracy beats cleanliness.
+- Sanitizing a distinctive voice into bland professional prose.

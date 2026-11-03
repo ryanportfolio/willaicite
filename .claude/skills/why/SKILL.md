@@ -1,12 +1,12 @@
 ---
-description: Use only when the user explicitly invokes /why to challenge the assistant's immediately prior recommendation; never trigger from ordinary why questions or paraphrases.
+description: "Pressure-test a recommendation with one fresh reviewer: on /why, or before presenting own weighty rec (hard to undo, 2+ real options, real time or money at stake). Never from ordinary why questions or paraphrases."
 ---
 
 # Why
 
 The user typed `/why`. They just got a recommendation from you — a library, an approach, a file layout, a fix, a tradeoff call — and want a quick, honest, well-rounded look at it: why it matters, the real reasoning, and, critically, what it might be missing. They can already see the recommendation. Don't re-explain the conversation. Explain and pressure-test the *pick*.
 
-**Trigger:** this skill runs ONLY on the explicit `/why` command. The word "why" used normally in conversation is not a trigger — never fire on it.
+**Triggers:** the explicit `/why` command, or self-run before you present a weighty recommendation (see "Self-run mode" below and the caveman skill's questions rule). The word "why" used normally in conversation is not a trigger — never fire on it.
 
 **Lightweight by design.** This is not `/impartial-review` (no five-bucket panel, no broad audit). But a model reviewing its *own* previous turn tends to rubber-stamp — same blind spots, same biases. So `/why` borrows exactly one trick from real review: a single fresh subagent with no memory of this session, to get genuine distance on the weak spots. Everything else you do yourself, fast.
 
@@ -35,12 +35,31 @@ Verify the one or two facts the pick actually leans on. If nothing needed verify
 
 Dispatch **one** subagent via the Agent tool for the "what it could be missing" angle — independent distance the self-review can't give itself:
 
-- **Model:** the Agent tool's `opus` model (currently Opus 4.8). **Type:** `general-purpose`, fresh context.
+- **Model:** honor an explicit user model choice; otherwise inherit the configured session model. Inspect the exposed tool and model options before dispatch. **Type:** `general-purpose`, fresh context. An unavailable requested model is a capability gap, not permission to substitute silently.
 - **Feed it only the recommendation under review** — the text of your immediately-preceding turn, plus at most the single user message that prompted it so the pick makes sense. Do **not** paste the whole conversation or unrelated history. Minimal context is the point: genuine distance, no wasted tokens chewing the thread.
 - **Ask it for:** unstated assumptions, edge cases the pick ignores, costs or risks not surfaced, and the conditions under which this is the *wrong* call. Tell it to be specific and skeptical, to **not** restate the recommendation, and to say plainly if the pick looks weak. Reasoning-level blind spots are the job — it may do one targeted grep/read if a claim is cheaply checkable, but it should not go spelunking the repo.
-- **One agent only.** If dispatch fails or it returns nothing useful, fall back to your own critique — don't block the review on it.
+- **One agent only.** If fresh dispatch is unavailable or fails, disclose that the independent check did not complete. Useful personal critique may continue, clearly labeled as self-review; it cannot complete the independent gate. A completed reviewer finding no valid criticism is a valid result, not a dispatch failure.
 
 Then **you** own the synthesis: take the subagent's findings, drop anything off-base (it lacks full repo context), and fold the rest into the review below. Don't relay its raw output — integrate it.
+
+## Self-run mode
+
+When you run this yourself before presenting a pick:
+
+- The pick under review is the recommendation you are about to give, not your previous turn. Feed the subagent that draft plus the user message that prompted it.
+- Do Steps 2 and 3 as written.
+- Skip the Step 4 review format. Present the refined recommendation in the session's normal style with one added line: `Pressure-tested (/why): <what the reviewer changed or confirmed>`. If the check overturns the pick, lead with the new pick and say why on that line.
+- No file edits for the pick until the user answers.
+
+## Session-brief mode
+
+Brief opens with a `/why` step (session chip from `start_session` `own_initiative`) → run it first, skip weighty gate.
+
+- Pick under review = brief's rec. Ground it (Step 2) against freshly fetched `origin/main`; feed reviewer (Step 3) the brief only.
+- Rejected → report why, stop. Do not start the brief's work until the user answers.
+- Refined → apply refinement, proceed with the work, state the change in first report.
+- Confirmed → proceed.
+- Skip Step 4 format; one line in first report: `Pressure-tested (/why): <what the reviewer changed or confirmed>`.
 
 ## Step 4: Write the review
 
@@ -63,12 +82,12 @@ A real header (`### Why it matters`). One to three sentences: the stakes, the pr
 - **Honest over flattering.** The value is surfacing weak spots — the user can already see the pick. If a harder look shows the recommendation was wrong or weak, lead with that; self-correcting here is a feature.
 - **Specific over generic.** "Wouter has no built-in data loaders, so route-level data fetching you bolt on yourself" beats "there are tradeoffs to consider."
 - **Don't re-litigate the thread.** Review the pick, not the conversation.
-- **Render the review in caveman *full* (the default intensity)** — even when the session is running caveman *ultra*. A review carries reasoning and nuance that ultra's compression mangles; full stays terse but readable. Resume the session's normal mode afterward. If the session isn't in caveman at all, just write plainly.
-- This skill **reviews and explains — it does not implement.** No file edits while running it. If the review changes the user's mind, that's a separate follow-up.
+- **Render the review as terse fragments without abbreviations or arrows**, even when the session runs caveman ultra. A review carries reasoning and nuance that ultra's compression mangles; plain fragments stay terse but readable. Resume the session's normal mode afterward. If the session isn't in caveman at all, just write plainly.
+- This skill **reviews and explains — it does not implement.** No file edits while running it. If the review changes the user's mind, that's a separate follow-up. Session-brief mode is the one exception: after a confirmed or refined check, the brief's own work proceeds.
 
 ## Worked example
 
-Pick under review: *"Use Wouter instead of React Router for the new settings pages."* An ideal `/why` response (caveman full):
+Pick under review: *"Use Wouter instead of React Router for the new settings pages."* An ideal `/why` response (terse fragments):
 
 > **Pick:** Wouter for the new settings pages, not React Router.
 >
