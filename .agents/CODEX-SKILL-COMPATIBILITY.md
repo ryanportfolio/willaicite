@@ -10,11 +10,11 @@
 
 | Status | Skills |
 |---|---|
-| Native | `babysit-ci`, `brainstorming`, `bro`, `caveman`, `enhance-prompt`, `forge-repo-ui-skill`, `handoff-audit`, `humanizer`, `purposeful-writing`, `recall`, `unslop`, `verify-this`, `writing-plans` |
-| Adapted | `addskill`, `automate-me`, `fable-mode`, `init-project`, `lab`, `optimize-context`, `sync-starter`, `writing-skills` |
-| Capability-gated | `advocate`, `arena`, `design-study`, `impartial-review`, `why` |
-| Dangerous | `deploy-site`, `merge` |
-| Claude-only | None in the starter source set. |
+| Native | `babysit-ci`, `brainstorming`, `bro`, `caveman`, `enhance-prompt`, `forge-repo-ui-skill`, `handoff-audit`, `recall`, `refine`, `servers`, `session-hub`, `showpiece`, `wrapup`, `writing`, `writing-plans` |
+| Adapted | `addskill`, `apply-firmware`, `astra-review`, `claude-review`, `codex-review`, `deep-plan`, `fable-mode`, `init-project`, `lab`, `optimize-context`, `sync-starter`, `writing-skills` |
+| Capability-gated | `advocate`, `arena`, `cache-loop`, `conversion-ux`, `dare`, `design-prototypes`, `design-study`, `impartial-review`, `long-horizon`, `motion-design`, `perf-loop`, `product-walkthrough`, `redesign-concepts`, `security-loop`, `seo-loop`, `ui-quality`, `why`, `wow-animation`, `wow-loop` |
+| Dangerous | `adopt-repo`, `deploy-site`, `merge` |
+| Claude-only | `astra-fullreview`, `codex-fullreview`, `codex-image-gen`, `coordinate`, `gauntlet`, `long-horizon-workflows` |
 
 `advocate`, `impartial-review`, and `why` require fresh independent context; do not replace them with self-review and call it equivalent. `merge` becomes session-wide only after explicit `$merge` or an unambiguous auto-merge request. Current system, developer, sandbox, approval, and user instructions win. Resolve canonical resources from `.claude/skills/<name>/` and never claim a gated workflow ran unless its tools were used.
 
