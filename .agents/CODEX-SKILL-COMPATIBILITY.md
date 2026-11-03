@@ -18,4 +18,4 @@
 
 `advocate`, `impartial-review`, and `why` require fresh independent context; do not replace them with self-review and call it equivalent. `merge` becomes session-wide only after explicit `$merge` or an unambiguous auto-merge request. Current system, developer, sandbox, approval, and user instructions win. Resolve canonical resources from `.claude/skills/<name>/` and never claim a gated workflow ran unless its tools were used.
 
-`node .claude/scripts/test-codex-contract.mjs` verifies that every active skill has exactly one classification and that Codex routing metadata stays within its context budget.
+`node .claude/scripts/test-codex-contract.mjs` checks each active skill's frontmatter and reports the Codex catalog size. A skill with no classification, or more than one, is a warning, not a failure.
